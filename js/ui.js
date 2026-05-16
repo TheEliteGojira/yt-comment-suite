@@ -256,7 +256,7 @@ const UI = (() => {
       });
 
       /* Auto-expand when search matches a reply */
-      if (query && visibleReplies.length > 0) {
+      if (q && matchingCount > 0) {
         replyContainer.classList.add('open');
         toggle.classList.add('open');
       }
