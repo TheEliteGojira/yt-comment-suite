@@ -20,6 +20,9 @@
   <button class="tab-btn" onclick="switchTab('viewer', this)">
     ② Viewer
   </button>
+  <button class="tab-btn" onclick="switchTab('about', this)">
+    ③ About
+  </button>
 
   <!-- Dark / light mode toggle -->
   <button id="theme-toggle" onclick="UI.toggleTheme()" title="Toggle dark/light mode">
@@ -258,8 +261,168 @@
 
 
 <!-- ============================================================
-     SCRIPTS — order matters: dependencies first
+     ABOUT TAB
+     Overview of how the app works, API quota costs, and tips.
      ============================================================ -->
+<div id="tab-about" class="tab-panel">
+  <div class="page-wrap" style="max-width: 740px;">
+
+    <header class="page-header">
+      <div class="logo-tag">▶ YT Archive</div>
+      <div class="page-title">About<span>This App.</span></div>
+      <div class="page-subtitle">
+        How YT Comment Suite works, what it costs, and how to get set up.
+      </div>
+    </header>
+
+    <!-- What it is -->
+    <div class="panel">
+      <div class="panel-label">What is this?</div>
+      <p class="about-body">
+        YT Comment Suite is a self-contained web app that lets you fetch, browse, and export
+        every public comment under any YouTube video. It runs entirely in your browser —
+        no servers, no accounts, no cloud storage. Your comments and API key never leave your machine.
+      </p>
+      <p class="about-body">
+        It is split into two tools that work together:
+      </p>
+      <ul class="about-list">
+        <li><strong>Archiver</strong> — connects to the YouTube API with your key, paginates through all comment threads and replies, and streams them into a live preview. When done, you can open the archive directly in the Viewer or export it to a file.</li>
+        <li><strong>Viewer</strong> — lets you browse, search, sort, and filter the fetched comments. You can load data directly from the Archiver (no download needed) or drop a previously exported JSON file.</li>
+      </ul>
+    </div>
+
+    <!-- API key setup -->
+    <div class="panel">
+      <div class="panel-label">Getting an API Key</div>
+      <p class="about-body">
+        The app uses YouTube's official <strong>Data API v3</strong>, which is free up to a daily
+        quota limit. You supply your own key, so you control your own quota.
+      </p>
+      <ol class="about-list">
+        <li>Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a></li>
+        <li>Create a new project (or select an existing one)</li>
+        <li>Click <strong>Enable APIs &amp; Services</strong> → search for <strong>YouTube Data API v3</strong> → Enable</li>
+        <li>Go to <strong>Credentials</strong> → <strong>Create Credentials</strong> → <strong>API Key</strong></li>
+        <li>Copy the key (it starts with <code>AIza</code>) and paste it into the Archiver tab</li>
+      </ol>
+      <p class="about-body" style="margin-top: 12px;">
+        Your key is saved in your browser's local storage so you only need to enter it once.
+        It is never sent anywhere except directly to Google's API servers.
+      </p>
+    </div>
+
+    <!-- Quota costs — the main reference table -->
+    <div class="panel">
+      <div class="panel-label">API Quota Costs</div>
+      <p class="about-body">
+        YouTube gives every project <strong>10,000 units per day</strong> for free.
+        Quota resets at midnight Pacific Time. Here is exactly what each operation costs:
+      </p>
+
+      <table class="about-table">
+        <thead>
+          <tr>
+            <th>Operation</th>
+            <th>Units</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fetch video title/metadata</td>
+            <td class="units">1</td>
+            <td>Done once per fetch, at the start</td>
+          </tr>
+          <tr>
+            <td>One page of comment threads</td>
+            <td class="units">1</td>
+            <td>Up to 100 top-level comments per page</td>
+          </tr>
+          <tr>
+            <td>One page of replies (overflow)</td>
+            <td class="units">1</td>
+            <td>Only triggered when a thread has more than 5 replies</td>
+          </tr>
+          <tr class="table-note-row">
+            <td colspan="3">
+              Threads with ≤5 replies are included free inside the thread response — no extra call needed.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="about-body" style="margin-top: 16px;"><strong>Practical estimates:</strong></p>
+      <table class="about-table">
+        <thead>
+          <tr>
+            <th>Video size</th>
+            <th>Approx. comments</th>
+            <th>Approx. units used</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Small</td>    <td>~500</td>     <td>~6–10</td></tr>
+          <tr><td>Medium</td>   <td>~5,000</td>   <td>~55–80</td></tr>
+          <tr><td>Large</td>    <td>~50,000</td>  <td>~550–900</td></tr>
+          <tr><td>Viral</td>    <td>~200,000</td> <td>~2,100–4,000</td></tr>
+          <tr><td>Massive</td>  <td>~500,000+</td><td>May exceed daily quota</td></tr>
+        </tbody>
+      </table>
+
+      <p class="about-body" style="margin-top: 14px;">
+        Reply-heavy videos cost more because each thread with more than 5 replies requires
+        its own API call. A video where most top-level comments have long reply chains
+        can cost 2–3× more than the thread count alone suggests.
+      </p>
+      <p class="about-body">
+        If you hit the quota limit mid-fetch, the app will show a clear error message.
+        You can export whatever was captured before the limit was hit, then continue the next day
+        with a fresh quota — or use a second API key from a different Google Cloud project.
+      </p>
+    </div>
+
+    <!-- Workflow tips -->
+    <div class="panel">
+      <div class="panel-label">Workflow Tips</div>
+      <ul class="about-list">
+        <li><strong>No download needed:</strong> After fetching, click "→ Open in Viewer" to browse immediately. The data passes in memory — no file created.</li>
+        <li><strong>Save for later:</strong> Export to JSON to archive a video's comments permanently. Drop the file back into the Viewer at any time without re-fetching.</li>
+        <li><strong>Searching replies:</strong> When you search, threads with a matching reply are shown with all their replies visible — matching ones are highlighted, non-matching ones are dimmed so you see the full conversation context.</li>
+        <li><strong>Sort by Most Liked:</strong> Useful for finding the community's top reactions quickly. Sorting applies to top-level comments; replies always stay in chronological order under their parent.</li>
+        <li><strong>Timezone:</strong> All timestamps are stored as UTC in the JSON. The Viewer converts them to whichever timezone you select — you can switch freely without re-loading.</li>
+        <li><strong>Stopping early:</strong> The Stop button halts after the current page finishes. You can still export or open in the Viewer with whatever was fetched up to that point.</li>
+      </ul>
+    </div>
+
+    <!-- Running locally / deploying -->
+    <div class="panel">
+      <div class="panel-label">Running &amp; Deploying</div>
+      <p class="about-body">
+        Because the app calls the YouTube API, it must be served over HTTP — opening
+        <code>index.html</code> as a local file will cause CORS errors. The quickest local server:
+      </p>
+      <pre class="about-code">cd yt-comment-suite
+python3 -m http.server 8080
+# Then open: http://localhost:8080</pre>
+      <p class="about-body" style="margin-top: 14px;">
+        To share with others, drag the <code>yt-comment-suite/</code> folder onto
+        <a href="https://app.netlify.com/drop" target="_blank" rel="noopener">app.netlify.com/drop</a>
+        for a free public URL in about 30 seconds. No account required.
+        GitHub Pages is also free and redeploys automatically on every <code>git push</code>.
+      </p>
+    </div>
+
+    <footer>
+      <span>YT Comment Suite</span>
+      <span>Built with the YouTube Data API v3</span>
+    </footer>
+
+  </div><!-- /page-wrap -->
+</div><!-- /tab-about -->
+
+
+<!-- ============================================================
 <script src="js/youtube-api.js"></script>
 <script src="js/archive-manager.js"></script>
 <script src="js/ui.js"></script>

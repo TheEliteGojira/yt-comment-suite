@@ -790,6 +790,9 @@ body::before {
 .reply-card .c-text   { font-size: 12px; color: #999; }
 [data-theme="light"] .reply-card .c-text { color: #666; }
 
+/* Non-matching replies are dimmed during search so matches stand out */
+.reply-card.reply-dimmed { opacity: 0.35; }
+
 /* ── No results ───────────────────────────────────────────── */
 #v-no-results {
   display: none;
@@ -838,6 +841,99 @@ footer {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* ── About tab ────────────────────────────────────────────── */
+.about-body {
+  font-size: 13px;
+  line-height: 1.85;
+  color: #ccc;
+  margin-bottom: 12px;
+}
+
+[data-theme="light"] .about-body { color: #333; }
+
+.about-body a { color: var(--accent); text-decoration: none; }
+.about-body a:hover { text-decoration: underline; }
+
+.about-body strong { color: var(--text); font-weight: 700; }
+
+.about-body code {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  background: var(--border);
+  color: var(--accent);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.about-list {
+  font-size: 13px;
+  line-height: 1.85;
+  color: #ccc;
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+[data-theme="light"] .about-list { color: #333; }
+
+.about-list li { margin-bottom: 8px; }
+.about-list strong { color: var(--text); }
+
+.about-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 12px;
+}
+
+.about-table th {
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 12px;
+}
+
+.about-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: #ccc;
+  vertical-align: top;
+}
+
+[data-theme="light"] .about-table td { color: #333; }
+
+.about-table td.units {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.about-table tr:last-child td { border-bottom: none; }
+
+.about-table tr:hover td { background: var(--panel-hover); }
+
+.table-note-row td {
+  font-size: 11px;
+  color: var(--text-muted) !important;
+  font-style: italic;
+  background: var(--reply-bg) !important;
+}
+
+.about-code {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  background: var(--reply-bg);
+  border: 1px solid var(--border);
+  color: var(--green);
+  padding: 16px 18px;
+  line-height: 1.8;
+  white-space: pre;
+  overflow-x: auto;
+  margin-top: 10px;
 }
 
 /* ── Animations ───────────────────────────────────────────── */

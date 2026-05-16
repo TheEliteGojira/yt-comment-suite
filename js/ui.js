@@ -210,25 +210,34 @@ const UI = (() => {
     /* Replies */
     const replies = thread.replies || [];
     if (replies.length > 0 && showReplies) {
-      /* Filter replies if there's a search query */
-      const visibleReplies = query
-        ? replies.filter(r => r.text?.toLowerCase().includes(query.toLowerCase()))
-        : replies;
+      const q = query ? query.toLowerCase() : '';
+
+      /*
+       * When searching: show ALL replies in the thread so the full
+       * conversation is visible. Matching replies get highlighted;
+       * non-matching replies are dimmed so context is clear.
+       * When not searching: show all replies normally.
+       */
+      const matchingCount = q
+        ? replies.filter(r => r.text?.toLowerCase().includes(q)).length
+        : replies.length;
 
       const toggle       = document.createElement('button');
       toggle.className   = 'replies-toggle';
       toggle.innerHTML   = `
         <em class="toggle-arrow">▶</em>
-        ${visibleReplies.length} ${visibleReplies.length === 1 ? 'reply' : 'replies'}
-        ${query && visibleReplies.length < replies.length ? ' matching' : ''}
+        ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}
+        ${q && matchingCount < replies.length ? ` · ${matchingCount} matching` : ''}
       `;
 
       const replyContainer     = document.createElement('div');
       replyContainer.className = 'replies-container';
 
-      visibleReplies.forEach(r => {
+      replies.forEach(r => {
+        const isMatch  = q ? r.text?.toLowerCase().includes(q) : true;
         const rc       = document.createElement('div');
-        rc.className   = 'reply-card';
+        /* Dim non-matching replies so the matching ones stand out */
+        rc.className   = 'reply-card' + (!isMatch && q ? ' reply-dimmed' : '');
         rc.innerHTML   = `
           <div class="comment-header">
             <span class="c-author">${esc(r.author)}</span>
