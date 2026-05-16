@@ -16,12 +16,12 @@
   --accent:         #ff233d;
   --accent-dim:     #df1846;
   --accent2:        #f5702d;  
-  --green:          #4effb0;   /* reply author colour */
+  --blu:            #096cbc;   /* reply author colour */
   --text:           #f0f0f0;
   --text-muted:     #555555;
   --reply-bg:       #0d0d0d;
   --reply-border:   #1e1e1e;
-  --highlight-bg:   #3a3a00;
+  --highlight-bg:   #df1846;
   --highlight-text: #e8ff4e;
   --progress-track: #1a1a1a;
 
@@ -40,12 +40,12 @@
   --accent:         #ff233d;
   --accent-dim:     #df1846;
   --accent2:        #f5702d;
-  --green:          #4effb0;
+  --blu:            #096cbc;
   --text:           #111111;
   --text-muted:     #888888;
   --reply-bg:       #f0f0ea;
   --reply-border:   #e0e0d8;
-  --highlight-bg:   #3a3a00;
+  --highlight-bg:   #df1846;
   --highlight-text: #e8ff4e;
   --progress-track: #e0e0e0;
 }
