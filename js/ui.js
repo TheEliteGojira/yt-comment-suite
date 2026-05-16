@@ -194,6 +194,12 @@ const UI = (() => {
     wrapper.className   = 'comment-thread';
     wrapper.style.animationDelay = Math.min(animDelay * 20, 300) + 'ms';
 
+    /* Strips highlight marks and dimming from the whole thread on click */
+    function clearSearchEffects() {
+      wrapper.querySelectorAll('mark').forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
+      wrapper.querySelectorAll('.reply-dimmed').forEach(el => el.classList.remove('reply-dimmed'));
+    }
+
     /* Top-level comment card */
     const card        = document.createElement('div');
     card.className    = 'comment-card';
@@ -205,6 +211,7 @@ const UI = (() => {
       </div>
       <div class="c-text">${highlight(esc(thread.text || ''), query)}</div>
     `;
+    if (query) card.addEventListener('click', clearSearchEffects);
     wrapper.appendChild(card);
 
     /* Replies */
@@ -246,6 +253,7 @@ const UI = (() => {
           </div>
           <div class="c-text">${highlight(esc(r.text || ''), query)}</div>
         `;
+        if (q) rc.addEventListener('click', clearSearchEffects);
         replyContainer.appendChild(rc);
       });
 

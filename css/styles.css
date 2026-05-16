@@ -13,9 +13,9 @@
   --panel:          #111111;
   --panel-hover:    #161616;
   --border:         #222222;
-  --accent:         #e8ff4e;   /* neon yellow */
-  --accent-dim:     #d4eb00;
-  --accent2:        #ff4e6a;   /* neon pink/red */
+  --accent:         #ff233d;
+  --accent-dim:     #df1846;
+  --accent2:        #f5702d;  
   --green:          #4effb0;   /* reply author colour */
   --text:           #f0f0f0;
   --text-muted:     #555555;
@@ -37,16 +37,16 @@
   --panel:          #ffffff;
   --panel-hover:    #f9f9f4;
   --border:         #ddd;
-  --accent:         #b8a000;   /* darker yellow so text stays readable */
-  --accent-dim:     #9e8a00;
-  --accent2:        #d63350;
-  --green:          #1a7a50;
+  --accent:         #ff233d;
+  --accent-dim:     #df1846;
+  --accent2:        #f5702d;
+  --green:          #4effb0;
   --text:           #111111;
   --text-muted:     #888888;
   --reply-bg:       #f0f0ea;
   --reply-border:   #e0e0d8;
-  --highlight-bg:   #fff59d;
-  --highlight-text: #333300;
+  --highlight-bg:   #3a3a00;
+  --highlight-text: #e8ff4e;
   --progress-track: #e0e0e0;
 }
 
@@ -935,6 +935,39 @@ footer {
   overflow-x: auto;
   margin-top: 10px;
 }
+
+/* ── Buffering dots ───────────────────────────────────────── */
+.dot-loader {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.dot-loader span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.2;
+  animation: dotGlow 1.4s infinite ease-in-out;
+}
+
+.dot-loader span:nth-child(2) { animation-delay: 0.22s; }
+.dot-loader span:nth-child(3) { animation-delay: 0.44s; }
+
+@keyframes dotGlow {
+  0%, 60%, 100% { opacity: 0.2; box-shadow: none; }
+  30%            { opacity: 1;   box-shadow: 0 0 8px 2px var(--accent); }
+}
+
+/* Comment / reply cards are clickable during search to clear effects */
+.comment-card,
+.reply-card { cursor: default; }
+
+.comment-thread:has(mark) .comment-card,
+.comment-thread:has(.reply-dimmed) .reply-card,
+.comment-thread:has(mark) .reply-card { cursor: pointer; }
 
 /* ── Animations ───────────────────────────────────────────── */
 @keyframes fadeIn  { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
