@@ -1,0 +1,451 @@
+/* =============================================================
+   script.js — App init, event listeners, tab switching,
+               archiver orchestration, viewer orchestration.
+
+   Depends on: YouTubeAPI, ArchiveManager, UI  (loaded before this)
+   ============================================================= */
+
+/* ─────────────────────────────────────────────────────────────
+   SHARED STATE
+   In-memory archive passed from Archiver → Viewer without disk.
+   ───────────────────────────────────────────────────────────── */
+const AppState = {
+  /* Flat array of all fetched comment objects (archiver) */
+  allComments:  [],
+
+  /* Nested threads array for the viewer */
+  threads:      [],
+
+  /* Video metadata */
+  videoTitle:   '',
+  videoId:      '',
+
+  /* Fetch control */
+  isFetching:   false,
+  stopRequested: false,
+
+  /* Viewer UI state */
+  currentSort:  'newest',
+  showComments: true,
+  showReplies:  true,
+};
+
+/* ─────────────────────────────────────────────────────────────
+   HELPERS — video ID extraction
+   ───────────────────────────────────────────────────────────── */
+function extractVideoId(input) {
+  input = input.trim();
+
+  /* Plain 11-character ID */
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+
+  /* All common YouTube URL formats (desktop, mobile, short, embed, shorts) */
+  const patterns = [
+    /[?&]v=([a-zA-Z0-9_-]{11})/,
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /embed\/([a-zA-Z0-9_-]{11})/,
+    /shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+
+  for (const p of patterns) {
+    const m = input.match(p);
+    if (m) return m[1];
+  }
+
+  return null;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   API KEY — persisted in localStorage
+   ───────────────────────────────────────────────────────────── */
+const API_KEY_STORAGE = 'yt-suite-api-key';
+
+function loadSavedApiKey() {
+  const saved = localStorage.getItem(API_KEY_STORAGE);
+  if (saved) {
+    const input = document.getElementById('a-api-key');
+    if (input) input.value = saved;
+  }
+}
+
+function saveApiKey(key) {
+  /* Only save if non-empty */
+  if (key) localStorage.setItem(API_KEY_STORAGE, key);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TAB SWITCHER
+   ───────────────────────────────────────────────────────────── */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b  => b.classList.remove('active'));
+
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ARCHIVER — fetch orchestration
+   ───────────────────────────────────────────────────────────── */
+async function startFetch() {
+  if (AppState.isFetching) return;
+
+  /* Read inputs */
+  const apiKey      = document.getElementById('a-api-key').value.trim();
+  const videoInput  = document.getElementById('a-video-url').value.trim();
+  const inclReplies = document.getElementById('a-opt-replies').checked;
+  const sortByTop   = document.getElementById('a-opt-sort').checked;
+
+  /* Validate */
+  UI.hideError('a-error-box');
+
+  if (!apiKey) {
+    UI.showError('a-error-box', 'Please enter your YouTube Data API v3 key.');
+    return;
+  }
+
+  if (!videoInput) {
+    UI.showError('a-error-box', 'Please enter a YouTube URL or video ID.');
+    return;
+  }
+
+  const videoId = extractVideoId(videoInput);
+  if (!videoId) {
+    UI.showError('a-error-box', 'Could not find a valid YouTube video ID in that URL. Supported formats: youtube.com/watch?v=..., youtu.be/..., shorts/...');
+    return;
+  }
+
+  /* Persist API key */
+  saveApiKey(apiKey);
+
+  /* Reset state */
+  AppState.allComments   = [];
+  AppState.stopRequested = false;
+  AppState.isFetching    = true;
+  AppState.videoTitle    = '';
+  AppState.videoId       = videoId;
+
+  /* UI: show progress, hide previous results */
+  document.getElementById('a-fetch-btn').disabled = true;
+  document.getElementById('a-comment-list').innerHTML = '';
+  UI.hide('a-results-section');
+  UI.hide('a-open-viewer-btn');
+  UI.show('a-progress-section');
+  UI.setProgress('a-progress-bar', 0);
+  document.getElementById('a-progress-label').textContent = 'Fetching comments…';
+  document.getElementById('a-progress-label').classList.add('pulsing');
+
+  /* Step 1: get video title */
+  try {
+    const info         = await YouTubeAPI.getVideoInfo(videoId, apiKey);
+    AppState.videoTitle = info.title;
+    UI.setText('a-status-line', `Video: "${info.title}"`);
+  } catch (e) {
+    /* Non-fatal — we still try to fetch comments */
+    AppState.videoTitle = videoId;
+    UI.setText('a-status-line', `⚠ Could not fetch video title: ${e.message}`);
+  }
+
+  /* Step 2: paginate through comment threads */
+  const order = sortByTop ? 'relevance' : 'time';
+  let pageToken = '';
+  let page      = 0;
+
+  try {
+    do {
+      if (AppState.stopRequested) break;
+
+      const data = await YouTubeAPI.getCommentThreadPage(videoId, apiKey, order, pageToken);
+
+      for (const thread of (data.items || [])) {
+        if (AppState.stopRequested) break;
+
+        /* Parse top-level comment */
+        const topComment = YouTubeAPI.parseThread(thread);
+        AppState.allComments.push(topComment);
+        UI.appendToPreview('a-comment-list', topComment);
+
+        /* Handle replies */
+        if (inclReplies) {
+          if (topComment._totalReplies <= 5 && topComment._inlineReplies.length > 0) {
+            /* All replies already included inline — just parse them */
+            const inlineReplies = YouTubeAPI.parseInlineReplies(topComment._inlineReplies, topComment.id);
+            inlineReplies.forEach(r => {
+              AppState.allComments.push(r);
+              UI.appendToPreview('a-comment-list', r);
+            });
+
+          } else if (topComment._totalReplies > 5) {
+            /* More replies than inline batch — fetch the full set */
+            await YouTubeAPI.getAllReplies(
+              topComment.id,
+              apiKey,
+              (reply) => {
+                AppState.allComments.push(reply);
+                UI.appendToPreview('a-comment-list', reply);
+              },
+              () => AppState.stopRequested
+            );
+          }
+        }
+      }
+
+      page++;
+      const count = AppState.allComments.length;
+      UI.setText('a-prog-count', `${count.toLocaleString()} comments`);
+      UI.setText('a-prog-pages', `page ${page}`);
+      UI.setProgress('a-progress-bar', Math.min(95, (page / (page + 2)) * 100));
+
+      pageToken = data.nextPageToken || '';
+
+    } while (pageToken && !AppState.stopRequested);
+
+    finishFetch(AppState.stopRequested ? 'stopped' : 'complete');
+
+  } catch (e) {
+    UI.showError('a-error-box', e.message);
+    finishFetch('error');
+  }
+}
+
+function finishFetch(reason) {
+  AppState.isFetching    = false;
+  AppState.stopRequested = false;
+
+  document.getElementById('a-fetch-btn').disabled = false;
+  document.getElementById('a-progress-label').classList.remove('pulsing');
+
+  if (reason === 'complete') {
+    UI.setProgress('a-progress-bar', 100);
+    document.getElementById('a-progress-label').textContent = '✓ Done!';
+  } else if (reason === 'stopped') {
+    document.getElementById('a-progress-label').textContent = '⏹ Stopped by user';
+  } else {
+    document.getElementById('a-progress-label').textContent = '✕ Error';
+  }
+
+  if (reason !== 'error' && AppState.allComments.length > 0) {
+    /* Update stats */
+    const threads = AppState.allComments.filter(c => c.type === 'comment').length;
+    const replies = AppState.allComments.filter(c => c.type === 'reply').length;
+
+    UI.setText('a-stat-total',   UI.fmt(AppState.allComments.length));
+    UI.setText('a-stat-threads', UI.fmt(threads));
+    UI.setText('a-stat-replies', UI.fmt(replies));
+
+    UI.show('a-results-section');
+
+    /* Show the "Open in Viewer" CTA button */
+    UI.show('a-open-viewer-btn');
+  }
+}
+
+function stopFetch() {
+  AppState.stopRequested = true;
+  UI.setText('a-status-line', 'Stopping after current page…');
+}
+
+/* Triggered by the "→ Open in Viewer" button */
+function openInViewer() {
+  /* Build nested threads from the flat allComments array */
+  const exportData    = ArchiveManager.buildNestedExport(AppState.allComments, AppState.videoTitle);
+  const { threads }   = ArchiveManager.parseImport(exportData);
+  AppState.threads    = threads;
+
+  /* Switch to Viewer tab and load */
+  const viewerBtn = document.querySelector('.tab-btn[onclick*="viewer"]');
+  switchTab('viewer', viewerBtn);
+  loadViewerData(exportData, threads);
+}
+
+function resetArchiver() {
+  AppState.allComments = [];
+  AppState.videoTitle  = '';
+  AppState.videoId     = '';
+
+  document.getElementById('a-comment-list').innerHTML = '';
+  document.getElementById('a-video-url').value = '';
+  UI.hide('a-results-section');
+  UI.hide('a-progress-section');
+  UI.hide('a-open-viewer-btn');
+  UI.hideError('a-error-box');
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ARCHIVER — exports (delegates to ArchiveManager)
+   ───────────────────────────────────────────────────────────── */
+function exportJSON() { ArchiveManager.exportJSON(AppState.allComments, AppState.videoTitle); }
+function exportCSV()  { ArchiveManager.exportCSV(AppState.allComments,  AppState.videoTitle); }
+function exportTXT()  { ArchiveManager.exportTXT(AppState.allComments,  AppState.videoTitle); }
+
+/* ─────────────────────────────────────────────────────────────
+   VIEWER — file loading (manual JSON upload path)
+   ───────────────────────────────────────────────────────────── */
+function initDropZone() {
+  const zone  = document.getElementById('v-drop-zone');
+  const input = document.getElementById('v-file-input');
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', ()  => zone.classList.remove('drag-over'));
+
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) readJsonFile(file);
+  });
+
+  input.addEventListener('change', () => {
+    if (input.files[0]) readJsonFile(input.files[0]);
+  });
+}
+
+function readJsonFile(file) {
+  const reader = new FileReader();
+
+  reader.onload = e => {
+    try {
+      const data          = JSON.parse(e.target.result);
+      const { threads }   = ArchiveManager.parseImport(data);
+      AppState.threads    = threads;
+      loadViewerData(data, threads);
+    } catch (err) {
+      alert(`Could not load file: ${err.message}`);
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+/* ── Common viewer setup (used by both paths) ─────────────── */
+function loadViewerData(meta, threads) {
+  /* Populate meta bar */
+  UI.setText('v-meta-title',   meta.videoTitle || 'Unknown Video');
+  UI.setText('v-meta-total',   UI.fmt(meta.totalComments || threads.length));
+  UI.setText('v-meta-threads', UI.fmt(meta.totalTopLevelComments || threads.length));
+  UI.setText('v-meta-replies', UI.fmt(meta.totalReplies || threads.reduce((s, t) => s + (t.replies?.length || 0), 0)));
+  UI.setText('v-meta-date',    meta.exportedAt
+    ? new Date(meta.exportedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    : '—'
+  );
+
+  const total = threads.reduce((s, t) => s + 1 + (t.replies?.length || 0), 0);
+  UI.setText('v-footer-count', `${UI.fmt(total)} comments loaded`);
+
+  /* Show viewer UI */
+  UI.hide('v-drop-zone');
+  UI.show('v-meta-bar');
+  UI.show('v-controls', 'flex');
+  UI.show('v-result-count');
+  UI.show('v-comment-feed');
+  UI.show('v-reset-btn');
+
+  applyViewerFilters();
+}
+
+/* ─────────────────────────────────────────────────────────────
+   VIEWER — sort / filter / render
+   ───────────────────────────────────────────────────────────── */
+function setSort(mode) {
+  AppState.currentSort = mode;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('v-sort-' + mode).classList.add('active');
+  applyViewerFilters();
+}
+
+function toggleFilter(type) {
+  if (type === 'comments') {
+    AppState.showComments = !AppState.showComments;
+    document.getElementById('v-filter-comments').classList.toggle('active', AppState.showComments);
+  } else {
+    AppState.showReplies = !AppState.showReplies;
+    document.getElementById('v-filter-replies').classList.toggle('active', AppState.showReplies);
+  }
+  applyViewerFilters();
+}
+
+function applyViewerFilters() {
+  const query = document.getElementById('v-search-input').value.trim().toLowerCase();
+  const tz    = document.getElementById('v-tz-select').value || 'UTC';
+  const feed  = document.getElementById('v-comment-feed');
+  feed.innerHTML = '';
+
+  /* Filter */
+  let filtered = AppState.showComments
+    ? ArchiveManager.filterThreads(AppState.threads, query, AppState.showReplies)
+    : [];
+
+  /* Sort */
+  filtered = ArchiveManager.sortThreads(filtered, AppState.currentSort);
+
+  /* No results */
+  if (filtered.length === 0) {
+    UI.show('v-no-results');
+    UI.setText('v-result-count', 'No comments match your search.');
+    return;
+  }
+
+  UI.hide('v-no-results');
+
+  /* Update count label */
+  const replyCount = filtered.reduce((s, t) => s + (t.replies?.length || 0), 0);
+  UI.setText(
+    'v-result-count',
+    query
+      ? `${UI.fmt(filtered.length)} thread${filtered.length !== 1 ? 's' : ''} matching "${query}"`
+      : `${UI.fmt(filtered.length)} comment${filtered.length !== 1 ? 's' : ''}${AppState.showReplies ? ` · ${UI.fmt(replyCount)} replies` : ''}`
+  );
+
+  /* Render threads into a DocumentFragment for performance */
+  const frag = document.createDocumentFragment();
+  filtered.forEach((thread, i) => {
+    frag.appendChild(UI.renderThread(thread, query, AppState.showReplies, tz, i));
+  });
+  feed.appendChild(frag);
+}
+
+function resetViewer() {
+  /* Don't clear AppState.threads — the archiver data stays intact.
+     Only reset viewer-specific UI state. */
+  AppState.currentSort  = 'newest';
+  AppState.showComments = true;
+  AppState.showReplies  = true;
+
+  UI.show('v-drop-zone');
+  UI.hide('v-meta-bar');
+  UI.hide('v-controls');
+  UI.hide('v-result-count');
+  UI.hide('v-comment-feed');
+  UI.hide('v-no-results');
+  UI.hide('v-reset-btn');
+
+  document.getElementById('v-comment-feed').innerHTML = '';
+  document.getElementById('v-search-input').value    = '';
+  document.getElementById('v-file-input').value      = '';
+  UI.setText('v-footer-count', '');
+
+  /* Reset sort buttons */
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('v-sort-newest').classList.add('active');
+
+  /* Reset filter buttons */
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.add('active'));
+}
+
+/* ─────────────────────────────────────────────────────────────
+   INIT — runs once DOM is ready
+   ───────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  /* Apply saved theme (or system default) */
+  UI.initTheme();
+
+  /* Restore saved API key */
+  loadSavedApiKey();
+
+  /* Set up drag-and-drop zone in viewer */
+  initDropZone();
+
+  /* Populate timezone dropdown */
+  UI.populateTzDropdown('v-tz-select');
+});

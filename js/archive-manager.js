@@ -1,0 +1,179 @@
+/* =============================================================
+   archive-manager.js — Import / export JSON, sort, filter
+   Exports: ArchiveManager object
+   ============================================================= */
+
+const ArchiveManager = (() => {
+
+  /* ── Flatten a raw flat comments array into nested threads ── */
+  function buildThreadsFromFlat(comments) {
+    const topLevel = comments.filter(c => c.type === 'comment' || !c.parentId);
+    const byId     = {};
+
+    topLevel.forEach(c => { byId[c.id] = { ...c, replies: [] }; });
+
+    comments
+      .filter(c => c.type === 'reply' || c.parentId)
+      .forEach(r => {
+        if (byId[r.parentId]) byId[r.parentId].replies.push(r);
+      });
+
+    /* Sort inline replies chronologically */
+    Object.values(byId).forEach(t => {
+      t.replies.sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt));
+    });
+
+    return Object.values(byId);
+  }
+
+  /* ── Convert current allComments flat array to nested JSON ── */
+  function buildNestedExport(allComments, videoTitle) {
+    const threads = allComments
+      .filter(c => c.type === 'comment')
+      .map(c => {
+        /* Destructure out fields that are implicit in the nested structure */
+        const { type, parentId, ...rest } = c;
+        return {
+          ...rest,
+          replies: allComments
+            .filter(r => r.type === 'reply' && r.parentId === c.id)
+            .sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt))
+            .map(r => {
+              const { type, parentId, ...rRest } = r;
+              return rRest;
+            }),
+        };
+      });
+
+    return {
+      exportedAt:            new Date().toISOString(),
+      videoTitle:            videoTitle || '',
+      totalTopLevelComments: threads.length,
+      totalReplies:          allComments.filter(c => c.type === 'reply').length,
+      totalComments:         allComments.length,
+      comments:              threads,
+    };
+  }
+
+  /* ── Parse an imported JSON object into a threads array ────── */
+  function parseImport(data) {
+    if (!data || !Array.isArray(data.comments)) {
+      throw new Error('Unrecognised JSON format. Expected a file exported by YT Comment Suite.');
+    }
+
+    /* Already nested (new format) */
+    if (data.comments.length === 0 || data.comments[0]?.replies !== undefined) {
+      return { threads: data.comments, meta: data };
+    }
+
+    /* Flat (old format) — reconstruct nesting */
+    return { threads: buildThreadsFromFlat(data.comments), meta: data };
+  }
+
+  /* ── Sort a threads array (returns a new array) ────────────── */
+  function sortThreads(threads, mode) {
+    const copy = [...threads];
+
+    if (mode === 'likes') {
+      return copy.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+    }
+    if (mode === 'oldest') {
+      return copy.sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt));
+    }
+    /* Default: newest first */
+    return copy.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  }
+
+  /* ── Filter threads by a search query ─────────────────────── */
+  function filterThreads(threads, query, includeReplies) {
+    if (!query) return threads;
+
+    const q = query.toLowerCase();
+    return threads.filter(t => {
+      const threadMatch = t.text?.toLowerCase().includes(q);
+      const replyMatch  = includeReplies && t.replies?.some(r => r.text?.toLowerCase().includes(q));
+      return threadMatch || replyMatch;
+    });
+  }
+
+  /* ── Download helper ────────────────────────────────────────── */
+  function downloadBlob(content, filename, mime) {
+    const blob = new Blob([content], { type: mime });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    /* Clean up object URL after a short delay */
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+
+  /* ── Safe filename prefix from video title ────────────────── */
+  function safeFilename(videoTitle) {
+    return (videoTitle || 'comments')
+      .replace(/[^a-z0-9]/gi, '_')
+      .substring(0, 40);
+  }
+
+  /* ── Export as JSON ─────────────────────────────────────────── */
+  function exportJSON(allComments, videoTitle) {
+    const payload = buildNestedExport(allComments, videoTitle);
+    downloadBlob(
+      JSON.stringify(payload, null, 2),
+      `${safeFilename(videoTitle)}_comments.json`,
+      'application/json'
+    );
+    return payload; /* also return for in-memory pass-through */
+  }
+
+  /* ── Export as CSV ──────────────────────────────────────────── */
+  function exportCSV(allComments, videoTitle) {
+    const headers = ['id','type','author','authorChannelId','text','likeCount','replyCount','publishedAt','updatedAt','parentId'];
+    const rows    = [headers.join(',')];
+
+    for (const c of allComments) {
+      rows.push(
+        headers.map(h => {
+          const v = String(c[h] ?? '');
+          return '"' + v.replace(/"/g, '""').replace(/\n/g, '\\n') + '"';
+        }).join(',')
+      );
+    }
+
+    downloadBlob(rows.join('\n'), `${safeFilename(videoTitle)}_comments.csv`, 'text/csv');
+  }
+
+  /* ── Export as plain text ─────────────────────────────────── */
+  function exportTXT(allComments, videoTitle) {
+    const lines = [
+      'YouTube Comment Archive',
+      `Video: ${videoTitle || ''}`,
+      `Exported: ${new Date().toISOString()}`,
+      `Total: ${allComments.length} comments`,
+      '',
+      '='.repeat(60),
+      '',
+    ];
+
+    for (const c of allComments) {
+      const indent = c.type === 'reply' ? '    ↳ ' : '';
+      const date   = new Date(c.publishedAt).toLocaleString();
+      lines.push(`${indent}[${c.author}] ${date} | ♥ ${c.likeCount}`);
+      lines.push(`${indent}${c.text}`);
+      lines.push('');
+    }
+
+    downloadBlob(lines.join('\n'), `${safeFilename(videoTitle)}_comments.txt`, 'text/plain');
+  }
+
+  /* ── Public API ───────────────────────────────────────────── */
+  return {
+    parseImport,
+    buildNestedExport,
+    sortThreads,
+    filterThreads,
+    exportJSON,
+    exportCSV,
+    exportTXT,
+  };
+
+})();
