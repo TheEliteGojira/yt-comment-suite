@@ -276,6 +276,161 @@ const UI = (() => {
     return wrapper;
   }
 
+  /* ── User profile modal ──────────────────────────────────── */
+
+  /* Named so it can be removed cleanly from the document listener */
+  function _onModalKeydown(e) {
+    if (e.key === 'Escape') closeModal();
+  }
+
+  function closeModal() {
+    const el = document.getElementById('user-modal-overlay');
+    if (el) el.remove();
+    document.removeEventListener('keydown', _onModalKeydown);
+    document.body.style.overflow = '';
+  }
+
+  /*
+   * Builds and mounts the author activity modal.
+   * stats comes from ArchiveManager.getUserStats().
+   * Reads the current timezone from the viewer dropdown so timestamps match.
+   */
+  function renderUserModal(stats) {
+    closeModal(); /* dismiss any already-open modal first */
+
+    const tz = document.getElementById('v-tz-select')?.value || 'UTC';
+
+    /* ── Overlay ─────────────────────────────────────────────── */
+    const overlay     = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id        = 'user-modal-overlay';
+
+    /* ── Panel ───────────────────────────────────────────────── */
+    const panel     = document.createElement('div');
+    panel.className = 'modal-panel';
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
+
+    /* ── Header ──────────────────────────────────────────────── */
+    const header     = document.createElement('div');
+    header.className = 'modal-header';
+    header.innerHTML = `
+      <div class="modal-header-left">
+        <div class="modal-eyebrow">Author Activity</div>
+        <div class="modal-author-name">${esc(stats.authorName)}</div>
+        <div class="modal-disclaimer">activity in this video only · display names are not unique on YouTube</div>
+      </div>
+      <button class="modal-close" aria-label="Close modal">✕</button>
+    `;
+
+    /* ── Stats bar ───────────────────────────────────────────── */
+    const statsBar     = document.createElement('div');
+    statsBar.className = 'modal-stats';
+    statsBar.innerHTML = `
+      <div class="modal-stat">
+        <span class="modal-stat-num">${fmt(stats.commentCount)}</span>
+        <div class="modal-stat-label">Comments</div>
+      </div>
+      <div class="modal-stat">
+        <span class="modal-stat-num">${fmt(stats.replyCount)}</span>
+        <div class="modal-stat-label">Replies</div>
+      </div>
+      <div class="modal-stat">
+        <span class="modal-stat-num">${fmt(stats.totalLikes)}</span>
+        <div class="modal-stat-label">Likes Received</div>
+      </div>
+    `;
+
+    /* ── Scrollable body ─────────────────────────────────────── */
+    const body     = document.createElement('div');
+    body.className = 'modal-body';
+
+    /* Comments section */
+    const commentsHeading     = document.createElement('div');
+    commentsHeading.className = 'modal-section-label';
+    commentsHeading.textContent = `Comments (${fmt(stats.commentCount)})`;
+    body.appendChild(commentsHeading);
+
+    if (stats.comments.length === 0) {
+      const empty     = document.createElement('div');
+      empty.className = 'modal-empty';
+      empty.textContent = 'No top-level comments in this archive.';
+      body.appendChild(empty);
+    } else {
+      for (const c of stats.comments) {
+        const card     = document.createElement('div');
+        card.className = 'modal-comment-card';
+        card.innerHTML = `
+          <div class="comment-header">
+            <span class="c-date">${formatDate(c.publishedAt, tz)}</span>
+            <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(c.likeCount)}</span></span>
+          </div>
+          <div class="c-text">${esc(c.text || '')}</div>
+        `;
+        body.appendChild(card);
+      }
+    }
+
+    /* Replies section */
+    const repliesHeading     = document.createElement('div');
+    repliesHeading.className = 'modal-section-label';
+    repliesHeading.textContent = `Replies (${fmt(stats.replyCount)})`;
+    body.appendChild(repliesHeading);
+
+    if (stats.replies.length === 0) {
+      const empty     = document.createElement('div');
+      empty.className = 'modal-empty';
+      empty.textContent = 'No replies in this archive.';
+      body.appendChild(empty);
+    } else {
+      for (const r of stats.replies) {
+        const parent = r._parentThread;
+
+        /* Dimmed parent comment for context */
+        const context     = document.createElement('div');
+        context.className = 'modal-parent-context';
+        const parentSnippet = (parent.text || '').length > 140
+          ? esc(parent.text.substring(0, 140)) + '…'
+          : esc(parent.text || '');
+        context.innerHTML = `
+          <div class="comment-header">
+            <span class="c-author">${esc(parent.author)}</span>
+            <span class="c-date">${formatDate(parent.publishedAt, tz)}</span>
+          </div>
+          <div class="c-text">${parentSnippet}</div>
+        `;
+        body.appendChild(context);
+
+        /* The reply itself */
+        const replyCard     = document.createElement('div');
+        replyCard.className = 'modal-reply-card';
+        replyCard.innerHTML = `
+          <div class="comment-header">
+            <span class="c-date">${formatDate(r.publishedAt, tz)}</span>
+            <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(r.likeCount)}</span></span>
+          </div>
+          <div class="c-text">${esc(r.text || '')}</div>
+        `;
+        body.appendChild(replyCard);
+      }
+    }
+
+    /* ── Assemble ────────────────────────────────────────────── */
+    panel.appendChild(header);
+    panel.appendChild(statsBar);
+    panel.appendChild(body);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    /* ── Close handlers ──────────────────────────────────────── */
+    header.querySelector('.modal-close').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', _onModalKeydown);
+
+    /* Prevent page scroll while modal is open */
+    document.body.style.overflow = 'hidden';
+  }
+
   /* ── Theme: dark / light toggle ──────────────────────────── */
   const THEME_KEY = 'yt-suite-theme';
 
@@ -313,6 +468,8 @@ const UI = (() => {
     formatDate,
     populateTzDropdown,
     renderThread,
+    renderUserModal,
+    closeModal,
     initTheme,
     toggleTheme,
   };

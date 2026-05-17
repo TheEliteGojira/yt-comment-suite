@@ -62,7 +62,7 @@ The logo lives at `assets/logo.svg`. Three stacked red chevrons + TUBE pill badg
 ```
 
 The `.suite-logo` div has `padding: 0 20px` and a right border — do not change these.
-`.suite-logo-img` renders at `height: 28px` desktop, `22px` mobile. Do not filter or
+`.suite-logo-img` renders at `height: 42px` desktop, `33px` mobile. Do not filter or
 recolour the SVG — it is already the correct brand red.
 
 ---
@@ -231,6 +231,41 @@ that author's activity within the currently loaded archive.
 - Modal must respect dark/light theme
 - Close on outside click or Escape key
 - Style consistently with existing panels (same border, background, font)
+
+---
+
+## Feature: Web Workers for off-main-thread processing
+
+**Status: future consideration — implement after user profile modal**
+
+Move the CPU-heavy operations in `archive-manager.js` off the main thread so the UI
+stays fully responsive during large-archive operations.
+
+### Motivation
+After the O(n²) fix and infinite-scroll rendering, the remaining main-thread bottleneck
+is `filterThreads` / `sortThreads` on large archives (300k+ comments). At that scale,
+each search keystroke (even debounced) can cause brief stutter on slower devices.
+`buildNestedExport` is also still a synchronous main-thread operation.
+
+### Scope
+- New `js/worker.js` — imports `archive-manager.js` logic via `importScripts()`,
+  handles `filter`, `sort`, and `export` message types
+- `script.js` — instantiate one worker on page load; post messages instead of calling
+  `_renderViewer` directly; cancel in-flight jobs when a new search arrives
+- `archive-manager.js` — no changes needed; logic is already DOM-free
+
+### Data transfer
+Use structured clone (not `SharedArrayBuffer`). Transfer `AppState.threads` to the
+worker once on load; the worker holds its own copy. Simpler than shared memory and
+avoids the `Cross-Origin-Opener-Policy` / `Cross-Origin-Embedder-Policy` header
+requirements that `SharedArrayBuffer` demands.
+
+### Constraints
+- Worker file must be a real file path (`new Worker('js/worker.js')`) — no inline blobs.
+  This matches the existing constraint that the app must be served over HTTP anyway.
+- No bundler, so use `importScripts()` inside the worker rather than ES module imports.
+- Do not implement until the user profile modal is complete — the worker message
+  interface should not need to keep changing as features are added.
 
 ---
 

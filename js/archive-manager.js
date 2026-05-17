@@ -87,6 +87,39 @@ const ArchiveManager = (() => {
     return { threads: buildThreadsFromFlat(data.comments), meta: data };
   }
 
+  /* ── Aggregate one author's activity within the loaded archive ─ */
+  function getUserStats(threads, authorName) {
+    const comments = [];
+    const replies  = [];
+    let totalLikes = 0;
+
+    for (const thread of threads) {
+      if (thread.author === authorName) {
+        comments.push(thread);
+        totalLikes += thread.likeCount || 0;
+      }
+      for (const reply of (thread.replies || [])) {
+        if (reply.author === authorName) {
+          /* Attach the parent thread as context for modal rendering */
+          replies.push({ ...reply, _parentThread: thread });
+          totalLikes += reply.likeCount || 0;
+        }
+      }
+    }
+
+    comments.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+    replies.sort((a, b)  => new Date(b.publishedAt) - new Date(a.publishedAt));
+
+    return {
+      authorName,
+      commentCount: comments.length,
+      replyCount:   replies.length,
+      totalLikes,
+      comments,
+      replies,
+    };
+  }
+
   /* ── Sort a threads array (returns a new array) ────────────── */
   function sortThreads(threads, mode) {
     const copy = [...threads];
@@ -186,6 +219,7 @@ const ArchiveManager = (() => {
   return {
     parseImport,
     buildNestedExport,
+    getUserStats,
     sortThreads,
     filterThreads,
     exportJSON,

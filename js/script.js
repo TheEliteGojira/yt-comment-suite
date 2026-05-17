@@ -85,6 +85,9 @@ function switchTab(name, btn) {
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  /* Dismiss any open author modal when navigating away */
+  UI.closeModal();
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -562,4 +565,18 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSavedApiKey();
   initDropZone();
   UI.populateTzDropdown('v-tz-select');
+
+  /*
+   * Author profile modal — single delegated listener on the feed container.
+   * Catches clicks on any .c-author element regardless of when it was rendered.
+   * Using delegation means we never attach per-comment listeners (important
+   * since comments are rendered in batches and may not exist yet at init time).
+   */
+  document.getElementById('v-comment-feed').addEventListener('click', e => {
+    const authorEl = e.target.closest('.c-author');
+    if (!authorEl || !AppState.threads.length) return;
+
+    const stats = ArchiveManager.getUserStats(AppState.threads, authorEl.textContent.trim());
+    UI.renderUserModal(stats);
+  });
 });
