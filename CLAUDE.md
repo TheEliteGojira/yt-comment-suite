@@ -249,6 +249,7 @@ activity within the currently loaded archive. Fully implemented.
 ```js
 {
   authorName,
+  authorChannelId,  // first authorChannelId found across their comments/replies, or ''
   avatarUrl,        // first authorAvatar found across their comments/replies, or ''
   commentCount,
   replyCount,
@@ -261,6 +262,12 @@ activity within the currently loaded archive. Fully implemented.
 The optional `channelId` parameter enables `authorChannelId` matching as a fallback.
 This is used for the meta-bar channel name click so it still works if the channel
 owner has renamed their account since commenting. Pass `AppState.videoChannelId`.
+
+**Channel link:**
+A "View channel ↗" anchor is shown below the disclaimer when `stats.authorChannelId`
+is non-empty. It links to `https://www.youtube.com/channel/{authorChannelId}` and
+opens in a new tab (`target="_blank" rel="noopener noreferrer"`). Archives exported
+before `authorChannelId` was stored will not show the link — no fallback is needed.
 
 **Constraints — do not change these:**
 - YouTube display names are not unique. The modal is explicitly scoped to
@@ -360,22 +367,24 @@ docs:     README, CLAUDE.md, code comments only
 
 ### 🔧 Short term
 
-- [ ] **User profile modal: channel link** — if `authorChannelId` is present on a
-      comment, add a "View channel →" anchor pointing to
-      `https://youtube.com/channel/{authorChannelId}` that opens in a new tab.
-      The field is already stored; this is a UI addition in `ui.js renderUserModal`
-      and a one-line CSS rule. Add a note in the modal that this opens YouTube externally.
+- [x] **User profile modal: channel link** — `getUserStats` now returns
+      `authorChannelId` (first found across matched comments/replies). `renderUserModal`
+      renders a "View channel ↗" anchor below the disclaimer when `authorChannelId` is
+      present; opens `https://www.youtube.com/channel/{id}` in a new tab.
+      `.modal-channel-link` CSS added. Pre-authorChannelId archives show nothing.
+      *(js/archive-manager.js, js/ui.js, css/styles.css)*
+
+- [x] **Archiver: estimated quota cost** — `getVideoInfo` now requests `statistics`
+      alongside `snippet` (no extra quota cost). Returns `commentCount` (integer).
+      After a successful metadata fetch, `script.js` shows `#a-quota-estimate` below
+      the options row: "~N units estimated (X comments · replies will add more)".
+      Hidden and cleared in `resetArchiver`. Hidden when comments are disabled (count 0).
+      *(js/youtube-api.js, js/script.js, index.html, css/styles.css)*
 
 - [ ] **Viewer: comment permalink** — add a small external-link icon to each comment
       card that opens `https://youtube.com/watch?v={videoId}&lc={commentId}` in a new
       tab. `videoId` is in `AppState`; `commentId` is the `id` field on each comment.
       Icon renders in `.comment-header` alongside the date and likes.
-
-- [ ] **Archiver: estimated quota cost before fetch** — the `statistics` part of the
-      videos endpoint (bundled into the existing metadata fetch at no extra quota cost)
-      returns `commentCount`. Use it to estimate units needed and display it below the
-      video URL input before the user clicks Fetch. Add to `youtube-api.js getVideoInfo`
-      return value and wire display in `script.js`.
 
 - [ ] **Viewer: export filtered results** — when a search query or filter is active,
       show an "Export filtered (N)" button in the controls bar. It should export only

@@ -100,8 +100,9 @@ const ArchiveManager = (() => {
   function getUserStats(threads, authorName, channelId) {
     const comments = [];
     const replies  = [];
-    let totalLikes = 0;
-    let avatarUrl  = '';  /* first profile picture found for this author */
+    let totalLikes      = 0;
+    let avatarUrl       = '';  /* first profile picture found for this author */
+    let authorChannelId = '';  /* used by the modal to link to the YouTube channel */
 
     for (const thread of threads) {
       const nameMatch    = thread.author === authorName;
@@ -110,7 +111,8 @@ const ArchiveManager = (() => {
       if (nameMatch || channelMatch) {
         comments.push(thread);
         totalLikes += thread.likeCount || 0;
-        if (!avatarUrl && thread.authorAvatar) avatarUrl = thread.authorAvatar;
+        if (!avatarUrl       && thread.authorAvatar)    avatarUrl       = thread.authorAvatar;
+        if (!authorChannelId && thread.authorChannelId) authorChannelId = thread.authorChannelId;
       }
 
       for (const reply of (thread.replies || [])) {
@@ -121,7 +123,8 @@ const ArchiveManager = (() => {
           /* Attach the parent thread as context for modal rendering */
           replies.push({ ...reply, _parentThread: thread });
           totalLikes += reply.likeCount || 0;
-          if (!avatarUrl && reply.authorAvatar) avatarUrl = reply.authorAvatar;
+          if (!avatarUrl       && reply.authorAvatar)    avatarUrl       = reply.authorAvatar;
+          if (!authorChannelId && reply.authorChannelId) authorChannelId = reply.authorChannelId;
         }
       }
     }
@@ -131,6 +134,7 @@ const ArchiveManager = (() => {
 
     return {
       authorName,
+      authorChannelId,
       avatarUrl,
       commentCount: comments.length,
       replyCount:   replies.length,

@@ -46,20 +46,24 @@ const YouTubeAPI = (() => {
     return data;
   }
 
-  /* ── Fetch video metadata (title, etc.) ───────────────────── */
+  /* ── Fetch video metadata (title, channel, comment count) ─── */
   async function getVideoInfo(videoId, apiKey) {
-    const url  = buildUrl('videos', { part: 'snippet', id: videoId, key: apiKey });
+    /* Request both snippet and statistics — same cost (1 unit), no extra quota */
+    const url  = buildUrl('videos', { part: 'snippet,statistics', id: videoId, key: apiKey });
     const data = await apiFetch(url);
 
     if (!data.items || data.items.length === 0)
       throw new Error('No video found with that ID. It may be private or deleted.');
 
+    const item = data.items[0];
     return {
       id:           videoId,
-      title:        data.items[0].snippet.title,
-      publishedAt:  data.items[0].snippet.publishedAt  || '',
-      channelTitle: data.items[0].snippet.channelTitle || '',
-      channelId:    data.items[0].snippet.channelId    || '',
+      title:        item.snippet.title,
+      publishedAt:  item.snippet.publishedAt  || '',
+      channelTitle: item.snippet.channelTitle || '',
+      channelId:    item.snippet.channelId    || '',
+      /* commentCount is a string in the API response; 0 means disabled or unavailable */
+      commentCount: parseInt(item.statistics?.commentCount || '0', 10),
     };
   }
 

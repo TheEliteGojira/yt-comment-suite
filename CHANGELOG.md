@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #21 / α 0.21.0
+Two new features. (1) **Quota estimate:** `getVideoInfo` now requests `snippet,statistics` (same quota cost). The returned `commentCount` is used to show `#a-quota-estimate` below the options row immediately after the metadata fetch — "~N units estimated (X comments · replies will add more)". Hidden and cleared on reset; hidden when comments are disabled. (2) **Channel link in author modal:** `getUserStats` now returns `authorChannelId` (first found across matched comments/replies). `renderUserModal` renders a "View channel ↗" anchor beneath the disclaimer when the field is present, linking to `youtube.com/channel/{id}` in a new tab. CLAUDE.md updated with both features. Version badge and README updated to α 0.21.0.
+*(js/youtube-api.js, js/archive-manager.js, js/script.js, js/ui.js, css/styles.css, index.html, README.md, CHANGELOG.md, CLAUDE.md)*
+
+---
+
 ## COMMIT #20 / α 0.20.0
 Two-part avatar bug fix. (1) `.c-author` comment feed click now passes `AppState.videoChannelId` to `getUserStats`, matching the existing meta-bar click — this restores the `authorChannelId` fallback for channel owners who have renamed their account. (2) `renderUserModal` `onerror` handler now replaces the broken `<img>` with the placeholder div rather than simply hiding it, so expired or unavailable avatar URLs degrade gracefully. Version badge and README updated to α 0.20.0.
 *(js/script.js, js/ui.js, index.html, README.md, CHANGELOG.md)*

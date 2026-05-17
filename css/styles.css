@@ -310,6 +310,13 @@ body::before {
   align-items: center;
 }
 
+#a-quota-estimate {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -1038,6 +1045,19 @@ footer {
   color: var(--text-muted);
   margin-top: 5px;
   font-style: italic;
+}
+
+.modal-channel-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+}
+
+.modal-channel-link:hover {
+  color: var(--accent);
 }
 
 .modal-close {

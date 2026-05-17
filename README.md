@@ -1,6 +1,6 @@
 # TubeArchiver
 
-**α 0.20.0** — A self-contained, client-side web app for fetching, browsing, and exporting YouTube comments.
+**α 0.21.0** — A self-contained, client-side web app for fetching, browsing, and exporting YouTube comments.
 No server. No backend. No cloud storage. Everything runs in your browser and stays on your machine.
 
 ---

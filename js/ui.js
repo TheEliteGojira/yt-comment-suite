@@ -322,6 +322,13 @@ const UI = (() => {
              onerror="this.outerHTML='<div class=\\'modal-avatar modal-avatar--placeholder\\'></div>'">`
       : `<div class="modal-avatar modal-avatar--placeholder"></div>`;
 
+    /* Channel link — only shown when authorChannelId is present in the archive.
+     * Opens the author's YouTube channel page in a new tab. */
+    const channelLinkHtml = stats.authorChannelId
+      ? `<a href="https://www.youtube.com/channel/${esc(stats.authorChannelId)}"
+            class="modal-channel-link" target="_blank" rel="noopener noreferrer">View channel ↗</a>`
+      : '';
+
     header.innerHTML = `
       <div class="modal-header-left">
         ${avatarHtml}
@@ -329,6 +336,7 @@ const UI = (() => {
           <div class="modal-eyebrow">Author Activity</div>
           <div class="modal-author-name">${esc(stats.authorName)}</div>
           <div class="modal-disclaimer">activity in this video only · display names are not unique on YouTube</div>
+          ${channelLinkHtml}
         </div>
       </div>
       <button class="modal-close" aria-label="Close modal">✕</button>

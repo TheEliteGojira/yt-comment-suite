@@ -148,7 +148,7 @@ async function startFetch() {
   document.getElementById('a-progress-label').textContent = 'Fetching comments…';
   document.getElementById('a-progress-label').classList.add('pulsing');
 
-  /* Step 1: get video title */
+  /* Step 1: get video metadata (title, channel, comment count) */
   try {
     const info                 = await YouTubeAPI.getVideoInfo(videoId, apiKey);
     AppState.videoTitle        = info.title;
@@ -156,6 +156,18 @@ async function startFetch() {
     AppState.videoChannelTitle = info.channelTitle;
     AppState.videoChannelId    = info.channelId;
     UI.setText('a-status-line', `Video: "${info.title}"`);
+
+    /* Show a quota estimate so the user knows what they're committing to.
+     * Each page of 100 top-level comments = 1 unit; replies add more but are
+     * unknowable upfront. commentCount is 0 when comments are disabled. */
+    if (info.commentCount > 0) {
+      const minUnits = Math.ceil(info.commentCount / 100);
+      UI.setText('a-quota-estimate',
+        `~${minUnits.toLocaleString()} unit${minUnits === 1 ? '' : 's'} estimated ` +
+        `(${info.commentCount.toLocaleString()} comments · replies will add more)`
+      );
+      UI.show('a-quota-estimate');
+    }
   } catch (e) {
     AppState.videoTitle        = videoId;
     AppState.videoPublishedAt  = '';
@@ -312,6 +324,8 @@ function resetArchiver() {
   UI.hide('a-results-section');
   UI.hide('a-progress-section');
   UI.hide('a-open-viewer-btn');
+  UI.hide('a-quota-estimate');
+  UI.setText('a-quota-estimate', '');
   UI.hideError('a-error-box');
 }
 
