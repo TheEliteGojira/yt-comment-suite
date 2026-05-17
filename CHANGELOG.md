@@ -4,6 +4,24 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #17 / α 0.17.0
+Complete rewrite of README.md to reflect the current state of the project: updated project name (TubeArchiver), current version badge, full feature list including author profiles and avatars, updated Viewer usage section, performance optimisation table, accurate large-archive notes, and links to CLAUDE.md and CHANGELOG.md. Version badge updated to α 0.17.0 in `index.html` and `README.md`.
+*(README.md, index.html)*
+
+---
+
+## COMMIT #16b / α 0.16.0
+Updated version badge from α 0.15.0 to α 0.16.0 to correct the async between commit number and alpha title introduced in commit 16.
+*(index.html)*
+
+---
+
+## COMMIT #16 / α 0.15.0
+Created CHANGELOG.md.
+*(CHANGELOG.md)*
+
+---
+
 ## COMMIT #15b / α 0.15.0
 Updated version badge from α 0.13.0 to α 0.15.0 to correct the async between commit number and alpha title introduced in commit 15.
 *(index.html)*
