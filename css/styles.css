@@ -1202,6 +1202,20 @@ footer {
 .comment-thread:has(.reply-dimmed) .reply-card,
 .comment-thread:has(mark) .reply-card { cursor: pointer; }
 
+/* ── Version badge ────────────────────────────────────────── */
+#version-badge {
+  position: fixed;
+  bottom: 14px;
+  left: 16px;
+  z-index: 50;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* ── Animations ───────────────────────────────────────────── */
 @keyframes fadeIn  { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }

@@ -290,6 +290,7 @@ docs:     README, CLAUDE.md, code comments only
 > After completing a task, change `[ ]` to `[x]` and append a short completion note
 > on the same line describing what was done and which files changed.
 > Do not delete completed items — the history is useful.
+> Move any completed items from the "Short Term" section to the "Completed" section.
 > Run the full syntax check and the testing checklist after every task.
 
 ---
@@ -328,7 +329,10 @@ docs:     README, CLAUDE.md, code comments only
       meta bar so order is: Total, Top-Level, Replies, Uploaded, Exported, Channel.
       *(index.html)*
 
-
+- [x] **Add a version title to the bottom left of screen** — fixed `#version-badge`
+      div added before `</body>`; displays `α 0.13.0`. CSS: `position: fixed`,
+      `bottom: 14px`, `left: 16px`, `var(--text-muted)`, `pointer-events: none`.
+      *(index.html, styles.css)*
 
 ---
 
