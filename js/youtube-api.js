@@ -59,6 +59,7 @@ const YouTubeAPI = (() => {
       title:        data.items[0].snippet.title,
       publishedAt:  data.items[0].snippet.publishedAt  || '',
       channelTitle: data.items[0].snippet.channelTitle || '',
+      channelId:    data.items[0].snippet.channelId    || '',
     };
   }
 

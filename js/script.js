@@ -21,6 +21,7 @@ const AppState = {
   videoId:           '',
   videoPublishedAt:  '',
   videoChannelTitle: '',
+  videoChannelId:    '',
 
   /* Fetch control */
   isFetching:    false,
@@ -134,6 +135,7 @@ async function startFetch() {
   AppState.videoTitle        = '';
   AppState.videoPublishedAt  = '';
   AppState.videoChannelTitle = '';
+  AppState.videoChannelId    = '';
   AppState.videoId           = videoId;
 
   /* UI: show progress, hide previous results */
@@ -152,6 +154,7 @@ async function startFetch() {
     AppState.videoTitle        = info.title;
     AppState.videoPublishedAt  = info.publishedAt;
     AppState.videoChannelTitle = info.channelTitle;
+    AppState.videoChannelId    = info.channelId;
     UI.setText('a-status-line', `Video: "${info.title}"`);
   } catch (e) {
     AppState.videoTitle        = videoId;
@@ -288,7 +291,7 @@ function openInViewer() {
   UI.show('v-loading');
 
   setTimeout(() => {
-    const exportData  = ArchiveManager.buildNestedExport(AppState.allComments, AppState.videoTitle, AppState.videoPublishedAt, AppState.videoChannelTitle);
+    const exportData  = ArchiveManager.buildNestedExport(AppState.allComments, AppState.videoTitle, AppState.videoPublishedAt, AppState.videoChannelTitle, AppState.videoChannelId);
     const { threads } = ArchiveManager.parseImport(exportData);
     AppState.threads  = threads;
     loadViewerData(exportData, threads);
@@ -302,6 +305,7 @@ function resetArchiver() {
   AppState.videoId           = '';
   AppState.videoPublishedAt  = '';
   AppState.videoChannelTitle = '';
+  AppState.videoChannelId    = '';
 
   document.getElementById('a-comment-list').innerHTML = '';
   document.getElementById('a-video-url').value        = '';
@@ -314,7 +318,7 @@ function resetArchiver() {
 /* ─────────────────────────────────────────────────────────────
    ARCHIVER — exports (delegates to ArchiveManager)
    ───────────────────────────────────────────────────────────── */
-function exportJSON() { ArchiveManager.exportJSON(AppState.allComments, AppState.videoTitle, AppState.videoPublishedAt, AppState.videoChannelTitle); }
+function exportJSON() { ArchiveManager.exportJSON(AppState.allComments, AppState.videoTitle, AppState.videoPublishedAt, AppState.videoChannelTitle, AppState.videoChannelId); }
 function exportCSV()  { ArchiveManager.exportCSV(AppState.allComments,  AppState.videoTitle); }
 function exportTXT()  { ArchiveManager.exportTXT(AppState.allComments,  AppState.videoTitle); }
 
@@ -389,6 +393,9 @@ function loadViewerData(meta, threads) {
   const channelEl = document.getElementById('v-meta-channel');
   UI.setText('v-meta-channel', meta.videoChannelTitle || '—');
   channelEl.classList.toggle('meta-link', !!meta.videoChannelTitle);
+
+  /* Persist channel ID so the meta-bar click can match by authorChannelId */
+  AppState.videoChannelId = meta.videoChannelId || '';
 
   const total = threads.reduce((s, t) => s + 1 + (t.replies?.length || 0), 0);
   UI.setText('v-footer-count', `${UI.fmt(total)} comments loaded`);
@@ -590,7 +597,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('v-meta-bar').addEventListener('click', e => {
     const el = e.target.closest('#v-meta-channel');
     if (!el || !el.classList.contains('meta-link') || !AppState.threads.length) return;
-    const stats = ArchiveManager.getUserStats(AppState.threads, el.textContent.trim());
+    /*
+     * Pass videoChannelId so getUserStats can fall back to authorChannelId matching.
+     * This handles the case where the channel owner has renamed their account since
+     * commenting, meaning videoChannelTitle no longer matches authorDisplayName.
+     */
+    const stats = ArchiveManager.getUserStats(AppState.threads, el.textContent.trim(), AppState.videoChannelId);
     UI.renderUserModal(stats);
   });
 

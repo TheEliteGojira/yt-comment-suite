@@ -27,7 +27,7 @@ const ArchiveManager = (() => {
   }
 
   /* ── Convert current allComments flat array to nested JSON ── */
-  function buildNestedExport(allComments, videoTitle, videoPublishedAt, videoChannelTitle) {
+  function buildNestedExport(allComments, videoTitle, videoPublishedAt, videoChannelTitle, videoChannelId) {
     /*
      * Old approach filtered allComments once per top-level comment → O(n²).
      * For 200k threads × 300k total that was ~60 billion iterations.
@@ -67,6 +67,7 @@ const ArchiveManager = (() => {
       videoTitle:            videoTitle        || '',
       videoPublishedAt:      videoPublishedAt  || '',
       videoChannelTitle:     videoChannelTitle || '',
+      videoChannelId:        videoChannelId    || '',
       totalTopLevelComments: threads.length,
       totalReplies,
       totalComments:         allComments.length,
@@ -89,31 +90,44 @@ const ArchiveManager = (() => {
     return { threads: buildThreadsFromFlat(data.comments), meta: data };
   }
 
-  /* ── Aggregate one author's activity within the loaded archive ─ */
-  function getUserStats(threads, authorName) {
+  /* ── Aggregate one author's activity within the loaded archive ─
+   *
+   * authorName — display name shown in the modal header
+   * channelId  — optional YouTube channel ID; when provided, comments are
+   *              also matched by authorChannelId so that a channel-name
+   *              click still works even if the owner has renamed their account.
+   */
+  function getUserStats(threads, authorName, channelId) {
     const comments = [];
     const replies  = [];
     let totalLikes = 0;
+    let avatarUrl  = '';  /* first profile picture found for this author */
 
     for (const thread of threads) {
-      if (thread.author === authorName) {
+      const nameMatch    = thread.author === authorName;
+      const channelMatch = channelId && thread.authorChannelId === channelId;
+
+      if (nameMatch || channelMatch) {
         comments.push(thread);
         totalLikes += thread.likeCount || 0;
+        if (!avatarUrl && thread.authorAvatar) avatarUrl = thread.authorAvatar;
       }
+
       for (const reply of (thread.replies || [])) {
-        if (reply.author === authorName) {
+        const rNameMatch    = reply.author === authorName;
+        const rChannelMatch = channelId && reply.authorChannelId === channelId;
+
+        if (rNameMatch || rChannelMatch) {
           /* Attach the parent thread as context for modal rendering */
           replies.push({ ...reply, _parentThread: thread });
           totalLikes += reply.likeCount || 0;
+          if (!avatarUrl && reply.authorAvatar) avatarUrl = reply.authorAvatar;
         }
       }
     }
 
     comments.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
     replies.sort((a, b)  => new Date(b.publishedAt) - new Date(a.publishedAt));
-
-    /* Use the first available avatar URL — from a comment or reply */
-    const avatarUrl = comments[0]?.authorAvatar || replies[0]?._parentThread && replies[0]?.authorAvatar || '';
 
     return {
       authorName,
@@ -171,8 +185,8 @@ const ArchiveManager = (() => {
   }
 
   /* ── Export as JSON ─────────────────────────────────────────── */
-  function exportJSON(allComments, videoTitle, videoPublishedAt, videoChannelTitle) {
-    const payload = buildNestedExport(allComments, videoTitle, videoPublishedAt, videoChannelTitle);
+  function exportJSON(allComments, videoTitle, videoPublishedAt, videoChannelTitle, videoChannelId) {
+    const payload = buildNestedExport(allComments, videoTitle, videoPublishedAt, videoChannelTitle, videoChannelId);
     downloadBlob(
       JSON.stringify(payload, null, 2),
       `${safeFilename(videoTitle)}_comments.json`,
@@ -183,7 +197,7 @@ const ArchiveManager = (() => {
 
   /* ── Export as CSV ──────────────────────────────────────────── */
   function exportCSV(allComments, videoTitle) {
-    const headers = ['id','type','author','authorChannelId','text','likeCount','replyCount','publishedAt','updatedAt','parentId'];
+    const headers = ['id','type','author','authorChannelId','authorAvatar','text','likeCount','replyCount','publishedAt','updatedAt','parentId'];
     const rows    = [headers.join(',')];
 
     for (const c of allComments) {

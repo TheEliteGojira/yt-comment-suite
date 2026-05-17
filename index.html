@@ -202,8 +202,8 @@
         <div>Total <span id="v-meta-total">—</span></div>
         <div>Top-Level <span id="v-meta-threads">—</span></div>
         <div>Replies <span id="v-meta-replies">—</span></div>
-        <div>Exported <span id="v-meta-date">—</span></div>
         <div>Uploaded <span id="v-meta-uploaded">—</span></div>
+        <div>Exported <span id="v-meta-date">—</span></div>
         <div>Channel <span id="v-meta-channel">—</span></div>
       </div>
     </div>
@@ -405,6 +405,8 @@
         <li><strong>Sort by Most Liked:</strong> Useful for finding the community's top reactions quickly. Sorting applies to top-level comments; replies always stay in chronological order under their parent.</li>
         <li><strong>Timezone:</strong> All timestamps are stored as UTC in the JSON. The Viewer converts them to whichever timezone you select — you can switch freely without re-loading.</li>
         <li><strong>Stopping early:</strong> The Stop button halts after the current page finishes. You can still export or open in the Viewer with whatever was fetched up to that point.</li>
+        <li><strong>Author profiles:</strong> In the Viewer, click any commenter's name to open a profile panel showing all of their activity in the loaded archive — comment count, reply count, total likes, and a full history. You can also click the channel name in the video info bar to see the video author's comments. Note that YouTube display names are not unique; the panel is scoped to the current archive only and makes no identity claims across videos.</li>
+        <li><strong>Profile picture expiry:</strong> Avatar URLs are fetched live from Google's CDN at archive time and stored in the JSON. They may expire or become outdated if a user later changes their profile picture. If an avatar fails to load, a grey placeholder is shown instead. Re-fetching the video will capture the current picture.</li>
       </ul>
     </div>
 

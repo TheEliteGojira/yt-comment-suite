@@ -126,16 +126,19 @@ New colours must be added to `:root` first before use anywhere else.
 5. **`AppState` is the single source of truth** for all runtime data (`script.js`):
    ```js
    {
-     allComments:   [],     // flat array used by archiver
-     threads:       [],     // nested array used by viewer
-     videoTitle:    '',
-     videoId:       '',
-     isFetching:    false,
-     stopRequested: false,
-     currentSort:   'newest',
-     showComments:  true,
-     showReplies:   true,
-     previewCount:  0,      // live preview item count (capped at 100)
+     allComments:       [],   // flat array used by archiver
+     threads:           [],   // nested array used by viewer
+     videoTitle:        '',
+     videoId:           '',
+     videoPublishedAt:  '',
+     videoChannelTitle: '',
+     videoChannelId:    '',   // used for authorChannelId fallback in getUserStats
+     isFetching:        false,
+     stopRequested:     false,
+     currentSort:       'newest',
+     showComments:      true,
+     showReplies:       true,
+     previewCount:      0,    // live preview item count (capped at 100)
    }
    ```
 
@@ -229,11 +232,11 @@ activity within the currently loaded archive. Fully implemented.
 2. `ArchiveManager.getUserStats(threads, authorName)` aggregates the data
 3. `UI.renderUserModal(stats)` builds and mounts the modal
 
-**`getUserStats` returns:**
+**`getUserStats(threads, authorName, channelId?)` returns:**
 ```js
 {
   authorName,
-  avatarUrl,        // first authorAvatar found across their comments/replies
+  avatarUrl,        // first authorAvatar found across their comments/replies, or ''
   commentCount,
   replyCount,
   totalLikes,
@@ -241,6 +244,10 @@ activity within the currently loaded archive. Fully implemented.
   replies,          // sorted newest first, each with ._parentThread for context
 }
 ```
+
+The optional `channelId` parameter enables `authorChannelId` matching as a fallback.
+This is used for the meta-bar channel name click so it still works if the channel
+owner has renamed their account since commenting. Pass `AppState.videoChannelId`.
 
 **Constraints — do not change these:**
 - YouTube display names are not unique. The modal is explicitly scoped to
@@ -298,18 +305,30 @@ docs:     README, CLAUDE.md, code comments only
 
 ### 🔧 Short term
 
-- [ ] **CSV export: add `authorAvatar` column** — `authorAvatar` is now on every comment
-      object. Add `'authorAvatar'` to the `headers` array in `archive-manager.js`
-      `exportCSV()` so it appears in spreadsheet exports alongside the other fields.
+- [x] **CSV export: add `authorAvatar` column** — added `'authorAvatar'` to the
+      `headers` array in `archive-manager.js` `exportCSV()`. *(archive-manager.js)*
 
-- [ ] **Viewer: `.c-author` clickable styling** — `.c-author` elements should visually
-      signal interactivity (cursor pointer, subtle underline on hover) so users discover
-      the profile modal without being told. CSS-only change in `styles.css`; the click
-      handler in `script.js` already exists.
+- [x] **Viewer: `.c-author` clickable styling** — `cursor: pointer` and hover underline
+      were already present in `styles.css`; no code change needed. *(styles.css)*
 
-- [ ] **About tab: document the profile modal** — add a short paragraph under
-      "Workflow Tips" in `index.html` explaining that clicking any username opens a
-      profile panel, and note the avatar expiry limitation.
+- [x] **About tab: document the profile modal** — added two list items under
+      "Workflow Tips": one explaining the author profile panel, one explaining avatar
+      expiry and the placeholder fallback. *(index.html)*
+
+- [x] **Profile picture bug** — root cause: `getUserStats` was not extracting
+      `avatarUrl` from matched comments/replies, and the channel-owner click had no
+      fallback when `videoChannelTitle` mismatched `authorDisplayName`. Fixed:
+      `getUserStats` now accepts an optional `channelId` param and does
+      `authorChannelId` fallback matching; `avatarUrl` is populated from the first
+      matching comment or reply. `getVideoInfo` now returns `channelId`;
+      `AppState.videoChannelId` threads it through to the meta-bar click handler and
+      to exported JSON. *(youtube-api.js, archive-manager.js, script.js, CLAUDE.md)*
+
+- [x] **Viewer Tab panel reshuffle** — swapped Uploaded and Exported divs in the
+      meta bar so order is: Total, Top-Level, Replies, Uploaded, Exported, Channel.
+      *(index.html)*
+
+
 
 ---
 

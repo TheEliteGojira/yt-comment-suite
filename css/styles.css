@@ -1006,6 +1006,12 @@ footer {
   background: var(--border);
 }
 
+/* Text column (eyebrow + name + disclaimer) that sits beside the avatar */
+.modal-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
 .modal-eyebrow {
   font-size: 10px;
   letter-spacing: 3px;
