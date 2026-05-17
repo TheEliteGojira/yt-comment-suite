@@ -403,9 +403,22 @@ function toggleFilter(type) {
   applyViewerFilters();
 }
 
-/* Debounced entry point — shows loading dots immediately, defers heavy render */
-let _filterTimer = null;
+/* ─────────────────────────────────────────────────────────────
+   VIEWER — batch / infinite-scroll rendering state
+   Rendering all threads at once locks the browser for large archives.
+   Instead we paint the first BATCH_SIZE threads immediately, then
+   append the next batch each time the user scrolls near the bottom.
+   ───────────────────────────────────────────────────────────── */
+const BATCH_SIZE = 100;
 
+let _filterTimer      = null;
+let _renderedThreads  = [];   /* current filtered+sorted list */
+let _renderOffset     = 0;    /* how many threads have been painted so far */
+let _renderQuery      = '';   /* captured at render time for batch callbacks */
+let _renderTz         = 'UTC';
+let _scrollObserver   = null; /* IntersectionObserver watching the sentinel */
+
+/* Debounced entry point — shows loading dots immediately, defers heavy render */
 function applyViewerFilters() {
   clearTimeout(_filterTimer);
 
@@ -419,20 +432,27 @@ function applyViewerFilters() {
 }
 
 function _renderViewer() {
-  const query = document.getElementById('v-search-input').value.trim().toLowerCase();
-  const tz    = document.getElementById('v-tz-select').value || 'UTC';
-  const feed  = document.getElementById('v-comment-feed');
+  const feed = document.getElementById('v-comment-feed');
+
+  /* Tear down any in-progress batch scroll from a previous render */
+  _teardownSentinel();
+  feed.innerHTML = '';
+
+  _renderQuery = document.getElementById('v-search-input').value.trim().toLowerCase();
+  _renderTz    = document.getElementById('v-tz-select').value || 'UTC';
 
   UI.hide('v-loading');
-  feed.innerHTML = '';
 
   /* Filter */
   let filtered = AppState.showComments
-    ? ArchiveManager.filterThreads(AppState.threads, query, AppState.showReplies)
+    ? ArchiveManager.filterThreads(AppState.threads, _renderQuery, AppState.showReplies)
     : [];
 
   /* Sort */
   filtered = ArchiveManager.sortThreads(filtered, AppState.currentSort);
+
+  _renderedThreads = filtered;
+  _renderOffset    = 0;
 
   /* No results */
   if (filtered.length === 0) {
@@ -444,25 +464,69 @@ function _renderViewer() {
   UI.hide('v-no-results');
   UI.show('v-comment-feed');
 
-  /* Update count label */
+  /* Update count label (always shows total, not just what's painted) */
   const replyCount = filtered.reduce((s, t) => s + (t.replies?.length || 0), 0);
   UI.setText(
     'v-result-count',
-    query
-      ? `${UI.fmt(filtered.length)} thread${filtered.length !== 1 ? 's' : ''} matching "${query}"`
+    _renderQuery
+      ? `${UI.fmt(filtered.length)} thread${filtered.length !== 1 ? 's' : ''} matching "${_renderQuery}"`
       : `${UI.fmt(filtered.length)} comment${filtered.length !== 1 ? 's' : ''}${AppState.showReplies ? ` · ${UI.fmt(replyCount)} replies` : ''}`
   );
 
-  /* Render threads into a DocumentFragment for performance */
+  /* Paint first batch; the sentinel handles every subsequent batch */
+  _renderBatch(feed);
+}
+
+/* Appends the next BATCH_SIZE threads and attaches a new sentinel if more remain */
+function _renderBatch(feed) {
+  const end  = Math.min(_renderOffset + BATCH_SIZE, _renderedThreads.length);
   const frag = document.createDocumentFragment();
-  filtered.forEach((thread, i) => {
-    frag.appendChild(UI.renderThread(thread, query, AppState.showReplies, tz, i));
-  });
+
+  for (let i = _renderOffset; i < end; i++) {
+    frag.appendChild(
+      UI.renderThread(_renderedThreads[i], _renderQuery, AppState.showReplies, _renderTz, i)
+    );
+  }
+
   feed.appendChild(frag);
+  _renderOffset = end;
+
+  if (_renderOffset < _renderedThreads.length) {
+    _attachSentinel(feed);
+  }
+}
+
+/*
+ * Inserts a 1px sentinel element at the bottom of the feed.
+ * The IntersectionObserver fires when the user scrolls within
+ * 400px of it, triggering the next batch — then removes itself.
+ */
+function _attachSentinel(feed) {
+  const sentinel       = document.createElement('div');
+  sentinel.id          = 'v-scroll-sentinel';
+  sentinel.innerHTML   = '<div class="dot-loader sentinel-dots"><span></span><span></span><span></span></div>';
+  feed.appendChild(sentinel);
+
+  _scrollObserver = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    _teardownSentinel();
+    _renderBatch(feed);
+  }, { rootMargin: '400px' });
+
+  _scrollObserver.observe(sentinel);
+}
+
+function _teardownSentinel() {
+  if (_scrollObserver) { _scrollObserver.disconnect(); _scrollObserver = null; }
+  const el = document.getElementById('v-scroll-sentinel');
+  if (el) el.remove();
 }
 
 function resetViewer() {
   clearTimeout(_filterTimer);
+  _teardownSentinel();
+  _renderedThreads = [];
+  _renderOffset    = 0;
 
   AppState.currentSort  = 'newest';
   AppState.showComments = true;

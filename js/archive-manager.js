@@ -28,20 +28,37 @@ const ArchiveManager = (() => {
 
   /* ── Convert current allComments flat array to nested JSON ── */
   function buildNestedExport(allComments, videoTitle) {
+    /*
+     * Old approach filtered allComments once per top-level comment → O(n²).
+     * For 200k threads × 300k total that was ~60 billion iterations.
+     * Build a parentId → replies Map first so each lookup is O(1).
+     */
+    const replyMap = new Map();
+    let totalReplies = 0;
+
+    for (const c of allComments) {
+      if (c.type === 'reply' && c.parentId) {
+        if (!replyMap.has(c.parentId)) replyMap.set(c.parentId, []);
+        replyMap.get(c.parentId).push(c);
+        totalReplies++;
+      }
+    }
+
+    /* Sort each reply bucket once — O(r log r) total across all buckets */
+    replyMap.forEach(replies =>
+      replies.sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt))
+    );
+
     const threads = allComments
       .filter(c => c.type === 'comment')
       .map(c => {
-        /* Destructure out fields that are implicit in the nested structure */
         const { type, parentId, ...rest } = c;
         return {
           ...rest,
-          replies: allComments
-            .filter(r => r.type === 'reply' && r.parentId === c.id)
-            .sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt))
-            .map(r => {
-              const { type, parentId, ...rRest } = r;
-              return rRest;
-            }),
+          replies: (replyMap.get(c.id) || []).map(r => {
+            const { type, parentId, ...rRest } = r;
+            return rRest;
+          }),
         };
       });
 
@@ -49,7 +66,7 @@ const ArchiveManager = (() => {
       exportedAt:            new Date().toISOString(),
       videoTitle:            videoTitle || '',
       totalTopLevelComments: threads.length,
-      totalReplies:          allComments.filter(c => c.type === 'reply').length,
+      totalReplies,
       totalComments:         allComments.length,
       comments:              threads,
     };

@@ -959,6 +959,9 @@ footer {
 /* Viewer loading dots — hidden until a render is pending */
 #v-loading { display: none; margin: 20px 0; }
 
+/* Dots shown inside the scroll sentinel while the next batch loads */
+.sentinel-dots { justify-content: center; padding: 24px 0; }
+
 /* Archiver preview cap notice */
 .preview-limit-note {
   padding: 10px 16px;
