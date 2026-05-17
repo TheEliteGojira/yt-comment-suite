@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #17b / α 0.17.0b
+Replaced heading font Syne with Exo 2 for comparison against Jost (commit 17c). Google Fonts import updated; all nine `font-family: 'Syne'` declarations replaced with `'Exo 2'`. Version badge and README updated to α 0.17.0b.
+*(css/styles.css, index.html, README.md)*
+
+---
+
 ## COMMIT #17 / α 0.17.0
 Complete rewrite of README.md to reflect the current state of the project: updated project name (TubeArchiver), current version badge, full feature list including author profiles and avatars, updated Viewer usage section, performance optimisation table, accurate large-archive notes, and links to CLAUDE.md and CHANGELOG.md. Version badge updated to α 0.17.0 in `index.html` and `README.md`.
 *(README.md, index.html)*
