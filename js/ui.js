@@ -314,11 +314,21 @@ const UI = (() => {
     /* ── Header ──────────────────────────────────────────────── */
     const header     = document.createElement('div');
     header.className = 'modal-header';
+
+    /* Avatar — shown if the archive contains the URL; hidden gracefully if absent
+       (older archives pre-dating the authorAvatar field won't have it) */
+    const avatarHtml = stats.avatarUrl
+      ? `<img src="${esc(stats.avatarUrl)}" class="modal-avatar" alt="" onerror="this.style.display='none'">`
+      : `<div class="modal-avatar modal-avatar--placeholder"></div>`;
+
     header.innerHTML = `
       <div class="modal-header-left">
-        <div class="modal-eyebrow">Author Activity</div>
-        <div class="modal-author-name">${esc(stats.authorName)}</div>
-        <div class="modal-disclaimer">activity in this video only · display names are not unique on YouTube</div>
+        ${avatarHtml}
+        <div>
+          <div class="modal-eyebrow">Author Activity</div>
+          <div class="modal-author-name">${esc(stats.authorName)}</div>
+          <div class="modal-disclaimer">activity in this video only · display names are not unique on YouTube</div>
+        </div>
       </div>
       <button class="modal-close" aria-label="Close modal">✕</button>
     `;

@@ -112,8 +112,12 @@ const ArchiveManager = (() => {
     comments.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
     replies.sort((a, b)  => new Date(b.publishedAt) - new Date(a.publishedAt));
 
+    /* Use the first available avatar URL — from a comment or reply */
+    const avatarUrl = comments[0]?.authorAvatar || replies[0]?._parentThread && replies[0]?.authorAvatar || '';
+
     return {
       authorName,
+      avatarUrl,
       commentCount: comments.length,
       replyCount:   replies.length,
       totalLikes,

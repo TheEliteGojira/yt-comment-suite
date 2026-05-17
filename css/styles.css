@@ -983,7 +983,28 @@ footer {
   flex-shrink: 0;
 }
 
-.modal-header-left { flex: 1; min-width: 0; }
+.modal-header-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Profile picture */
+.modal-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+
+/* Shown when no avatar URL is available (pre-avatar archive) */
+.modal-avatar--placeholder {
+  background: var(--border);
+}
 
 .modal-eyebrow {
   font-size: 10px;
