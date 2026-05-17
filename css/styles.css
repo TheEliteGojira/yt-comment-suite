@@ -4,7 +4,7 @@
    ============================================================= */
 
 /* ── Google Fonts ─────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Exo+2:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Jost:wght@400;600;800&display=swap');
 
 /* ── Design tokens ────────────────────────────────────────── */
 :root {
@@ -177,7 +177,7 @@ body::before {
 }
 
 .logo-tag {
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Jost', sans-serif;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 4px;
@@ -187,7 +187,7 @@ body::before {
 }
 
 .page-title {
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Jost', sans-serif;
   font-size: clamp(28px, 5vw, 52px);
   font-weight: 800;
   line-height: 1.05;
@@ -397,7 +397,7 @@ body::before {
 }
 
 .stat-num {
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Jost', sans-serif;
   font-size: 28px;
   font-weight: 800;
   color: var(--accent);
@@ -423,7 +423,7 @@ body::before {
   border: 2px solid var(--accent);
   background: transparent;
   color: var(--accent);
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Jost', sans-serif;
   font-weight: 800;
   text-transform: uppercase;
   cursor: pointer;
@@ -513,7 +513,7 @@ body::before {
 #v-drop-zone.drag-over { transform: scale(1.01); }
 
 .drop-icon  { font-size: 28px; margin-bottom: 12px; display: block; }
-.drop-title { font-family: 'Exo 2', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.drop-title { font-family: 'Jost', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
 .drop-sub   { font-size: 11px; color: var(--text-muted); line-height: 1.8; }
 
 #v-file-input { display: none; }
@@ -529,7 +529,7 @@ body::before {
 }
 
 .meta-title {
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Jost', sans-serif;
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 8px;
@@ -815,7 +815,7 @@ body::before {
 }
 
 .no-results-title {
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Jost', sans-serif;
   font-size: 26px;
   font-weight: 800;
   margin-bottom: 8px;
@@ -1021,7 +1021,7 @@ footer {
 }
 
 .modal-author-name {
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Jost', sans-serif;
   font-size: 22px;
   font-weight: 800;
   color: var(--accent);
@@ -1068,7 +1068,7 @@ footer {
 }
 
 .modal-stat-num {
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Jost', sans-serif;
   font-size: 22px;
   font-weight: 800;
   color: var(--accent);

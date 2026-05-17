@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #17c / α 0.17.0c
+Replaced heading font Exo 2 with Jost for comparison against Exo 2 (commit 17b). Google Fonts import updated; all nine `font-family` declarations replaced with `'Jost'`. Version badge and README updated to α 0.17.0c.
+*(css/styles.css, index.html, README.md)*
+
+---
+
 ## COMMIT #17b / α 0.17.0b
 Replaced heading font Syne with Exo 2 for comparison against Jost (commit 17c). Google Fonts import updated; all nine `font-family: 'Syne'` declarations replaced with `'Exo 2'`. Version badge and README updated to α 0.17.0b.
 *(css/styles.css, index.html, README.md)*
