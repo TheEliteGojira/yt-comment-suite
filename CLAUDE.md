@@ -302,10 +302,6 @@ docs:     README, CLAUDE.md, code comments only
       `<img>` in the modal header with a grey placeholder fallback for pre-avatar archives.
       *(youtube-api.js, archive-manager.js, ui.js, styles.css)*
 
----
-
-### 🔧 Short term
-
 - [x] **CSV export: add `authorAvatar` column** — added `'authorAvatar'` to the
       `headers` array in `archive-manager.js` `exportCSV()`. *(archive-manager.js)*
 
@@ -333,6 +329,10 @@ docs:     README, CLAUDE.md, code comments only
       div added before `</body>`; displays `α 0.13.0`. CSS: `position: fixed`,
       `bottom: 14px`, `left: 16px`, `var(--text-muted)`, `pointer-events: none`.
       *(index.html, styles.css)*
+
+---
+
+### 🔧 Short term
 
 ---
 
