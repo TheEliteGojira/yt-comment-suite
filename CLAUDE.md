@@ -51,17 +51,30 @@ yt-comment-suite/
 
 ## Logo
 
-`assets/logo.svg` — three stacked red chevrons + TUBE pill badge + Archiver wordmark,
-all in `#ff233d`. In `index.html`:
+Two SVG files provide theme-adaptive logo rendering:
+
+- `assets/logo.svg` — dark-mode variant. Chevrons and TUBE pill in `#ff233d`; "Archiver" wordmark in `#f0f0f0` (light grey).
+- `assets/logo-light.svg` — light-mode variant. Identical except "Archiver" wordmark is `#111111` (near-black).
+
+In `index.html`:
 
 ```html
 <div class="suite-logo">
-  <img src="assets/logo.svg" alt="TubeArchiver" class="suite-logo-img">
+  <img src="assets/logo.svg" alt="TubeArchiver" class="suite-logo-img suite-logo-img--dark">
+  <img src="assets/logo-light.svg" alt="TubeArchiver" class="suite-logo-img suite-logo-img--light">
 </div>
 ```
 
-`.suite-logo-img` renders at `height: 28px` on desktop, `22px` on mobile.
-Do not filter, recolour, or replace the SVG.
+CSS swaps visibility based on `[data-theme]` (set on `<body>`):
+
+```css
+.suite-logo-img--light { display: none; }
+[data-theme="light"] .suite-logo-img--dark  { display: none; }
+[data-theme="light"] .suite-logo-img--light { display: block; }
+```
+
+`.suite-logo-img` renders at `height: 42px` on desktop. Do not filter, recolour, or replace the SVGs.
+Do not consolidate back to a single file — the two-file approach is intentional.
 
 ---
 
@@ -330,13 +343,15 @@ docs:     README, CLAUDE.md, code comments only
       `bottom: 14px`, `left: 16px`, `var(--text-muted)`, `pointer-events: none`.
       *(index.html, styles.css)*
 
+- [x] **Dark/light: logo adaptation for light mode** — two SVG files: `logo.svg`
+      ("Archiver" text `#f0f0f0` for dark) and `logo-light.svg` ("Archiver" text
+      `#111111` for light). CSS swaps visibility via `[data-theme]` attribute.
+      `index.html` updated to two `<img>` tags with `--dark`/`--light` classes.
+      *(assets/logo.svg, assets/logo-light.svg, index.html, css/styles.css)*
+
 ---
 
 ### 🔧 Short term
-
----
-
-### 🗺 Long term
 
 - [ ] **User profile modal: channel link** — if `authorChannelId` is present on a
       comment, add a "View channel →" anchor pointing to
@@ -360,7 +375,6 @@ docs:     README, CLAUDE.md, code comments only
       the currently visible threads (`_renderedThreads` in `script.js`) rather than the
       full archive. Add to `archive-manager.js` and wire in `script.js`.
 
-- [ ] **Dark/light: logo adaptation for light mode** — in light mode the red logo on
-      a near-white tab bar has lower contrast than ideal. Explore a CSS `filter` or a
-      separate light-mode logo variant. Coordinate with the designer (owner of this repo)
-      before implementing — do not change the logo unilaterally.
+---
+
+### 🗺 Long term

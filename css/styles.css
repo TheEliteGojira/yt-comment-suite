@@ -107,6 +107,10 @@ body::before {
   display: block;
 }
 
+.suite-logo-img--light { display: none; }
+[data-theme="light"] .suite-logo-img--dark  { display: none; }
+[data-theme="light"] .suite-logo-img--light { display: block; }
+
 .tab-btn {
   font-family: 'Space Mono', monospace;
   font-size: 11px;

@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #19 / α 0.19.0
+Theme-adaptive logo: "Archiver" wordmark now renders white in dark mode and black in light mode. `logo.svg` path5 fill changed from `#ff233d` to `#f0f0f0`; `logo-light.svg` created as a sibling with path5 fill `#111111`. `index.html` updated to two `<img>` tags (`.suite-logo-img--dark` / `.suite-logo-img--light`); CSS show/hide rules added to `styles.css` keyed on `[data-theme="light"]`. CLAUDE.md logo section rewritten to document two-file system; long-term items 1–4 moved to short term. Version badge and README updated to α 0.19.0.
+*(assets/logo.svg, assets/logo-light.svg, index.html, css/styles.css, CLAUDE.md, README.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #18 / α 0.18.0
 Reverted heading font from Jost back to Syne following comparison test (commits 17b/17c). Google Fonts import and all font-family declarations restored to Syne. Version badge and README updated to α 0.18.0.
 *(css/styles.css, index.html, README.md, CHANGELOG.md)*
