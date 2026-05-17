@@ -364,6 +364,13 @@ const UI = (() => {
     const body     = document.createElement('div');
     body.className = 'modal-body';
 
+    if (stats.commentCount === 0 && stats.replyCount === 0) {
+      const empty     = document.createElement('div');
+      empty.className = 'modal-empty';
+      empty.textContent = 'No comments or replies found in this archive.';
+      body.appendChild(empty);
+    } else {
+
     /* Comments section */
     const commentsHeading     = document.createElement('div');
     commentsHeading.className = 'modal-section-label';
@@ -433,6 +440,8 @@ const UI = (() => {
         body.appendChild(replyCard);
       }
     }
+
+    } /* end has-activity else */
 
     /* ── Assemble ────────────────────────────────────────────── */
     panel.appendChild(header);

@@ -617,6 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * commenting, meaning videoChannelTitle no longer matches authorDisplayName.
      */
     const stats = ArchiveManager.getUserStats(AppState.threads, el.textContent.trim(), AppState.videoChannelId);
+    if (!stats.authorChannelId && AppState.videoChannelId) stats.authorChannelId = AppState.videoChannelId;
     UI.renderUserModal(stats);
   });
 
