@@ -349,6 +349,13 @@ docs:     README, CLAUDE.md, code comments only
       `index.html` updated to two `<img>` tags with `--dark`/`--light` classes.
       *(assets/logo.svg, assets/logo-light.svg, index.html, css/styles.css)*
 
+- [x] **Channel author avatar bug (re-fix)** — `.c-author` feed click was missing
+      `AppState.videoChannelId` argument to `getUserStats`; now matches the meta-bar
+      click pattern so `authorChannelId` fallback fires for renamed channel owners.
+      `renderUserModal` `onerror` now swaps the broken `<img>` for the placeholder div
+      rather than hiding it, so expired avatar URLs degrade gracefully.
+      *(js/script.js, js/ui.js)*
+
 ---
 
 ### 🔧 Short term

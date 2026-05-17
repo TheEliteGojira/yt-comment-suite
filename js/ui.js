@@ -318,7 +318,8 @@ const UI = (() => {
     /* Avatar — shown if the archive contains the URL; hidden gracefully if absent
        (older archives pre-dating the authorAvatar field won't have it) */
     const avatarHtml = stats.avatarUrl
-      ? `<img src="${esc(stats.avatarUrl)}" class="modal-avatar" alt="" onerror="this.style.display='none'">`
+      ? `<img src="${esc(stats.avatarUrl)}" class="modal-avatar" alt=""
+             onerror="this.outerHTML='<div class=\\'modal-avatar modal-avatar--placeholder\\'></div>'">`
       : `<div class="modal-avatar modal-avatar--placeholder"></div>`;
 
     header.innerHTML = `

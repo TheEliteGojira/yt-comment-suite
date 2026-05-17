@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #20 / α 0.20.0
+Two-part avatar bug fix. (1) `.c-author` comment feed click now passes `AppState.videoChannelId` to `getUserStats`, matching the existing meta-bar click — this restores the `authorChannelId` fallback for channel owners who have renamed their account. (2) `renderUserModal` `onerror` handler now replaces the broken `<img>` with the placeholder div rather than simply hiding it, so expired or unavailable avatar URLs degrade gracefully. Version badge and README updated to α 0.20.0.
+*(js/script.js, js/ui.js, index.html, README.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #19 / α 0.19.0
 Theme-adaptive logo: "Archiver" wordmark now renders white in dark mode and black in light mode. `logo.svg` path5 fill changed from `#ff233d` to `#f0f0f0`; `logo-light.svg` created as a sibling with path5 fill `#111111`. `index.html` updated to two `<img>` tags (`.suite-logo-img--dark` / `.suite-logo-img--light`); CSS show/hide rules added to `styles.css` keyed on `[data-theme="light"]`. CLAUDE.md logo section rewritten to document two-file system; long-term items 1–4 moved to short term. Version badge and README updated to α 0.19.0.
 *(assets/logo.svg, assets/logo-light.svg, index.html, css/styles.css, CLAUDE.md, README.md, CHANGELOG.md)*
