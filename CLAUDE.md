@@ -234,6 +234,35 @@ that author's activity within the currently loaded archive.
 
 ---
 
+## Feature: viewer meta bar — upload date and channel name
+
+**Status: complete**
+
+The meta bar in the Viewer tab now shows two additional fields:
+
+- **Uploaded** — the video's original publish date from YouTube (`snippet.publishedAt`),
+  formatted as `MMM DD, YYYY`. Falls back to `—` for archives exported before this feature.
+- **Channel** — the uploading channel's display name (`snippet.channelTitle`). Rendered as
+  a `.meta-link` (accent colour, underline on hover) and clicking it opens the author
+  profile modal showing that channel's comments in the loaded archive.
+
+### Data flow
+- `youtube-api.js` `getVideoInfo()` returns `publishedAt` and `channelTitle` (both were
+  already in the `snippet` response; just not previously returned)
+- `AppState` carries `videoPublishedAt` and `videoChannelTitle`
+- `archive-manager.js` `buildNestedExport()` and `exportJSON()` accept and persist both
+  fields so they survive a JSON round-trip
+- `script.js` `loadViewerData()` populates `#v-meta-uploaded` and `#v-meta-channel`;
+  the channel span gets the `.meta-link` class added/removed based on whether data exists
+- A delegated click listener on `#v-meta-bar` (set up in `DOMContentLoaded`) handles
+  the channel name click — calls `ArchiveManager.getUserStats` + `UI.renderUserModal`
+
+### Backwards compatibility
+Old JSON exports without `videoPublishedAt` / `videoChannelTitle` display `—` for those
+fields. No errors thrown.
+
+---
+
 ## Feature: Web Workers for off-main-thread processing
 
 **Status: future consideration — implement after user profile modal**

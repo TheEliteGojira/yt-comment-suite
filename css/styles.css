@@ -546,6 +546,13 @@ body::before {
 
 .meta-stats span { color: var(--accent); }
 
+/* Channel name in meta bar is clickable when an archive is loaded */
+.meta-link {
+  cursor: pointer;
+  text-underline-offset: 2px;
+}
+.meta-link:hover { text-decoration: underline; }
+
 /* ── Viewer: controls bar ─────────────────────────────────── */
 #v-controls {
   display: none;

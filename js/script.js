@@ -17,8 +17,10 @@ const AppState = {
   threads:       [],
 
   /* Video metadata */
-  videoTitle:    '',
-  videoId:       '',
+  videoTitle:        '',
+  videoId:           '',
+  videoPublishedAt:  '',
+  videoChannelTitle: '',
 
   /* Fetch control */
   isFetching:    false,
@@ -127,10 +129,12 @@ async function startFetch() {
   /* Reset state */
   AppState.allComments   = [];
   AppState.previewCount  = 0;
-  AppState.stopRequested = false;
-  AppState.isFetching    = true;
-  AppState.videoTitle    = '';
-  AppState.videoId       = videoId;
+  AppState.stopRequested     = false;
+  AppState.isFetching        = true;
+  AppState.videoTitle        = '';
+  AppState.videoPublishedAt  = '';
+  AppState.videoChannelTitle = '';
+  AppState.videoId           = videoId;
 
   /* UI: show progress, hide previous results */
   document.getElementById('a-fetch-btn').disabled = true;
@@ -144,11 +148,15 @@ async function startFetch() {
 
   /* Step 1: get video title */
   try {
-    const info          = await YouTubeAPI.getVideoInfo(videoId, apiKey);
-    AppState.videoTitle = info.title;
+    const info                 = await YouTubeAPI.getVideoInfo(videoId, apiKey);
+    AppState.videoTitle        = info.title;
+    AppState.videoPublishedAt  = info.publishedAt;
+    AppState.videoChannelTitle = info.channelTitle;
     UI.setText('a-status-line', `Video: "${info.title}"`);
   } catch (e) {
-    AppState.videoTitle = videoId;
+    AppState.videoTitle        = videoId;
+    AppState.videoPublishedAt  = '';
+    AppState.videoChannelTitle = '';
     UI.setText('a-status-line', `⚠ Could not fetch video title: ${e.message}`);
   }
 
@@ -280,7 +288,7 @@ function openInViewer() {
   UI.show('v-loading');
 
   setTimeout(() => {
-    const exportData  = ArchiveManager.buildNestedExport(AppState.allComments, AppState.videoTitle);
+    const exportData  = ArchiveManager.buildNestedExport(AppState.allComments, AppState.videoTitle, AppState.videoPublishedAt, AppState.videoChannelTitle);
     const { threads } = ArchiveManager.parseImport(exportData);
     AppState.threads  = threads;
     loadViewerData(exportData, threads);
@@ -290,8 +298,10 @@ function openInViewer() {
 function resetArchiver() {
   AppState.allComments  = [];
   AppState.previewCount = 0;
-  AppState.videoTitle   = '';
-  AppState.videoId      = '';
+  AppState.videoTitle        = '';
+  AppState.videoId           = '';
+  AppState.videoPublishedAt  = '';
+  AppState.videoChannelTitle = '';
 
   document.getElementById('a-comment-list').innerHTML = '';
   document.getElementById('a-video-url').value        = '';
@@ -304,7 +314,7 @@ function resetArchiver() {
 /* ─────────────────────────────────────────────────────────────
    ARCHIVER — exports (delegates to ArchiveManager)
    ───────────────────────────────────────────────────────────── */
-function exportJSON() { ArchiveManager.exportJSON(AppState.allComments, AppState.videoTitle); }
+function exportJSON() { ArchiveManager.exportJSON(AppState.allComments, AppState.videoTitle, AppState.videoPublishedAt, AppState.videoChannelTitle); }
 function exportCSV()  { ArchiveManager.exportCSV(AppState.allComments,  AppState.videoTitle); }
 function exportTXT()  { ArchiveManager.exportTXT(AppState.allComments,  AppState.videoTitle); }
 
@@ -372,6 +382,13 @@ function loadViewerData(meta, threads) {
     ? new Date(meta.exportedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
     : '—'
   );
+  UI.setText('v-meta-uploaded', meta.videoPublishedAt
+    ? new Date(meta.videoPublishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    : '—'
+  );
+  const channelEl = document.getElementById('v-meta-channel');
+  UI.setText('v-meta-channel', meta.videoChannelTitle || '—');
+  channelEl.classList.toggle('meta-link', !!meta.videoChannelTitle);
 
   const total = threads.reduce((s, t) => s + 1 + (t.replies?.length || 0), 0);
   UI.setText('v-footer-count', `${UI.fmt(total)} comments loaded`);
@@ -565,6 +582,17 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSavedApiKey();
   initDropZone();
   UI.populateTzDropdown('v-tz-select');
+
+  /*
+   * Channel name in the meta bar — click to show the uploader's comments.
+   * Single listener set up once; reads text content at click time.
+   */
+  document.getElementById('v-meta-bar').addEventListener('click', e => {
+    const el = e.target.closest('#v-meta-channel');
+    if (!el || !el.classList.contains('meta-link') || !AppState.threads.length) return;
+    const stats = ArchiveManager.getUserStats(AppState.threads, el.textContent.trim());
+    UI.renderUserModal(stats);
+  });
 
   /*
    * Author profile modal — single delegated listener on the feed container.

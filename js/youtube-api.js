@@ -55,8 +55,10 @@ const YouTubeAPI = (() => {
       throw new Error('No video found with that ID. It may be private or deleted.');
 
     return {
-      id:    videoId,
-      title: data.items[0].snippet.title,
+      id:           videoId,
+      title:        data.items[0].snippet.title,
+      publishedAt:  data.items[0].snippet.publishedAt  || '',
+      channelTitle: data.items[0].snippet.channelTitle || '',
     };
   }
 

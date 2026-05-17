@@ -27,7 +27,7 @@ const ArchiveManager = (() => {
   }
 
   /* ── Convert current allComments flat array to nested JSON ── */
-  function buildNestedExport(allComments, videoTitle) {
+  function buildNestedExport(allComments, videoTitle, videoPublishedAt, videoChannelTitle) {
     /*
      * Old approach filtered allComments once per top-level comment → O(n²).
      * For 200k threads × 300k total that was ~60 billion iterations.
@@ -64,7 +64,9 @@ const ArchiveManager = (() => {
 
     return {
       exportedAt:            new Date().toISOString(),
-      videoTitle:            videoTitle || '',
+      videoTitle:            videoTitle        || '',
+      videoPublishedAt:      videoPublishedAt  || '',
+      videoChannelTitle:     videoChannelTitle || '',
       totalTopLevelComments: threads.length,
       totalReplies,
       totalComments:         allComments.length,
@@ -165,8 +167,8 @@ const ArchiveManager = (() => {
   }
 
   /* ── Export as JSON ─────────────────────────────────────────── */
-  function exportJSON(allComments, videoTitle) {
-    const payload = buildNestedExport(allComments, videoTitle);
+  function exportJSON(allComments, videoTitle, videoPublishedAt, videoChannelTitle) {
+    const payload = buildNestedExport(allComments, videoTitle, videoPublishedAt, videoChannelTitle);
     downloadBlob(
       JSON.stringify(payload, null, 2),
       `${safeFilename(videoTitle)}_comments.json`,
