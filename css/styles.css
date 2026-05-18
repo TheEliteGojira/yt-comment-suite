@@ -921,7 +921,7 @@ footer {
   align-items: flex-end;
   margin-top: 48px;
   position: relative;
-  min-height: 200px;
+  min-height: 160px;
 }
 
 #about-sprite {

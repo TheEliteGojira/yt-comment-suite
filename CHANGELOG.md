@@ -16,6 +16,12 @@ Two viewer controls fixes. (1) **Reset button relocated** — "✕ Load a differ
 
 ---
 
+## COMMIT #33e / α 0.33.4
+Moved denton below the About tab footer. `#about-sprite-wrap` swapped with `<footer>` in `index.html` so the "Tube Archiver / Built with the YouTube Data API v3" line returns to its natural position and denton sits underneath it. `min-height` reduced from 200px to 160px since the footer no longer needs to clear the wrapper.
+*(index.html, css/styles.css, CHANGELOG.md)*
+
+---
+
 ## COMMIT #33d / α 0.33.3
 Denton sprite positioning simplified. All centering and offset modifiers (`top: 50%`, `translateY`) removed — they were conflicting with the scale transform and causing panel clipping across multiple attempts. Reverted to `bottom: 0; transform: scale(2); transform-origin: bottom right`, which floor-anchors the sprite inside the `min-height: 200px` wrapper (128px scaled height leaves 72px clear above, no clipping).
 *(css/styles.css, CHANGELOG.md)*
