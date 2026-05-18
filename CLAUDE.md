@@ -356,6 +356,27 @@ docs:     README, CLAUDE.md, code comments only
       `index.html` updated to two `<img>` tags with `--dark`/`--light` classes.
       *(assets/logo.svg, assets/logo-light.svg, index.html, css/styles.css)*
 
+- [x] **Sticky controls bar** — `#v-controls` given `position: sticky; top: 52px;
+      z-index: 90; background: var(--bg); border-bottom: 1px solid var(--border)`.
+      Search, sort, filter, and timezone stay visible without scrolling back up.
+      *(css/styles.css)*
+
+- [x] **Copy comment text** — `.c-copy` button (`⧉`) added to every top-level and
+      reply card header in `renderThread`. Click writes the comment text to the
+      clipboard via `navigator.clipboard.writeText`; button swaps to `✓` for 1.5 s
+      then reverts. `e.stopPropagation()` prevents triggering clearSearchEffects.
+      *(js/ui.js, css/styles.css)*
+
+- [x] **Escape key closes modal** — already implemented via `_onModalKeydown` in
+      `ui.js` which calls `closeModal()` on `Escape`. Confirmed present; no code
+      change needed. *(js/ui.js)*
+
+- [x] **Back to top button** — `#v-back-to-top` fixed to bottom-right; hidden via
+      `opacity: 0 / pointer-events: none` by default. A `scroll` listener in
+      `script.js` toggles `.visible` (opacity 1) past 400px scroll. Click calls
+      `window.scrollTo({ top: 0, behavior: 'smooth' })`.
+      *(index.html, js/script.js, css/styles.css)*
+
 - [x] **Channel author avatar bug (re-fix)** — `.c-author` feed click was missing
       `AppState.videoChannelId` argument to `getUserStats`; now matches the meta-bar
       click pattern so `authorChannelId` fallback fires for renamed channel owners.
@@ -395,24 +416,6 @@ docs:     README, CLAUDE.md, code comments only
       *(js/archive-manager.js, js/script.js, index.html)*
 
 #### Low effort
-
-- [ ] **Sticky controls bar** — pin `#v-controls` to the top of the viewport while
-      scrolling the comment feed so sort, search, and filter remain accessible without
-      scrolling back up. CSS `position: sticky` with appropriate `top` offset.
-      *(css/styles.css)*
-
-- [ ] **Copy comment text** — small clipboard icon button on each comment and reply
-      card. Clicking it writes the comment text to the clipboard via `navigator.clipboard.writeText`.
-      Should give brief visual feedback (e.g. icon swap or brief colour change) and
-      revert after ~1.5 s. No library needed. *(js/ui.js, css/styles.css)*
-
-- [ ] **Escape key closes modal** — add a `keydown` listener in `script.js` that calls
-      `UI.closeModal()` when `event.key === 'Escape'` and a modal is currently open.
-      *(js/script.js)*
-
-- [ ] **Back to top button** — appears (fade in) after the user scrolls the Viewer feed
-      past a threshold (e.g. 400px). Clicking it scrolls the page smoothly back to the
-      top. Disappears again once near the top. *(index.html, js/script.js, css/styles.css)*
 
 #### Medium effort
 

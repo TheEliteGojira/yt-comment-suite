@@ -625,6 +625,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initDropZone();
   UI.populateTzDropdown('v-tz-select');
 
+  /* Back to top — show after 400px of scroll, smooth-scroll to top on click */
+  const backToTopBtn = document.getElementById('v-back-to-top');
+  window.addEventListener('scroll', () => {
+    backToTopBtn.classList.toggle('visible', window.scrollY > 400);
+  });
+  backToTopBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
   /*
    * Channel name in the meta bar — click to show the uploader's comments.
    * Single listener set up once; reads text content at click time.

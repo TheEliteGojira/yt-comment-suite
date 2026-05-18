@@ -10,6 +10,12 @@ Removed tuan sprite from the About tab (file kept in assets for future use). Ups
 
 ---
 
+## COMMIT #32 / α 0.29.0
+Four low-effort QoL features. (1) **Sticky controls bar** — `#v-controls` now uses `position: sticky; top: 52px` so search, sort, filter, and timezone stay pinned below the tab bar while scrolling the comment feed. (2) **Copy comment text** — a `.c-copy` button (`⧉`) added to every top-level and reply card header; clicks write the comment text to the clipboard and swap the icon to `✓` for 1.5 s before reverting. (3) **Escape key closes modal** — already implemented in `ui.js` via `_onModalKeydown`; confirmed and documented, no code change required. (4) **Back to top button** — `#v-back-to-top` fixed to bottom-right, hidden by default, fades in past 400 px of scroll and smooth-scrolls to top on click.
+*(js/ui.js, js/script.js, css/styles.css, index.html, CLAUDE.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #29b / α 0.29.0
 Updated version badge from α 0.28.0 to α 0.29.0 to correct the mismatch introduced in commit 29.
 *(index.html, README.md, CHANGELOG.md)*

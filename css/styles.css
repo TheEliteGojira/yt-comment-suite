@@ -567,10 +567,16 @@ body::before {
 /* ── Viewer: controls bar ─────────────────────────────────── */
 #v-controls {
   display: none;
-  margin-bottom: 20px;
   gap: 10px;
   flex-wrap: wrap;
   align-items: stretch;
+  position: sticky;
+  top: 52px;
+  z-index: 90;
+  background: var(--bg);
+  padding: 10px 0 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
 .search-wrap {
@@ -736,6 +742,20 @@ body::before {
 .c-date      { font-size: 10px; color: var(--text-muted); }
 .c-permalink { font-size: 10px; color: var(--text-muted); text-decoration: none; line-height: 1; }
 .c-permalink:hover { color: var(--accent); }
+.c-copy {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  font-family: inherit;
+}
+.c-copy:hover { color: var(--accent); }
+.c-copy--copied { color: var(--accent); }
 .c-likes    { margin-left: auto; font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
 .c-likes-num { color: var(--text); font-weight: 700; }
 .heart      { color: var(--accent2); }
@@ -1289,6 +1309,37 @@ footer {
   letter-spacing: 1px;
   pointer-events: none;
   user-select: none;
+}
+
+/* ── Back to top ──────────────────────────────────────────── */
+#v-back-to-top {
+  position: fixed;
+  bottom: 14px;
+  right: 16px;
+  z-index: 50;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, color 0.15s, border-color 0.15s;
+}
+
+#v-back-to-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#v-back-to-top:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* ── Animations ───────────────────────────────────────────── */

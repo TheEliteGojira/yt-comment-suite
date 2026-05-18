@@ -213,9 +213,19 @@ const UI = (() => {
         <span class="c-date">${formatDate(thread.publishedAt, tz)}</span>
         ${threadLink}
         <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(thread.likeCount)}</span></span>
+        <button class="c-copy" aria-label="Copy comment text">⧉</button>
       </div>
       <div class="c-text">${highlight(esc(thread.text || ''), query)}</div>
     `;
+    card.querySelector('.c-copy').addEventListener('click', e => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(thread.text || '').then(() => {
+        const btn = e.currentTarget;
+        btn.textContent = '✓';
+        btn.classList.add('c-copy--copied');
+        setTimeout(() => { btn.textContent = '⧉'; btn.classList.remove('c-copy--copied'); }, 1500);
+      }).catch(() => {});
+    });
     if (query) card.addEventListener('click', clearSearchEffects);
     wrapper.appendChild(card);
 
@@ -259,9 +269,19 @@ const UI = (() => {
             <span class="c-date">${formatDate(r.publishedAt, tz)}</span>
             ${replyLink}
             <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(r.likeCount)}</span></span>
+            <button class="c-copy" aria-label="Copy reply text">⧉</button>
           </div>
           <div class="c-text">${highlight(esc(r.text || ''), query)}</div>
         `;
+        rc.querySelector('.c-copy').addEventListener('click', e => {
+          e.stopPropagation();
+          navigator.clipboard.writeText(r.text || '').then(() => {
+            const btn = e.currentTarget;
+            btn.textContent = '✓';
+            btn.classList.add('c-copy--copied');
+            setTimeout(() => { btn.textContent = '⧉'; btn.classList.remove('c-copy--copied'); }, 1500);
+          }).catch(() => {});
+        });
         if (q) rc.addEventListener('click', clearSearchEffects);
         replyContainer.appendChild(rc);
       });
