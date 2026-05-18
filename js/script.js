@@ -535,6 +535,12 @@ function toggleWordFreq() {
 
 /* ── Common viewer setup (used by both paths) ─────────────── */
 function loadViewerData(meta, threads) {
+  /* Clear word frequency cache and collapse panel for the new archive */
+  _wordFreqCache = null;
+  UI.hide('v-word-freq-content');
+  const wfArrow = document.getElementById('v-word-freq-arrow');
+  if (wfArrow) wfArrow.classList.remove('open');
+
   /* Restore videoId so renderThread can generate correct permalinks */
   AppState.videoId = meta.videoId || '';
 
