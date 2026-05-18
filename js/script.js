@@ -652,7 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const authorEl = e.target.closest('.c-author');
     if (!authorEl || !AppState.threads.length) return;
 
-    const stats = ArchiveManager.getUserStats(AppState.threads, authorEl.textContent.trim(), AppState.videoChannelId);
+    const stats = ArchiveManager.getUserStats(AppState.threads, authorEl.textContent.trim());
     UI.renderUserModal(stats);
   });
 });

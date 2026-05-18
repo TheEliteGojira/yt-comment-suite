@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #24 / α 0.24.0
+Removed `AppState.videoChannelId` from the `.c-author` feed click's `getUserStats` call. Passing it caused `channelMatch` to fire on all uploader threads regardless of which author was clicked, contaminating every user's avatar and stats with the uploader's data. The feed click uses the stored `author` display name which is always an exact match; the channelId fallback is only needed on the meta-bar click. Version badge and README updated to α 0.24.0.
+*(js/script.js, index.html, README.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #23 / α 0.23.0
 Comment permalinks and filtered export. Each comment and reply card now shows a small ↗ anchor between the date and likes, linking to `youtube.com/watch?v={videoId}&lc={commentId}` in a new tab; omitted when videoId is unavailable. `renderThread` accepts `videoId` as a 6th parameter. `archive-manager.js` gains `flattenThreads` (nested→flat) and `exportFilteredJSON` (wraps already-nested threads in the standard envelope). When a search query is active or either Show toggle is off, a `#v-filtered-export-row` appears inside `v-controls` with JSON/CSV/TXT buttons and a live count label. Row hides on viewer reset. Version badge and README updated to α 0.23.0.
 *(js/ui.js, js/script.js, js/archive-manager.js, css/styles.css, index.html, README.md, CHANGELOG.md, CLAUDE.md)*
