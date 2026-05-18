@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #35a / α 0.35.1
+Hotfix: Viewer export buttons only appeared when a filter was active, making it impossible to export an unfiltered archive from the Viewer. Removed the `isFiltered` gate from `_updateFilteredExportRow` — the export content now shows whenever `_renderedThreads.length > 0`. Label updates dynamically: "All (N):" when no filter is active, "Filtered (N):" when one is. *(js/script.js, index.html, CHANGELOG.md)*
+
+---
+
 ## COMMIT #35 / α 0.35.0
 Video thumbnail, view count, and like count added to the Viewer meta bar. `getVideoInfo` now extracts `thumbnailUrl` (highest-res available from `snippet.thumbnails`), `viewCount`, and `likeCount` from the already-fetched `snippet,statistics` response — no extra API quota. All three fields are stored in `AppState`, threaded through `buildNestedExport` / `exportJSON` / `exportFilteredJSON` (meta object refactor — positional params replaced with a single `meta` object), and persisted in exported JSON so re-imported archives retain them. In the Viewer, `#v-meta-bar` restructured as a flex row: `#v-meta-thumb-wrap` + `#v-meta-info` (title, comment stats, new video stats row). Thumbnail rendered at `107×60px` with `object-fit: cover`; thumb wrap hidden for archives that predate this feature. View/like counts formatted with new `UI.fmtCount` (K/M/B abbreviation) and shown as a second `.meta-stats` row; hidden for older archives. `UI.show('v-meta-bar', 'flex')` updated from `'block'`.
 *(js/youtube-api.js, js/ui.js, js/archive-manager.js, js/script.js, index.html, css/styles.css, CHANGELOG.md)*

@@ -622,12 +622,13 @@ function _renderViewer() {
 }
 
 function _updateFilteredExportRow() {
-  const dateFrom   = document.getElementById('v-date-from').value || '';
-  const dateTo     = document.getElementById('v-date-to').value   || '';
-  const isFiltered = _renderQuery !== '' || !AppState.showComments || !AppState.showReplies
-                     || dateFrom || dateTo || AppState.showPinnedOnly;
-  if (isFiltered && _renderedThreads.length > 0) {
-    UI.setText('v-filtered-export-label', `Filtered (${UI.fmt(_renderedThreads.length)}):`);
+  if (_renderedThreads.length > 0) {
+    const dateFrom   = document.getElementById('v-date-from').value || '';
+    const dateTo     = document.getElementById('v-date-to').value   || '';
+    const isFiltered = _renderQuery !== '' || !AppState.showComments || !AppState.showReplies
+                       || dateFrom || dateTo || AppState.showPinnedOnly;
+    const label = isFiltered ? 'Filtered' : 'All';
+    UI.setText('v-filtered-export-label', `${label} (${UI.fmt(_renderedThreads.length)}):`);
     UI.show('v-filtered-export-content', 'flex');
   } else {
     UI.hide('v-filtered-export-content');
