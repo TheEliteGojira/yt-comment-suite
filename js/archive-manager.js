@@ -188,6 +188,40 @@ const ArchiveManager = (() => {
       .substring(0, 40);
   }
 
+  /* ── Flatten nested threads back to a mixed flat array ──────── */
+  function flattenThreads(threads) {
+    const flat = [];
+    for (const t of threads) {
+      const { replies, ...rest } = t;
+      flat.push({ ...rest, type: 'comment', parentId: null });
+      for (const r of (replies || [])) {
+        flat.push({ ...r, type: 'reply', parentId: t.id });
+      }
+    }
+    return flat;
+  }
+
+  /* ── Export filtered (already-nested) threads as JSON ───────── */
+  function exportFilteredJSON(threads, meta) {
+    const totalReplies = threads.reduce((s, t) => s + (t.replies?.length || 0), 0);
+    const payload = {
+      exportedAt:            new Date().toISOString(),
+      videoTitle:            meta.videoTitle        || '',
+      videoPublishedAt:      meta.videoPublishedAt  || '',
+      videoChannelTitle:     meta.videoChannelTitle || '',
+      videoChannelId:        meta.videoChannelId    || '',
+      totalTopLevelComments: threads.length,
+      totalReplies,
+      totalComments:         threads.length + totalReplies,
+      comments:              threads,
+    };
+    downloadBlob(
+      JSON.stringify(payload, null, 2),
+      `${safeFilename(meta.videoTitle)}_filtered.json`,
+      'application/json'
+    );
+  }
+
   /* ── Export as JSON ─────────────────────────────────────────── */
   function exportJSON(allComments, videoTitle, videoPublishedAt, videoChannelTitle, videoChannelId) {
     const payload = buildNestedExport(allComments, videoTitle, videoPublishedAt, videoChannelTitle, videoChannelId);
@@ -246,9 +280,11 @@ const ArchiveManager = (() => {
     getUserStats,
     sortThreads,
     filterThreads,
+    flattenThreads,
     exportJSON,
     exportCSV,
     exportTXT,
+    exportFilteredJSON,
   };
 
 })();

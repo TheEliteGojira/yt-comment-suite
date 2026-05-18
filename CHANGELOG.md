@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #23 / α 0.23.0
+Comment permalinks and filtered export. Each comment and reply card now shows a small ↗ anchor between the date and likes, linking to `youtube.com/watch?v={videoId}&lc={commentId}` in a new tab; omitted when videoId is unavailable. `renderThread` accepts `videoId` as a 6th parameter. `archive-manager.js` gains `flattenThreads` (nested→flat) and `exportFilteredJSON` (wraps already-nested threads in the standard envelope). When a search query is active or either Show toggle is off, a `#v-filtered-export-row` appears inside `v-controls` with JSON/CSV/TXT buttons and a live count label. Row hides on viewer reset. Version badge and README updated to α 0.23.0.
+*(js/ui.js, js/script.js, js/archive-manager.js, css/styles.css, index.html, README.md, CHANGELOG.md, CLAUDE.md)*
+
+---
+
 ## COMMIT #22 / α 0.22.0
 Two modal fixes for channel owners with no comments. (1) Meta-bar click now injects `AppState.videoChannelId` as `stats.authorChannelId` when `getUserStats` returns no matches, so the "View channel ↗" link always appears for the channel owner regardless of comment activity. (2) Modal body renders a single "No comments or replies found in this archive." message when both counts are zero, replacing the two empty sections that previously made the modal appear broken. Version badge and README updated to α 0.22.0.
 *(js/script.js, js/ui.js, index.html, README.md, CHANGELOG.md)*

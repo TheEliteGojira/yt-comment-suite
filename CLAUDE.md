@@ -381,15 +381,18 @@ docs:     README, CLAUDE.md, code comments only
       Hidden and cleared in `resetArchiver`. Hidden when comments are disabled (count 0).
       *(js/youtube-api.js, js/script.js, index.html, css/styles.css)*
 
-- [ ] **Viewer: comment permalink** — add a small external-link icon to each comment
-      card that opens `https://youtube.com/watch?v={videoId}&lc={commentId}` in a new
-      tab. `videoId` is in `AppState`; `commentId` is the `id` field on each comment.
-      Icon renders in `.comment-header` alongside the date and likes.
+- [x] **Viewer: comment permalink** — `renderThread` accepts a 6th `videoId` param.
+      Each top-level card and reply card renders a `.c-permalink` anchor (`↗`) between
+      the date and likes, linking to `youtube.com/watch?v={videoId}&lc={commentId}`.
+      Opens in new tab; `stopPropagation` prevents triggering `clearSearchEffects`.
+      Link omitted when `videoId` is absent. *(js/ui.js, js/script.js, css/styles.css)*
 
-- [ ] **Viewer: export filtered results** — when a search query or filter is active,
-      show an "Export filtered (N)" button in the controls bar. It should export only
-      the currently visible threads (`_renderedThreads` in `script.js`) rather than the
-      full archive. Add to `archive-manager.js` and wire in `script.js`.
+- [x] **Viewer: export filtered results** — `archive-manager.js` gains `flattenThreads`
+      (nested → flat array) and `exportFilteredJSON` (wraps already-nested threads in
+      the standard metadata envelope). `#v-filtered-export-row` appears inside
+      `v-controls` when a search query is active or either toggle is off; shows JSON,
+      CSV, TXT buttons and a "Filtered (N):" label. Hidden on reset.
+      *(js/archive-manager.js, js/script.js, index.html)*
 
 ---
 

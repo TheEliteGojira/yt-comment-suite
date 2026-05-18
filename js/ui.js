@@ -189,7 +189,7 @@ const UI = (() => {
   }
 
   /* ── Render a single viewer comment thread ────────────────── */
-  function renderThread(thread, query, showReplies, tz, animDelay) {
+  function renderThread(thread, query, showReplies, tz, animDelay, videoId) {
     const wrapper       = document.createElement('div');
     wrapper.className   = 'comment-thread';
     wrapper.style.animationDelay = Math.min(animDelay * 20, 300) + 'ms';
@@ -200,6 +200,10 @@ const UI = (() => {
       wrapper.querySelectorAll('.reply-dimmed').forEach(el => el.classList.remove('reply-dimmed'));
     }
 
+    const threadLink = videoId
+      ? `<a href="https://www.youtube.com/watch?v=${videoId}&lc=${thread.id}" class="c-permalink" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">↗</a>`
+      : '';
+
     /* Top-level comment card */
     const card        = document.createElement('div');
     card.className    = 'comment-card';
@@ -207,6 +211,7 @@ const UI = (() => {
       <div class="comment-header">
         <span class="c-author">${esc(thread.author)}</span>
         <span class="c-date">${formatDate(thread.publishedAt, tz)}</span>
+        ${threadLink}
         <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(thread.likeCount)}</span></span>
       </div>
       <div class="c-text">${highlight(esc(thread.text || ''), query)}</div>
@@ -244,11 +249,15 @@ const UI = (() => {
         const isMatch  = q ? r.text?.toLowerCase().includes(q) : true;
         const rc       = document.createElement('div');
         /* Dim non-matching replies so the matching ones stand out */
+        const replyLink = videoId
+          ? `<a href="https://www.youtube.com/watch?v=${videoId}&lc=${r.id}" class="c-permalink" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">↗</a>`
+          : '';
         rc.className   = 'reply-card' + (!isMatch && q ? ' reply-dimmed' : '');
         rc.innerHTML   = `
           <div class="comment-header">
             <span class="c-author">${esc(r.author)}</span>
             <span class="c-date">${formatDate(r.publishedAt, tz)}</span>
+            ${replyLink}
             <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(r.likeCount)}</span></span>
           </div>
           <div class="c-text">${highlight(esc(r.text || ''), query)}</div>

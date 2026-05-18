@@ -733,7 +733,9 @@ body::before {
   text-underline-offset: 2px;
 }
 #v-comment-feed .c-author:hover { text-decoration: underline; }
-.c-date     { font-size: 10px; color: var(--text-muted); }
+.c-date      { font-size: 10px; color: var(--text-muted); }
+.c-permalink { font-size: 10px; color: var(--text-muted); text-decoration: none; line-height: 1; }
+.c-permalink:hover { color: var(--accent); }
 .c-likes    { margin-left: auto; font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
 .c-likes-num { color: var(--text); font-weight: 700; }
 .heart      { color: var(--accent2); }

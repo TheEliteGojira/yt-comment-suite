@@ -336,6 +336,13 @@ function exportJSON() { ArchiveManager.exportJSON(AppState.allComments, AppState
 function exportCSV()  { ArchiveManager.exportCSV(AppState.allComments,  AppState.videoTitle); }
 function exportTXT()  { ArchiveManager.exportTXT(AppState.allComments,  AppState.videoTitle); }
 
+function exportFiltered(format) {
+  const meta = { videoTitle: AppState.videoTitle, videoPublishedAt: AppState.videoPublishedAt, videoChannelTitle: AppState.videoChannelTitle, videoChannelId: AppState.videoChannelId };
+  if (format === 'json') ArchiveManager.exportFilteredJSON(_renderedThreads, meta);
+  if (format === 'csv')  ArchiveManager.exportCSV(ArchiveManager.flattenThreads(_renderedThreads), AppState.videoTitle);
+  if (format === 'txt')  ArchiveManager.exportTXT(ArchiveManager.flattenThreads(_renderedThreads), AppState.videoTitle);
+}
+
 /* ─────────────────────────────────────────────────────────────
    VIEWER — file loading (manual JSON upload path)
    ───────────────────────────────────────────────────────────── */
@@ -499,6 +506,7 @@ function _renderViewer() {
   if (filtered.length === 0) {
     UI.show('v-no-results');
     UI.setText('v-result-count', 'No comments match your search.');
+    _updateFilteredExportRow();
     return;
   }
 
@@ -514,8 +522,20 @@ function _renderViewer() {
       : `${UI.fmt(filtered.length)} comment${filtered.length !== 1 ? 's' : ''}${AppState.showReplies ? ` · ${UI.fmt(replyCount)} replies` : ''}`
   );
 
+  _updateFilteredExportRow();
+
   /* Paint first batch; the sentinel handles every subsequent batch */
   _renderBatch(feed);
+}
+
+function _updateFilteredExportRow() {
+  const isFiltered = _renderQuery !== '' || !AppState.showComments || !AppState.showReplies;
+  if (isFiltered && _renderedThreads.length > 0) {
+    UI.setText('v-filtered-export-label', `Filtered (${UI.fmt(_renderedThreads.length)}):`);
+    UI.show('v-filtered-export-row', 'flex');
+  } else {
+    UI.hide('v-filtered-export-row');
+  }
 }
 
 /* Appends the next BATCH_SIZE threads and attaches a new sentinel if more remain */
@@ -525,7 +545,7 @@ function _renderBatch(feed) {
 
   for (let i = _renderOffset; i < end; i++) {
     frag.appendChild(
-      UI.renderThread(_renderedThreads[i], _renderQuery, AppState.showReplies, _renderTz, i)
+      UI.renderThread(_renderedThreads[i], _renderQuery, AppState.showReplies, _renderTz, i, AppState.videoId)
     );
   }
 
@@ -581,6 +601,7 @@ function resetViewer() {
   UI.hide('v-comment-feed');
   UI.hide('v-no-results');
   UI.hide('v-reset-btn');
+  UI.hide('v-filtered-export-row');
 
   document.getElementById('v-comment-feed').innerHTML = '';
   document.getElementById('v-search-input').value     = '';

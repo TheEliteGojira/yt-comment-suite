@@ -243,6 +243,13 @@
         </div>
       </div>
 
+      <div class="filter-row" id="v-filtered-export-row" style="display:none">
+        <span class="filter-label" id="v-filtered-export-label">Filtered (0):</span>
+        <button class="btn btn-secondary btn-sm" onclick="exportFiltered('json')">↓ JSON</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportFiltered('csv')">↓ CSV</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportFiltered('txt')">↓ TXT</button>
+      </div>
+
     </div><!-- /v-controls -->
 
     <!-- Result count line -->
@@ -445,7 +452,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.22.0</div>
+<div id="version-badge">α 0.23.0</div>
 
 </body>
 </html>
