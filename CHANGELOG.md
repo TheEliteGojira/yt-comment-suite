@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #37b / α 0.37.1
+Archiver info bar layout: thumbnail now fills the full panel width (`width: 100%; aspect-ratio: 16/9; object-fit: cover`) and the linked video title sits below it, above the channel status line. Previously the bar was a side-by-side flex row (thumb left, title right). CSS-only change — no JS modified. *(css/styles.css, index.html)*
+
+---
+
 ## COMMIT #37 / α 0.37.0
 Two changes to the About tab sprites and the Archiver progress section.
 
