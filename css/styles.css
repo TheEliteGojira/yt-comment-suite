@@ -1019,6 +1019,27 @@ footer {
   background: var(--border);
 }
 
+.modal-avatar--cannot-render {
+  background: var(--panel-hover);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.modal-avatar-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 6px;
+}
+
 /* Text column (eyebrow + name + disclaimer) that sits beside the avatar */
 .modal-header-text {
   flex: 1;

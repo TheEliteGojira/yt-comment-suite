@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #25 / α 0.25.0
+Channel owner avatar fetch and cannot-render state. `getChannelThumbnail(channelId, apiKey)` added to `youtube-api.js` — calls `channels?part=snippet` (1 unit) and returns the medium or default thumbnail URL. Meta-bar click handler made async: if the owner has no comments and no avatarUrl was found, attempts to fetch via `getChannelThumbnail` using the stored API key. If no key is available (e.g. JSON-only session) or the fetch fails, `cannotRender = true` is passed to `renderUserModal`. `renderUserModal` accepts a second `cannotRender` param (default false): renders a `modal-avatar--cannot-render` div with "CAN'T RENDER" text and a `modal-avatar-note` explaining that an API key is required to load channel thumbnails from a saved archive. Version badge and README updated to α 0.25.0.
+*(js/youtube-api.js, js/script.js, js/ui.js, css/styles.css, index.html, README.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #24 / α 0.24.0
 Removed `AppState.videoChannelId` from the `.c-author` feed click's `getUserStats` call. Passing it caused `channelMatch` to fire on all uploader threads regardless of which author was clicked, contaminating every user's avatar and stats with the uploader's data. The feed click uses the stored `author` display name which is always an exact match; the channelId fallback is only needed on the meta-bar click. Version badge and README updated to α 0.24.0.
 *(js/script.js, index.html, README.md, CHANGELOG.md)*

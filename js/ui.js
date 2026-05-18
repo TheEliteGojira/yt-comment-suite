@@ -304,7 +304,7 @@ const UI = (() => {
    * stats comes from ArchiveManager.getUserStats().
    * Reads the current timezone from the viewer dropdown so timestamps match.
    */
-  function renderUserModal(stats) {
+  function renderUserModal(stats, cannotRender = false) {
     closeModal(); /* dismiss any already-open modal first */
 
     const tz = document.getElementById('v-tz-select')?.value || 'UTC';
@@ -326,10 +326,19 @@ const UI = (() => {
 
     /* Avatar — shown if the archive contains the URL; hidden gracefully if absent
        (older archives pre-dating the authorAvatar field won't have it) */
-    const avatarHtml = stats.avatarUrl
-      ? `<img src="${esc(stats.avatarUrl)}" class="modal-avatar" alt=""
-             onerror="this.outerHTML='<div class=\\'modal-avatar modal-avatar--placeholder\\'></div>'">`
-      : `<div class="modal-avatar modal-avatar--placeholder"></div>`;
+    let avatarHtml;
+    if (stats.avatarUrl) {
+      avatarHtml = `<img src="${esc(stats.avatarUrl)}" class="modal-avatar" alt=""
+          onerror="this.outerHTML='<div class=\\'modal-avatar modal-avatar--placeholder\\'></div>'">`;
+    } else if (cannotRender) {
+      avatarHtml = `<div class="modal-avatar modal-avatar--cannot-render">CAN'T<br>RENDER</div>`;
+    } else {
+      avatarHtml = `<div class="modal-avatar modal-avatar--placeholder"></div>`;
+    }
+
+    const avatarNoteHtml = cannotRender
+      ? `<div class="modal-avatar-note">Avatar unavailable from saved archive — enter an API key in the Archiver tab to load channel thumbnails.</div>`
+      : '';
 
     /* Channel link — only shown when authorChannelId is present in the archive.
      * Opens the author's YouTube channel page in a new tab. */
@@ -346,6 +355,7 @@ const UI = (() => {
           <div class="modal-author-name">${esc(stats.authorName)}</div>
           <div class="modal-disclaimer">activity in this video only · display names are not unique on YouTube</div>
           ${channelLinkHtml}
+          ${avatarNoteHtml}
         </div>
       </div>
       <button class="modal-close" aria-label="Close modal">✕</button>

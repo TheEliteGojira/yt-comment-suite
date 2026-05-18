@@ -629,17 +629,28 @@ document.addEventListener('DOMContentLoaded', () => {
    * Channel name in the meta bar — click to show the uploader's comments.
    * Single listener set up once; reads text content at click time.
    */
-  document.getElementById('v-meta-bar').addEventListener('click', e => {
+  document.getElementById('v-meta-bar').addEventListener('click', async e => {
     const el = e.target.closest('#v-meta-channel');
     if (!el || !el.classList.contains('meta-link') || !AppState.threads.length) return;
-    /*
-     * Pass videoChannelId so getUserStats can fall back to authorChannelId matching.
-     * This handles the case where the channel owner has renamed their account since
-     * commenting, meaning videoChannelTitle no longer matches authorDisplayName.
-     */
+
     const stats = ArchiveManager.getUserStats(AppState.threads, el.textContent.trim(), AppState.videoChannelId);
     if (!stats.authorChannelId && AppState.videoChannelId) stats.authorChannelId = AppState.videoChannelId;
-    UI.renderUserModal(stats);
+
+    let cannotRender = false;
+    if (!stats.avatarUrl && AppState.videoChannelId) {
+      const apiKey = localStorage.getItem(API_KEY_STORAGE) || '';
+      if (apiKey) {
+        try {
+          stats.avatarUrl = await YouTubeAPI.getChannelThumbnail(AppState.videoChannelId, apiKey);
+        } catch (_) {
+          cannotRender = true;
+        }
+      } else {
+        cannotRender = true;
+      }
+    }
+
+    UI.renderUserModal(stats, cannotRender);
   });
 
   /*

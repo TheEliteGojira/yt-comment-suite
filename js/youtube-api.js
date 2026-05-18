@@ -67,6 +67,14 @@ const YouTubeAPI = (() => {
     };
   }
 
+  /* ── Fetch a channel's profile thumbnail ─────────────────── */
+  async function getChannelThumbnail(channelId, apiKey) {
+    const url  = buildUrl('channels', { part: 'snippet', id: channelId, key: apiKey });
+    const data = await apiFetch(url);
+    const thumbnails = data.items?.[0]?.snippet?.thumbnails;
+    return thumbnails?.medium?.url || thumbnails?.default?.url || '';
+  }
+
   /* ── Fetch one page of top-level comment threads ──────────── */
   async function getCommentThreadPage(videoId, apiKey, order, pageToken) {
     const url = buildUrl('commentThreads', {
@@ -155,6 +163,7 @@ const YouTubeAPI = (() => {
   /* ── Public API ───────────────────────────────────────────── */
   return {
     getVideoInfo,
+    getChannelThumbnail,
     getCommentThreadPage,
     getAllReplies,
     parseThread,
