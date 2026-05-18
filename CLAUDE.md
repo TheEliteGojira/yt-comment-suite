@@ -394,6 +394,65 @@ docs:     README, CLAUDE.md, code comments only
       CSV, TXT buttons and a "Filtered (N):" label. Hidden on reset.
       *(js/archive-manager.js, js/script.js, index.html)*
 
+#### Low effort
+
+- [ ] **Sticky controls bar** — pin `#v-controls` to the top of the viewport while
+      scrolling the comment feed so sort, search, and filter remain accessible without
+      scrolling back up. CSS `position: sticky` with appropriate `top` offset.
+      *(css/styles.css)*
+
+- [ ] **Copy comment text** — small clipboard icon button on each comment and reply
+      card. Clicking it writes the comment text to the clipboard via `navigator.clipboard.writeText`.
+      Should give brief visual feedback (e.g. icon swap or brief colour change) and
+      revert after ~1.5 s. No library needed. *(js/ui.js, css/styles.css)*
+
+- [ ] **Escape key closes modal** — add a `keydown` listener in `script.js` that calls
+      `UI.closeModal()` when `event.key === 'Escape'` and a modal is currently open.
+      *(js/script.js)*
+
+- [ ] **Back to top button** — appears (fade in) after the user scrolls the Viewer feed
+      past a threshold (e.g. 400px). Clicking it scrolls the page smoothly back to the
+      top. Disappears again once near the top. *(index.html, js/script.js, css/styles.css)*
+
+#### Medium effort
+
+- [ ] **Author name hover tooltip** — show a small tooltip (e.g. "X comments · Y replies")
+      when hovering a `.c-author` in the feed, giving a quick stats preview before
+      opening the full modal. Pure CSS `[title]` attribute approach or a lightweight
+      custom tooltip. *(js/ui.js, css/styles.css)*
+
+- [ ] **Highlight active author in feed** — when the author profile modal is open, dim
+      all comment threads whose author does not match the viewed user, so their activity
+      stands out visually in the background feed. Remove highlight on modal close.
+      *(js/ui.js, js/script.js, css/styles.css)*
+
+- [ ] **Date range filter** — two date inputs (`from` / `to`) in the Viewer controls bar.
+      When set, only threads containing at least one comment or reply within the range
+      are shown. Integrates with the existing `applyViewerFilters` / `_renderViewer`
+      pipeline. Clears with the existing reset flow. *(index.html, js/script.js, css/styles.css)*
+
+- [ ] **Pin / bookmark comments** — a pin icon on each card toggles a `pinned` flag on
+      the comment object in `AppState.threads`. A "Pinned" sort/filter mode shows only
+      pinned items. Pinned set can be exported via the filtered export row. Pins are
+      session-only (not persisted to localStorage). *(js/ui.js, js/script.js, js/archive-manager.js, css/styles.css)*
+
+#### Higher effort
+
+- [ ] **Word frequency panel** — scan the loaded archive and surface the N most-used
+      words or phrases (excluding stop words). Display as a ranked list in the About or
+      Viewer tab. No external libraries — implement client-side with a plain word-count
+      `Map`. *(js/archive-manager.js, js/ui.js, index.html, css/styles.css)*
+
+- [ ] **Sentiment distribution** — lightweight client-side classifier (positive / neutral /
+      negative) using a small keyword lexicon. Display a simple three-bar breakdown
+      below the Viewer meta bar or in a new panel. No external API or library.
+      *(js/archive-manager.js, js/ui.js, index.html, css/styles.css)*
+
+- [ ] **Multi-archive merge** — allow dropping a second `.json` export onto the Viewer
+      while one is already loaded. Merge the thread arrays, deduplicate by comment ID,
+      and re-render. Useful for comparing comment sections across related videos.
+      *(js/archive-manager.js, js/script.js, js/ui.js)*
+
 ---
 
 ### 🗺 Long term
