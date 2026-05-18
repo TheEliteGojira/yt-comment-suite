@@ -16,6 +16,12 @@ Two viewer controls fixes. (1) **Reset button relocated** — "✕ Load a differ
 
 ---
 
+## COMMIT #34 / α 0.34.0
+Merged "Load a different file" and the filtered export row into a single bar line. `#v-reset-row` removed; `#v-reset-btn` moved inside `#v-filtered-export-row` so both sit on the same row at all times. The export label/buttons wrapped in `#v-filtered-export-content` (inner span) which shows/hides based on filter state, while the outer row remains visible whenever the viewer is loaded. `_updateFilteredExportRow` updated to toggle `v-filtered-export-content` instead of the whole row; `loadViewerData` shows the outer row directly; `resetViewer` hides it. Duplicate `UI.hide` call removed.
+*(index.html, js/script.js, CHANGELOG.md)*
+
+---
+
 ## COMMIT #33e / α 0.33.4
 Moved denton below the About tab footer. `#about-sprite-wrap` swapped with `<footer>` in `index.html` so the "Tube Archiver / Built with the YouTube Data API v3" line returns to its natural position and denton sits underneath it. `min-height` reduced from 200px to 160px since the footer no longer needs to clear the wrapper.
 *(index.html, css/styles.css, CHANGELOG.md)*

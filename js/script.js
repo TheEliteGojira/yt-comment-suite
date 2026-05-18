@@ -429,7 +429,7 @@ function loadViewerData(meta, threads) {
   UI.show('v-meta-bar');
   UI.show('v-controls', 'flex');
   UI.show('v-result-count');
-  UI.show('v-reset-row', 'flex');
+  UI.show('v-filtered-export-row', 'flex');
 
   applyViewerFilters();
 }
@@ -568,9 +568,9 @@ function _updateFilteredExportRow() {
                      || dateFrom || dateTo || AppState.showPinnedOnly;
   if (isFiltered && _renderedThreads.length > 0) {
     UI.setText('v-filtered-export-label', `Filtered (${UI.fmt(_renderedThreads.length)}):`);
-    UI.show('v-filtered-export-row', 'flex');
+    UI.show('v-filtered-export-content', 'flex');
   } else {
-    UI.hide('v-filtered-export-row');
+    UI.hide('v-filtered-export-content');
   }
 }
 
@@ -638,7 +638,6 @@ function resetViewer() {
   UI.hide('v-result-count');
   UI.hide('v-comment-feed');
   UI.hide('v-no-results');
-  UI.hide('v-reset-row');
   UI.hide('v-filtered-export-row');
 
   document.getElementById('v-comment-feed').innerHTML = '';

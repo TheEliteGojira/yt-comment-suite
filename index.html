@@ -253,15 +253,14 @@
         <button class="btn btn-secondary btn-sm" onclick="clearDateFilter()">✕ Clear</button>
       </div>
 
+      <!-- Bottom row: filtered export (conditional) + reset button (always when loaded) -->
       <div class="filter-row" id="v-filtered-export-row" style="display:none">
-        <span class="filter-label" id="v-filtered-export-label">Filtered (0):</span>
-        <button class="btn btn-secondary btn-sm" onclick="exportFiltered('json')">↓ JSON</button>
-        <button class="btn btn-secondary btn-sm" onclick="exportFiltered('csv')">↓ CSV</button>
-        <button class="btn btn-secondary btn-sm" onclick="exportFiltered('txt')">↓ TXT</button>
-      </div>
-
-      <!-- Reset button — sits inside the sticky bar so it's always reachable -->
-      <div class="filter-row" id="v-reset-row" style="display:none">
+        <span id="v-filtered-export-content" style="display:none; align-items:center; gap:8px;">
+          <span class="filter-label" id="v-filtered-export-label">Filtered (0):</span>
+          <button class="btn btn-secondary btn-sm" onclick="exportFiltered('json')">↓ JSON</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportFiltered('csv')">↓ CSV</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportFiltered('txt')">↓ TXT</button>
+        </span>
         <button id="v-reset-btn" onclick="resetViewer()">✕ Load a different file</button>
       </div>
 
@@ -469,7 +468,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.33.4</div>
+<div id="version-badge">α 0.34.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>

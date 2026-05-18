@@ -419,10 +419,6 @@ docs:     README, CLAUDE.md, code comments only
       rather than hiding it, so expired avatar URLs degrade gracefully.
       *(js/script.js, js/ui.js)*
 
----
-
-### 🔧 Short term
-
 - [x] **User profile modal: channel link** — `getUserStats` now returns
       `authorChannelId` (first found across matched comments/replies). `renderUserModal`
       renders a "View channel ↗" anchor below the disclaimer when `authorChannelId` is
@@ -450,9 +446,9 @@ docs:     README, CLAUDE.md, code comments only
       CSV, TXT buttons and a "Filtered (N):" label. Hidden on reset.
       *(js/archive-manager.js, js/script.js, index.html)*
 
-#### Low effort
+---
 
-#### Medium effort
+### 🔧 Short term
 
 #### Higher effort
 
