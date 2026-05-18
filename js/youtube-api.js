@@ -55,7 +55,8 @@ const YouTubeAPI = (() => {
     if (!data.items || data.items.length === 0)
       throw new Error('No video found with that ID. It may be private or deleted.');
 
-    const item = data.items[0];
+    const item  = data.items[0];
+    const thumb = item.snippet.thumbnails;
     return {
       id:           videoId,
       title:        item.snippet.title,
@@ -63,7 +64,11 @@ const YouTubeAPI = (() => {
       channelTitle: item.snippet.channelTitle || '',
       channelId:    item.snippet.channelId    || '',
       /* commentCount is a string in the API response; 0 means disabled or unavailable */
-      commentCount: parseInt(item.statistics?.commentCount || '0', 10),
+      commentCount:  parseInt(item.statistics?.commentCount || '0', 10),
+      viewCount:     parseInt(item.statistics?.viewCount    || '0', 10),
+      likeCount:     parseInt(item.statistics?.likeCount    || '0', 10),
+      /* Prefer the highest-res thumbnail available */
+      thumbnailUrl: thumb?.maxres?.url || thumb?.high?.url || thumb?.medium?.url || thumb?.default?.url || '',
     };
   }
 

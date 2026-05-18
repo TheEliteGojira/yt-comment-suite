@@ -531,12 +531,28 @@ body::before {
 
 /* ── Viewer: meta bar ─────────────────────────────────────── */
 #v-meta-bar {
-  display: none;
+  display: none; /* shown as flex by JS */
+  align-items: flex-start;
+  gap: 16px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-left: 3px solid var(--accent);
   padding: 16px 20px;
   margin-bottom: 20px;
+}
+
+#v-meta-thumb-wrap { flex-shrink: 0; }
+
+#v-meta-thumb {
+  display: block;
+  width: 107px; /* 16:9 at 60px height */
+  height: 60px;
+  object-fit: cover;
+}
+
+#v-meta-info {
+  flex: 1;
+  min-width: 0; /* allow text truncation inside flex child */
 }
 
 .meta-title {
@@ -554,6 +570,8 @@ body::before {
   font-size: 11px;
   letter-spacing: 1px;
 }
+
+.meta-stats + .meta-stats { margin-top: 6px; }
 
 .meta-stats span { color: var(--accent); }
 

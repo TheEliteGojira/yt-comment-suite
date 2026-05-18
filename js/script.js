@@ -22,6 +22,9 @@ const AppState = {
   videoPublishedAt:  '',
   videoChannelTitle: '',
   videoChannelId:    '',
+  videoThumbnailUrl: '',
+  videoViewCount:    0,
+  videoLikeCount:    0,
 
   /* Fetch control */
   isFetching:    false,
@@ -140,6 +143,9 @@ async function startFetch() {
   AppState.videoPublishedAt  = '';
   AppState.videoChannelTitle = '';
   AppState.videoChannelId    = '';
+  AppState.videoThumbnailUrl = '';
+  AppState.videoViewCount    = 0;
+  AppState.videoLikeCount    = 0;
   AppState.videoId           = videoId;
 
   /* UI: show progress, hide previous results */
@@ -159,6 +165,9 @@ async function startFetch() {
     AppState.videoPublishedAt  = info.publishedAt;
     AppState.videoChannelTitle = info.channelTitle;
     AppState.videoChannelId    = info.channelId;
+    AppState.videoThumbnailUrl = info.thumbnailUrl;
+    AppState.videoViewCount    = info.viewCount;
+    AppState.videoLikeCount    = info.likeCount;
     UI.setText('a-status-line', `Video: "${info.title}"`);
 
     /* Show a quota estimate so the user knows what they're committing to.
@@ -307,7 +316,16 @@ function openInViewer() {
   UI.show('v-loading');
 
   setTimeout(() => {
-    const exportData  = ArchiveManager.buildNestedExport(AppState.allComments, AppState.videoTitle, AppState.videoPublishedAt, AppState.videoChannelTitle, AppState.videoChannelId);
+    const videoMeta   = {
+      videoTitle:        AppState.videoTitle,
+      videoPublishedAt:  AppState.videoPublishedAt,
+      videoChannelTitle: AppState.videoChannelTitle,
+      videoChannelId:    AppState.videoChannelId,
+      videoThumbnailUrl: AppState.videoThumbnailUrl,
+      videoViewCount:    AppState.videoViewCount,
+      videoLikeCount:    AppState.videoLikeCount,
+    };
+    const exportData  = ArchiveManager.buildNestedExport(AppState.allComments, videoMeta);
     const { threads } = ArchiveManager.parseImport(exportData);
     AppState.threads  = threads;
     loadViewerData(exportData, threads);
@@ -322,6 +340,9 @@ function resetArchiver() {
   AppState.videoPublishedAt  = '';
   AppState.videoChannelTitle = '';
   AppState.videoChannelId    = '';
+  AppState.videoThumbnailUrl = '';
+  AppState.videoViewCount    = 0;
+  AppState.videoLikeCount    = 0;
 
   document.getElementById('a-comment-list').innerHTML = '';
   document.getElementById('a-video-url').value        = '';
@@ -336,12 +357,30 @@ function resetArchiver() {
 /* ─────────────────────────────────────────────────────────────
    ARCHIVER — exports (delegates to ArchiveManager)
    ───────────────────────────────────────────────────────────── */
-function exportJSON() { ArchiveManager.exportJSON(AppState.allComments, AppState.videoTitle, AppState.videoPublishedAt, AppState.videoChannelTitle, AppState.videoChannelId); }
+function exportJSON() {
+  ArchiveManager.exportJSON(AppState.allComments, {
+    videoTitle:        AppState.videoTitle,
+    videoPublishedAt:  AppState.videoPublishedAt,
+    videoChannelTitle: AppState.videoChannelTitle,
+    videoChannelId:    AppState.videoChannelId,
+    videoThumbnailUrl: AppState.videoThumbnailUrl,
+    videoViewCount:    AppState.videoViewCount,
+    videoLikeCount:    AppState.videoLikeCount,
+  });
+}
 function exportCSV()  { ArchiveManager.exportCSV(AppState.allComments,  AppState.videoTitle); }
 function exportTXT()  { ArchiveManager.exportTXT(AppState.allComments,  AppState.videoTitle); }
 
 function exportFiltered(format) {
-  const meta = { videoTitle: AppState.videoTitle, videoPublishedAt: AppState.videoPublishedAt, videoChannelTitle: AppState.videoChannelTitle, videoChannelId: AppState.videoChannelId };
+  const meta = {
+    videoTitle:        AppState.videoTitle,
+    videoPublishedAt:  AppState.videoPublishedAt,
+    videoChannelTitle: AppState.videoChannelTitle,
+    videoChannelId:    AppState.videoChannelId,
+    videoThumbnailUrl: AppState.videoThumbnailUrl,
+    videoViewCount:    AppState.videoViewCount,
+    videoLikeCount:    AppState.videoLikeCount,
+  };
   if (format === 'json') ArchiveManager.exportFilteredJSON(_renderedThreads, meta);
   if (format === 'csv')  ArchiveManager.exportCSV(ArchiveManager.flattenThreads(_renderedThreads), AppState.videoTitle);
   if (format === 'txt')  ArchiveManager.exportTXT(ArchiveManager.flattenThreads(_renderedThreads), AppState.videoTitle);
@@ -422,11 +461,32 @@ function loadViewerData(meta, threads) {
   /* Persist channel ID so the meta-bar click can match by authorChannelId */
   AppState.videoChannelId = meta.videoChannelId || '';
 
+  /* Thumbnail — hide the wrap when URL is absent (older archives) */
+  const thumbImg  = document.getElementById('v-meta-thumb');
+  const thumbWrap = document.getElementById('v-meta-thumb-wrap');
+  if (meta.videoThumbnailUrl) {
+    thumbImg.src          = meta.videoThumbnailUrl;
+    thumbImg.style.display = '';
+    thumbWrap.style.display = '';
+  } else {
+    thumbWrap.style.display = 'none';
+  }
+
+  /* View / like counts — hide the row for archives that predate this feature */
+  if (meta.videoViewCount || meta.videoLikeCount) {
+    UI.setText('v-meta-video-stats',
+      `${UI.fmtCount(meta.videoViewCount)} views · ${UI.fmtCount(meta.videoLikeCount)} likes`
+    );
+    UI.show('v-meta-video-stats');
+  } else {
+    UI.hide('v-meta-video-stats');
+  }
+
   const total = threads.reduce((s, t) => s + 1 + (t.replies?.length || 0), 0);
   UI.setText('v-footer-count', `${UI.fmt(total)} comments loaded`);
 
   /* Show viewer chrome (dots will be hidden by the first render) */
-  UI.show('v-meta-bar');
+  UI.show('v-meta-bar', 'flex');
   UI.show('v-controls', 'flex');
   UI.show('v-result-count');
   UI.show('v-filtered-export-row', 'flex');

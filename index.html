@@ -199,14 +199,20 @@
 
     <!-- Video metadata bar (shown once data is loaded) -->
     <div id="v-meta-bar">
-      <div class="meta-title" id="v-meta-title"></div>
-      <div class="meta-stats">
-        <div>Total <span id="v-meta-total">—</span></div>
-        <div>Top-Level <span id="v-meta-threads">—</span></div>
-        <div>Replies <span id="v-meta-replies">—</span></div>
-        <div>Uploaded <span id="v-meta-uploaded">—</span></div>
-        <div>Exported <span id="v-meta-date">—</span></div>
-        <div>Channel <span id="v-meta-channel">—</span></div>
+      <div id="v-meta-thumb-wrap">
+        <img id="v-meta-thumb" src="" alt="" onerror="this.style.display='none'">
+      </div>
+      <div id="v-meta-info">
+        <div class="meta-title" id="v-meta-title"></div>
+        <div class="meta-stats">
+          <div>Total <span id="v-meta-total">—</span></div>
+          <div>Top-Level <span id="v-meta-threads">—</span></div>
+          <div>Replies <span id="v-meta-replies">—</span></div>
+          <div>Uploaded <span id="v-meta-uploaded">—</span></div>
+          <div>Exported <span id="v-meta-date">—</span></div>
+          <div>Channel <span id="v-meta-channel">—</span></div>
+        </div>
+        <div class="meta-stats" id="v-meta-video-stats" style="display:none"></div>
       </div>
     </div>
 
@@ -468,7 +474,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.34.1</div>
+<div id="version-badge">α 0.35.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>

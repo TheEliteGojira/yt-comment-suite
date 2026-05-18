@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #35 / α 0.35.0
+Video thumbnail, view count, and like count added to the Viewer meta bar. `getVideoInfo` now extracts `thumbnailUrl` (highest-res available from `snippet.thumbnails`), `viewCount`, and `likeCount` from the already-fetched `snippet,statistics` response — no extra API quota. All three fields are stored in `AppState`, threaded through `buildNestedExport` / `exportJSON` / `exportFilteredJSON` (meta object refactor — positional params replaced with a single `meta` object), and persisted in exported JSON so re-imported archives retain them. In the Viewer, `#v-meta-bar` restructured as a flex row: `#v-meta-thumb-wrap` + `#v-meta-info` (title, comment stats, new video stats row). Thumbnail rendered at `107×60px` with `object-fit: cover`; thumb wrap hidden for archives that predate this feature. View/like counts formatted with new `UI.fmtCount` (K/M/B abbreviation) and shown as a second `.meta-stats` row; hidden for older archives. `UI.show('v-meta-bar', 'flex')` updated from `'block'`.
+*(js/youtube-api.js, js/ui.js, js/archive-manager.js, js/script.js, index.html, css/styles.css, CHANGELOG.md)*
+
+---
+
 ## COMMIT #34a / α 0.34.1
 Hotfix: filtered export buttons not appearing when a filter was active. Root cause: `#v-filtered-export-content` was a `<span>` with `align-items` and `gap` baked into its inline `style` alongside `display:none`, creating a fragile cascade when JS toggled `display` to `flex`. Fixed by changing the element to a `<div>` and moving layout properties (`display: flex; align-items: center; gap: 8px; flex-shrink: 0`) into a dedicated CSS rule. Inline style now only carries `display:none` as the initial hidden state. No JS changes.
 *(index.html, css/styles.css, CHANGELOG.md)*

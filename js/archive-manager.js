@@ -27,7 +27,9 @@ const ArchiveManager = (() => {
   }
 
   /* ── Convert current allComments flat array to nested JSON ── */
-  function buildNestedExport(allComments, videoTitle, videoPublishedAt, videoChannelTitle, videoChannelId) {
+  /* meta: { videoTitle, videoPublishedAt, videoChannelTitle, videoChannelId,
+             videoThumbnailUrl, videoViewCount, videoLikeCount }             */
+  function buildNestedExport(allComments, meta) {
     /*
      * Old approach filtered allComments once per top-level comment → O(n²).
      * For 200k threads × 300k total that was ~60 billion iterations.
@@ -64,10 +66,13 @@ const ArchiveManager = (() => {
 
     return {
       exportedAt:            new Date().toISOString(),
-      videoTitle:            videoTitle        || '',
-      videoPublishedAt:      videoPublishedAt  || '',
-      videoChannelTitle:     videoChannelTitle || '',
-      videoChannelId:        videoChannelId    || '',
+      videoTitle:            meta.videoTitle         || '',
+      videoPublishedAt:      meta.videoPublishedAt   || '',
+      videoChannelTitle:     meta.videoChannelTitle  || '',
+      videoChannelId:        meta.videoChannelId     || '',
+      videoThumbnailUrl:     meta.videoThumbnailUrl  || '',
+      videoViewCount:        meta.videoViewCount      || 0,
+      videoLikeCount:        meta.videoLikeCount      || 0,
       totalTopLevelComments: threads.length,
       totalReplies,
       totalComments:         allComments.length,
@@ -206,10 +211,13 @@ const ArchiveManager = (() => {
     const totalReplies = threads.reduce((s, t) => s + (t.replies?.length || 0), 0);
     const payload = {
       exportedAt:            new Date().toISOString(),
-      videoTitle:            meta.videoTitle        || '',
-      videoPublishedAt:      meta.videoPublishedAt  || '',
-      videoChannelTitle:     meta.videoChannelTitle || '',
-      videoChannelId:        meta.videoChannelId    || '',
+      videoTitle:            meta.videoTitle         || '',
+      videoPublishedAt:      meta.videoPublishedAt   || '',
+      videoChannelTitle:     meta.videoChannelTitle  || '',
+      videoChannelId:        meta.videoChannelId     || '',
+      videoThumbnailUrl:     meta.videoThumbnailUrl  || '',
+      videoViewCount:        meta.videoViewCount      || 0,
+      videoLikeCount:        meta.videoLikeCount      || 0,
       totalTopLevelComments: threads.length,
       totalReplies,
       totalComments:         threads.length + totalReplies,
@@ -223,11 +231,13 @@ const ArchiveManager = (() => {
   }
 
   /* ── Export as JSON ─────────────────────────────────────────── */
-  function exportJSON(allComments, videoTitle, videoPublishedAt, videoChannelTitle, videoChannelId) {
-    const payload = buildNestedExport(allComments, videoTitle, videoPublishedAt, videoChannelTitle, videoChannelId);
+  /* meta: { videoTitle, videoPublishedAt, videoChannelTitle, videoChannelId,
+             videoThumbnailUrl, videoViewCount, videoLikeCount }             */
+  function exportJSON(allComments, meta) {
+    const payload = buildNestedExport(allComments, meta);
     downloadBlob(
       JSON.stringify(payload, null, 2),
-      `${safeFilename(videoTitle)}_comments.json`,
+      `${safeFilename(meta.videoTitle)}_comments.json`,
       'application/json'
     );
     return payload; /* also return for in-memory pass-through */

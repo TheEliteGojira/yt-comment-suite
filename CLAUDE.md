@@ -450,6 +450,45 @@ docs:     README, CLAUDE.md, code comments only
 
 ### 🔧 Short term
 
+#### Zero extra quota cost (data already fetched)
+
+- [x] **Video thumbnail in meta bar** — `getVideoInfo` now extracts `thumbnailUrl`
+      (prefers `maxres` → `high` → `medium` → `default`). Stored in `AppState.videoThumbnailUrl`
+      and in exported JSON. `#v-meta-bar` restructured as a flex row: `#v-meta-thumb-wrap`
+      (`107×60px`, `object-fit: cover`) on the left; `#v-meta-info` (title + stats rows) on
+      the right. Thumb wrap hidden for older archives that lack the field.
+      *(js/youtube-api.js, js/script.js, index.html, css/styles.css)*
+
+- [x] **View count and like count in meta bar** — `getVideoInfo` now returns `viewCount` and
+      `likeCount` (integers). Stored in `AppState` and persisted in exported JSON.
+      `UI.fmtCount` helper added (K/M/B abbreviation). Displayed as a second `.meta-stats`
+      row ("12.4M views · 847K likes") inside `#v-meta-info`; hidden for pre-35 archives.
+      `buildNestedExport` / `exportJSON` refactored from positional params to a single `meta`
+      object to cleanly carry all video metadata fields.
+      *(js/youtube-api.js, js/ui.js, js/archive-manager.js, js/script.js, index.html)*
+
+- [ ] **Video description toggle in meta bar** — `snippet.description` is inside the
+      already-fetched snippet but discarded. Store it and render a collapsed "Show
+      description ▾" toggle beneath the meta bar stats row. Clicking expands a
+      `<div class="meta-description">` panel; clicking again collapses it. Truncate at
+      500 characters with a "Show more" expansion if longer. Plain text only — escape
+      the value, do not render raw HTML from the API.
+      *(js/youtube-api.js, js/script.js, index.html, css/styles.css)*
+
+- [ ] **Clickable links in comment text (`textDisplay` rendering)** — the API returns
+      both `textOriginal` (raw with formatting chars) and `textDisplay` (YouTube's
+      HTML-rendered version with real `<a>` tags and `<br>` line breaks). Currently
+      `textOriginal` is stored and escaped. Switch to storing and rendering `textDisplay`
+      with a strict allowlist sanitiser: permit only `<a href target rel>`, `<b>`, `<br>`,
+      `<em>` — strip everything else. This makes URLs in comments clickable and preserves
+      bold/italic. Apply to both `parseThread` and `parseReply` in `youtube-api.js`.
+      The `esc()` function in `ui.js` must not be applied to `textDisplay` content — use
+      the sanitiser instead. Update `exportJSON`/`exportTXT` to continue using
+      `textOriginal` so exports stay clean and unescaped.
+      *(js/youtube-api.js, js/ui.js, js/archive-manager.js)*
+
+---
+
 #### Higher effort
 
 - [ ] **Word frequency panel** — scan the loaded archive and surface the N most-used

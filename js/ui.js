@@ -14,8 +14,17 @@ const UI = (() => {
       .replace(/"/g, '&quot;');
   }
 
-  /* ── Number formatter ─────────────────────────────────────── */
+  /* ── Number formatters ────────────────────────────────────── */
   function fmt(n) { return Number(n || 0).toLocaleString(); }
+
+  /* Abbreviates large numbers to K / M / B for compact display */
+  function fmtCount(n) {
+    const num = Number(n) || 0;
+    if (num >= 1e9) return (num / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+    if (num >= 1e6) return (num / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (num >= 1e3) return (num / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+    return num.toLocaleString();
+  }
 
   /* ── Show / hide an element ───────────────────────────────── */
   function show(id, display = 'block') {
@@ -546,6 +555,7 @@ const UI = (() => {
   return {
     esc,
     fmt,
+    fmtCount,
     show,
     hide,
     setText,
