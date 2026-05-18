@@ -270,14 +270,14 @@ body::before {
 .btn-primary:hover:not(:disabled) { background: var(--accent-dim); }
 
 .btn-primary:disabled {
-  background: #2a2a00;
-  color: var(--text-muted);
+  background: #df1846;
+  color: #000;
   cursor: not-allowed;
 }
 
 [data-theme="light"] .btn-primary:disabled {
-  background: #e8e8c0;
-  color: #999;
+  background: #df1846;
+  color: #000;
 }
 
 .btn-secondary {

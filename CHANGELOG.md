@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #38b / α 0.38.1
+`.btn-primary:disabled` colour changed from dark yellow (`#2a2a00` / `#e8e8c0`) to `#df1846` with black text in both themes. *(css/styles.css, index.html)*
+
+---
+
 ## COMMIT #38 / α 0.38.0
 Pre-fetch quota estimate. An "Estimate" button added to the video URL input row (secondary style, sits left of Fetch). Clicking it calls `getVideoInfo` (1 unit) and displays the result in the existing `#a-quota-estimate` area before any fetch begins: `"Video title" — ~N units estimated (X comments · replies will add more)`, or a "Comments are disabled" notice if `commentCount` is 0. API errors surface in the error box. The button shows "Estimating…" and disables itself during the lookup; both Estimate and Fetch disable together while a full fetch is running and re-enable together on completion. Archiver video title font changed to Syne 800 at 14px. *(js/script.js, index.html, css/styles.css, CHANGELOG.md)*
 
