@@ -881,6 +881,15 @@ footer {
   display: block;
 }
 
+.denton-sprite {
+  image-rendering: pixelated;
+  display: block;
+}
+
+.denton-sprite--light { display: none; }
+[data-theme="light"] .denton-sprite--dark  { display: none; }
+[data-theme="light"] .denton-sprite--light { display: block; }
+
 /* ── About tab ────────────────────────────────────────────── */
 .about-body {
   font-size: 13px;

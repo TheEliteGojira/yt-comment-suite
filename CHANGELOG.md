@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #28 / α 0.28.0
+Added denton sprite to the right of tuan in the About tab sprite row. Two image files: `denton.png` (dark mode) and `denton_light.png` (light mode), swapped via CSS `[data-theme="light"]` on `.denton-sprite--dark` / `.denton-sprite--light`, matching the logo theming pattern. `image-rendering: pixelated` applied. Version badge and README updated to α 0.28.0.
+*(index.html, css/styles.css, assets/denton.png, assets/denton_light.png, README.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #27 / α 0.27.0
 Added `tuan.PNG` sprite to the bottom of the About tab inside `#about-sprite-wrap`. `image-rendering: pixelated` applied so the image stays crisp at any scale. Centred horizontally with `margin-top: 48px` above the footer. To replace with an animated GIF later, update the `src` attribute on `#about-sprite`. Version badge and README updated to α 0.27.0.
 *(index.html, css/styles.css, assets/tuan.PNG, README.md, CHANGELOG.md)*
