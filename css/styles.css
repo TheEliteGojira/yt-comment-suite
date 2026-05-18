@@ -933,9 +933,9 @@ footer {
   image-rendering: pixelated;
   position: absolute;
   right: 0;
-  top: 50%;
-  transform: translateY(calc(-50% + 36px)) scale(2);
-  transform-origin: right center;
+  bottom: 0;
+  transform: scale(2);
+  transform-origin: bottom right;
 }
 
 .denton-sprite--light { display: none; }
