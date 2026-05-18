@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #29 / α 0.28.0
+Two sprite layout fixes. (1) Added `align-items: flex-end` to `#about-sprite-wrap` — default `stretch` was forcing tuan to fill the tallest sibling's height, distorting its aspect ratio and causing the horizontal-squish appearance. (2) Repositioned denton to the far-right edge of the content area via `position: absolute; right: 0; bottom: 0` on `.denton-sprite`, with `position: relative` added to `#about-sprite-wrap`. tuan remains centred; denton now sits independently at the right margin.
+*(css/styles.css, CHANGELOG.md)*
+
+---
+
 ## COMMIT #28 / α 0.28.0
 Added denton sprite to the right of tuan in the About tab sprite row. Two image files: `denton.png` (dark mode) and `denton_light.png` (light mode), swapped via CSS `[data-theme="light"]` on `.denton-sprite--dark` / `.denton-sprite--light`, matching the logo theming pattern. `image-rendering: pixelated` applied. Version badge and README updated to α 0.28.0.
 *(index.html, css/styles.css, assets/denton.png, assets/denton_light.png, README.md, CHANGELOG.md)*

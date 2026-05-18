@@ -873,7 +873,9 @@ footer {
 #about-sprite-wrap {
   display: flex;
   justify-content: center;
+  align-items: flex-end;
   margin-top: 48px;
+  position: relative;
 }
 
 #about-sprite {
@@ -884,6 +886,9 @@ footer {
 .denton-sprite {
   image-rendering: pixelated;
   display: block;
+  position: absolute;
+  right: 0;
+  bottom: 0;
 }
 
 .denton-sprite--light { display: none; }
