@@ -4,6 +4,17 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #39 / α 0.39.0
+Three changes.
+
+**Hover tooltips** — `title` attributes added to the pin (☆/★) and copy (⧉) buttons on all top-level and reply cards in the Viewer, matching their existing `aria-label` values. *(js/ui.js)*
+
+**About tab rewrite** — full content update reflecting all current features. Sections: What is this, Getting an API Key, API Quota Costs (updated to include the Estimate button), Archiver (new section covering estimate, live preview, stop, reply toggle, export formats, open in Viewer), Viewer (new section covering search, sort, filter toggles, date range, pin/bookmark, filtered export, permalinks, copy, timezone, author profiles, meta bar, avatar expiry), Running & Deploying. *(index.html)*
+
+**Hidden text** — the in-joke "It was written by Claude, btvv, so aiGODS stay vvinning" is hidden by default (transparent text, dotted underline as a subtle hint) and revealed on click via `classList.toggle('revealed')`. Delimited by `||` in the source. `.hidden-text` / `.hidden-text.revealed` CSS added. *(index.html, css/styles.css)*
+
+---
+
 ## COMMIT #38b / α 0.38.1
 `.btn-primary:disabled` colour changed from dark yellow (`#2a2a00` / `#e8e8c0`) to `#df1846` with black text in both themes. *(css/styles.css, index.html)*
 

@@ -315,7 +315,7 @@
       <div class="logo-tag">▶ Tube Archive</div>
       <div class="page-title">About<span>This App.</span></div>
       <div class="page-subtitle">
-        How the archiver works, what it costs, and how to get set up.
+        How the archiver works, what it costs, and how to get the most out of it.
       </div>
     </header>
 
@@ -323,17 +323,17 @@
     <div class="panel">
       <div class="panel-label">What is this?</div>
       <p class="about-body">
-        Tube Archiver is a self-contained web app that lets you fetch, browse, and export
-        every public comment under any 'tube video. It runs entirely in your browser —
-        no servers, no accounts, no cloud storage. Your comments and API key never leave 
-        your machine. It was written by Claude, btvv, so aiGODS stay vvinning
+        TubeArchiver is a self-contained browser app for fetching, browsing, and exporting
+        every public comment under any YouTube video. It runs entirely in your browser —
+        no servers, no accounts, no cloud storage. Your comments and API key never leave
+        your machine. <span class="hidden-text" onclick="this.classList.toggle('revealed')">||It was written by Claude, btvv, so aiGODS stay vvinning||</span>
       </p>
       <p class="about-body">
         It is split into two tools that work together:
       </p>
       <ul class="about-list">
-        <li><strong>Archiver</strong> — connects to the YouTube API with your key, paginates through all comment threads and replies, and streams them into a live preview. When done, you can open the archive directly in the Viewer or export it to a file.</li>
-        <li><strong>Viewer</strong> — lets you browse, search, sort, and filter the fetched comments. You can load data directly from the Archiver (no download needed) or drop a previously exported JSON file.</li>
+        <li><strong>Archiver</strong> — connects to the YouTube Data API v3 with your key, paginates through all comment threads and replies, and streams them into a live preview. Estimate the quota cost before committing to a full fetch. When done, open the archive directly in the Viewer or export it to a file.</li>
+        <li><strong>Viewer</strong> — browse, search, sort, filter, and export comments. Load data directly from the Archiver (no file needed) or drop a previously saved JSON archive at any time.</li>
       </ul>
     </div>
 
@@ -341,15 +341,15 @@
     <div class="panel">
       <div class="panel-label">Getting an API Key</div>
       <p class="about-body">
-        The app uses YouTube's official <strong>Data API v3</strong>, which is free up to a daily
-        quota limit. You supply your own key, so you control your own quota.
+        The app uses YouTube's official <strong>Data API v3</strong>, which is free up to a
+        daily quota limit. You supply your own key — you control your own quota.
       </p>
       <ol class="about-list">
         <li>Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a></li>
         <li>Create a new project (or select an existing one)</li>
         <li>Click <strong>Enable APIs &amp; Services</strong> → search for <strong>YouTube Data API v3</strong> → Enable</li>
         <li>Go to <strong>Credentials</strong> → <strong>Create Credentials</strong> → <strong>API Key</strong></li>
-        <li>Copy the key (it starts with <code>AIza</code>) and paste it into the Archiver tab</li>
+        <li>Copy the key (starts with <code>AIza</code>) and paste it into the Archiver tab</li>
       </ol>
       <p class="about-body" style="margin-top: 12px;">
         Your key is saved in your browser's local storage so you only need to enter it once.
@@ -357,27 +357,24 @@
       </p>
     </div>
 
-    <!-- Quota costs — the main reference table -->
+    <!-- Quota costs -->
     <div class="panel">
       <div class="panel-label">API Quota Costs</div>
       <p class="about-body">
         YouTube gives every project <strong>10,000 units per day</strong> for free.
-        Quota resets at midnight Pacific Time. Here is exactly what each operation costs:
+        Quota resets at midnight Pacific Time. Use the <strong>Estimate</strong> button
+        next to the URL field to check the cost of any video before fetching.
       </p>
 
       <table class="about-table">
         <thead>
-          <tr>
-            <th>Operation</th>
-            <th>Units</th>
-            <th>Notes</th>
-          </tr>
+          <tr><th>Operation</th><th>Units</th><th>Notes</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td>Fetch video title/metadata</td>
+            <td>Fetch video metadata / Estimate</td>
             <td class="units">1</td>
-            <td>Done once per fetch, at the start</td>
+            <td>Once per fetch or estimate</td>
           </tr>
           <tr>
             <td>One page of comment threads</td>
@@ -387,12 +384,10 @@
           <tr>
             <td>One page of replies (overflow)</td>
             <td class="units">1</td>
-            <td>Only triggered when a thread has more than 5 replies</td>
+            <td>Only when a thread has more than 5 replies</td>
           </tr>
           <tr class="table-note-row">
-            <td colspan="3">
-              Threads with ≤5 replies are included free inside the thread response — no extra call needed.
-            </td>
+            <td colspan="3">Threads with ≤5 replies are bundled free in the thread response — no extra call needed.</td>
           </tr>
         </tbody>
       </table>
@@ -400,45 +395,55 @@
       <p class="about-body" style="margin-top: 16px;"><strong>Practical estimates:</strong></p>
       <table class="about-table">
         <thead>
-          <tr>
-            <th>Video size</th>
-            <th>Approx. comments</th>
-            <th>Approx. units used</th>
-          </tr>
+          <tr><th>Video size</th><th>Approx. comments</th><th>Approx. units</th></tr>
         </thead>
         <tbody>
-          <tr><td>Small</td>    <td>~500</td>     <td>~6–10</td></tr>
-          <tr><td>Medium</td>   <td>~5,000</td>   <td>~55–80</td></tr>
-          <tr><td>Large</td>    <td>~50,000</td>  <td>~550–900</td></tr>
-          <tr><td>Viral</td>    <td>~200,000</td> <td>~2,100–4,000</td></tr>
-          <tr><td>Massive</td>  <td>~500,000+</td><td>May exceed daily quota</td></tr>
+          <tr><td>Small</td>    <td>~500</td>      <td>~6–10</td></tr>
+          <tr><td>Medium</td>   <td>~5,000</td>    <td>~55–80</td></tr>
+          <tr><td>Large</td>    <td>~50,000</td>   <td>~550–900</td></tr>
+          <tr><td>Viral</td>    <td>~200,000</td>  <td>~2,100–4,000</td></tr>
+          <tr><td>Massive</td>  <td>~500,000+</td> <td>May exceed daily quota</td></tr>
         </tbody>
       </table>
 
       <p class="about-body" style="margin-top: 14px;">
-        Reply-heavy videos cost more because each thread with more than 5 replies requires
-        its own API call. A video where most top-level comments have long reply chains
-        can cost 2–3× more than the thread count alone suggests.
-      </p>
-      <p class="about-body">
-        If you hit the quota limit mid-fetch, the app will show a clear error message.
-        You can export whatever was captured before the limit was hit, then continue the next day
-        with a fresh quota — or use a second API key from a different Google Cloud project.
+        Reply-heavy videos cost more — each thread with more than 5 replies requires its own
+        API call. A video with long reply chains can cost 2–3× more than the top-level count
+        alone suggests. If you hit the limit mid-fetch, the app shows a clear error. You can
+        export whatever was captured and continue the next day, or use a second key from a
+        different Google Cloud project.
       </p>
     </div>
 
-    <!-- Workflow tips -->
+    <!-- Archiver features -->
     <div class="panel">
-      <div class="panel-label">Workflow Tips</div>
+      <div class="panel-label">Archiver</div>
       <ul class="about-list">
-        <li><strong>No download needed:</strong> After fetching, click "→ Open in Viewer" to browse immediately. The data passes in memory — no file created.</li>
-        <li><strong>Save for later:</strong> Export to JSON to archive a video's comments permanently. Drop the file back into the Viewer at any time without re-fetching.</li>
-        <li><strong>Searching replies:</strong> When you search, threads with a matching reply are shown with all their replies visible — matching ones are highlighted, non-matching ones are dimmed so you see the full conversation context.</li>
-        <li><strong>Sort by Most Liked:</strong> Useful for finding the community's top reactions quickly. Sorting applies to top-level comments; replies always stay in chronological order under their parent.</li>
-        <li><strong>Timezone:</strong> All timestamps are stored as UTC in the JSON. The Viewer converts them to whichever timezone you select — you can switch freely without re-loading.</li>
-        <li><strong>Stopping early:</strong> The Stop button halts after the current page finishes. You can still export or open in the Viewer with whatever was fetched up to that point.</li>
-        <li><strong>Author profiles:</strong> In the Viewer, click any commenter's name to open a profile panel showing all of their activity in the loaded archive — comment count, reply count, total likes, and a full history. You can also click the channel name in the video info bar to see the video author's comments. Note that YouTube display names are not unique; the panel is scoped to the current archive only and makes no identity claims across videos.</li>
-        <li><strong>Profile picture expiry:</strong> Avatar URLs are fetched live from Google's CDN at archive time and stored in the JSON. They may expire or become outdated if a user later changes their profile picture. If an avatar fails to load, a grey placeholder is shown instead. Re-fetching the video will capture the current picture.</li>
+        <li><strong>Estimate before fetching:</strong> Click <strong>Estimate</strong> next to the URL field to fetch just the video metadata (1 unit) and see the projected quota cost before starting a full fetch.</li>
+        <li><strong>Live preview:</strong> Comments stream in as they are fetched, up to 100 in the preview pane. The full archive is always available in the Viewer.</li>
+        <li><strong>Stop and resume:</strong> The Stop button halts after the current page finishes. You can export or open in the Viewer with whatever was captured.</li>
+        <li><strong>Include replies toggle:</strong> Disable reply fetching to reduce quota usage on reply-heavy videos. Top-level comments only.</li>
+        <li><strong>Export formats:</strong> JSON (re-importable, nested structure), CSV (spreadsheet-compatible, flat), and plain TXT. All exports use the original unformatted text — no HTML tags.</li>
+        <li><strong>Open in Viewer:</strong> Passes the archive directly to the Viewer in memory — no file download required.</li>
+      </ul>
+    </div>
+
+    <!-- Viewer features -->
+    <div class="panel">
+      <div class="panel-label">Viewer</div>
+      <ul class="about-list">
+        <li><strong>Search:</strong> Filters comments and replies in real time. Matches are highlighted; non-matching replies in a matched thread are dimmed so you can read the full conversation context. Search operates on plain text — it never matches inside HTML formatting.</li>
+        <li><strong>Sort:</strong> Newest first, oldest first, or most liked. Applies to top-level comments; replies always stay in chronological order under their parent.</li>
+        <li><strong>Filter toggles:</strong> Show or hide top-level comments and/or replies independently. Combine with search for fine-grained results.</li>
+        <li><strong>Date range:</strong> Narrow the feed to comments posted between two dates. Clears with the ✕ button.</li>
+        <li><strong>Pin / bookmark:</strong> Click ☆ on any top-level comment to pin it. Use the ★ Pinned filter to view only pinned comments. Pins are session-only and clear on reset.</li>
+        <li><strong>Export filtered results:</strong> The export row shows the current count and always visible once a file is loaded. Label reads "All (N):" or "Filtered (N):" depending on active filters. Exports the current view as JSON, CSV, or TXT.</li>
+        <li><strong>Permalinks ↗:</strong> Every comment and reply card has a link that opens that specific comment on YouTube in a new tab.</li>
+        <li><strong>Copy ⧉:</strong> Copies the plain text of any comment or reply to the clipboard. Confirms with ✓ for 1.5 seconds.</li>
+        <li><strong>Timezone:</strong> All timestamps are stored as UTC. The Viewer converts to your chosen timezone on the fly — switch freely without reloading.</li>
+        <li><strong>Author profiles:</strong> Click any commenter's name to open a profile panel showing all their activity in the loaded archive — comment count, reply count, total likes, and full history. Hover a name for a quick summary tooltip. Click the channel name in the meta bar to see the video author's comments. Profiles are scoped to the current archive only.</li>
+        <li><strong>Video meta bar:</strong> Shows the video thumbnail, linked title, view and like counts, and a collapsible description panel. All data is stored in the JSON so it survives re-import.</li>
+        <li><strong>Profile picture expiry:</strong> Avatar URLs are captured at fetch time. They may expire if a user changes their picture. Failed avatars show a grey placeholder. Re-fetching captures the current picture.</li>
       </ul>
     </div>
 
@@ -446,17 +451,17 @@
     <div class="panel">
       <div class="panel-label">Running &amp; Deploying</div>
       <p class="about-body">
-        Because the app calls the YouTube API, it must be served over HTTP — opening
-        <code>index.html</code> as a local file will cause CORS errors. The quickest local server:
+        The app must be served over HTTP — opening <code>index.html</code> as a local file
+        causes CORS errors. The quickest local server:
       </p>
       <pre class="about-code">cd yt-comment-suite
 python3 -m http.server 8080
 # Then open: http://localhost:8080</pre>
       <p class="about-body" style="margin-top: 14px;">
-        To share with others, drag the <code>yt-comment-suite/</code> folder onto
+        To share publicly, drag the <code>yt-comment-suite/</code> folder onto
         <a href="https://app.netlify.com/drop" target="_blank" rel="noopener">app.netlify.com/drop</a>
-        for a free public URL in about 30 seconds. No account required.
-        GitHub Pages is also free and redeploys automatically on every <code>git push</code>.
+        for a free URL in about 30 seconds. GitHub Pages also works and redeploys
+        automatically on every <code>git push</code>.
       </p>
     </div>
 
@@ -484,7 +489,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.38.1</div>
+<div id="version-badge">α 0.39.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>

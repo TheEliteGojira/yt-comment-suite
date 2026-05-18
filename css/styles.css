@@ -1145,6 +1145,21 @@ footer {
   margin-top: 10px;
 }
 
+/* ── About tab hidden text ────────────────────────────────── */
+.hidden-text {
+  color: transparent;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px dotted var(--border);
+  transition: color 0.3s;
+}
+
+.hidden-text.revealed {
+  color: var(--text-muted);
+  user-select: text;
+  border-bottom-color: transparent;
+}
+
 /* ── User profile modal ───────────────────────────────────── */
 .modal-overlay {
   position: fixed;

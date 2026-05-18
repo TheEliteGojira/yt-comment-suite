@@ -285,8 +285,8 @@ const UI = (() => {
         <span class="c-date">${formatDate(thread.publishedAt, tz)}</span>
         ${threadLink}
         <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(thread.likeCount)}</span></span>
-        <button class="c-pin${isPinned ? ' c-pin--active' : ''}" data-comment-id="${esc(thread.id)}" aria-label="Pin comment">${isPinned ? '★' : '☆'}</button>
-        <button class="c-copy" aria-label="Copy comment text">⧉</button>
+        <button class="c-pin${isPinned ? ' c-pin--active' : ''}" data-comment-id="${esc(thread.id)}" aria-label="Pin comment" title="Pin comment">${isPinned ? '★' : '☆'}</button>
+        <button class="c-copy" aria-label="Copy comment text" title="Copy comment text">⧉</button>
       </div>
       <div class="c-text">${sanitiseDisplay(thread.text || '')}</div>
     `;
@@ -343,7 +343,7 @@ const UI = (() => {
             <span class="c-date">${formatDate(r.publishedAt, tz)}</span>
             ${replyLink}
             <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(r.likeCount)}</span></span>
-            <button class="c-copy" aria-label="Copy reply text">⧉</button>
+            <button class="c-copy" aria-label="Copy reply text" title="Copy reply text">⧉</button>
           </div>
           <div class="c-text">${sanitiseDisplay(r.text || '')}</div>
         `;
