@@ -869,6 +869,18 @@ footer {
   gap: 8px;
 }
 
+/* ── About tab sprite ─────────────────────────────────────── */
+#about-sprite-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 48px;
+}
+
+#about-sprite {
+  image-rendering: pixelated;
+  display: block;
+}
+
 /* ── About tab ────────────────────────────────────────────── */
 .about-body {
   font-size: 13px;

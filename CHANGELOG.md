@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #27 / α 0.27.0
+Added `tuan.PNG` sprite to the bottom of the About tab inside `#about-sprite-wrap`. `image-rendering: pixelated` applied so the image stays crisp at any scale. Centred horizontally with `margin-top: 48px` above the footer. To replace with an animated GIF later, update the `src` attribute on `#about-sprite`. Version badge and README updated to α 0.27.0.
+*(index.html, css/styles.css, assets/tuan.PNG, README.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #26 / α 0.26.0
 Moved "✕ Load a different file" button from below the comment feed to above it so it is visible without scrolling. Color changed from orange (`--accent2`) to `--border`/`--text-muted` so it blends with surrounding UI; hover fills with `--border` and text shifts to `--text`. `margin-top` replaced with `margin-bottom`. Version badge and README updated to α 0.26.0.
 *(index.html, css/styles.css, README.md, CHANGELOG.md)*
