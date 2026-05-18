@@ -260,6 +260,9 @@
       <span></span><span></span><span></span>
     </div>
 
+    <!-- Reset / load different file -->
+    <button id="v-reset-btn" onclick="resetViewer()">✕ Load a different file</button>
+
     <!-- Comment feed (rendered by script.js) -->
     <div id="v-comment-feed"></div>
 
@@ -268,9 +271,6 @@
       <div class="no-results-title">No results found.</div>
       <div>Try a different keyword or adjust the filters.</div>
     </div>
-
-    <!-- Reset / load different file -->
-    <button id="v-reset-btn" onclick="resetViewer()">✕ Load a different file</button>
 
     <footer>
       <span>Tube Archiver</span>
@@ -452,7 +452,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.25.0</div>
+<div id="version-badge">α 0.26.0</div>
 
 </body>
 </html>

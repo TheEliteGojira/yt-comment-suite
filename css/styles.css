@@ -844,15 +844,15 @@ body::before {
   letter-spacing: 2px;
   text-transform: uppercase;
   padding: 10px 18px;
-  border: 1px solid var(--accent2);
+  border: 1px solid var(--border);
   background: transparent;
-  color: var(--accent2);
+  color: var(--text-muted);
   cursor: pointer;
-  margin-top: 20px;
+  margin-bottom: 20px;
   transition: all 0.15s;
 }
 
-#v-reset-btn:hover { background: var(--accent2); color: #000; }
+#v-reset-btn:hover { background: var(--border); color: var(--text); }
 
 /* ── Footer ───────────────────────────────────────────────── */
 footer {

@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #26 / α 0.26.0
+Moved "✕ Load a different file" button from below the comment feed to above it so it is visible without scrolling. Color changed from orange (`--accent2`) to `--border`/`--text-muted` so it blends with surrounding UI; hover fills with `--border` and text shifts to `--text`. `margin-top` replaced with `margin-bottom`. Version badge and README updated to α 0.26.0.
+*(index.html, css/styles.css, README.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #25 / α 0.25.0
 Channel owner avatar fetch and cannot-render state. `getChannelThumbnail(channelId, apiKey)` added to `youtube-api.js` — calls `channels?part=snippet` (1 unit) and returns the medium or default thumbnail URL. Meta-bar click handler made async: if the owner has no comments and no avatarUrl was found, attempts to fetch via `getChannelThumbnail` using the stored API key. If no key is available (e.g. JSON-only session) or the fetch fails, `cannotRender = true` is passed to `renderUserModal`. `renderUserModal` accepts a second `cannotRender` param (default false): renders a `modal-avatar--cannot-render` div with "CAN'T RENDER" text and a `modal-avatar-note` explaining that an API key is required to load channel thumbnails from a saved archive. Version badge and README updated to α 0.25.0.
 *(js/youtube-api.js, js/script.js, js/ui.js, css/styles.css, index.html, README.md, CHANGELOG.md)*
