@@ -102,6 +102,58 @@ function switchTab(name, btn) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   ARCHIVER — quota estimate (1 unit, no side effects on AppState)
+   ───────────────────────────────────────────────────────────── */
+async function estimateCost() {
+  if (AppState.isFetching) return;
+
+  const apiKey     = document.getElementById('a-api-key').value.trim();
+  const videoInput = document.getElementById('a-video-url').value.trim();
+
+  UI.hideError('a-error-box');
+
+  if (!apiKey) {
+    UI.showError('a-error-box', 'Please enter your YouTube Data API v3 key.');
+    return;
+  }
+  if (!videoInput) {
+    UI.showError('a-error-box', 'Please enter a YouTube URL or video ID.');
+    return;
+  }
+
+  const videoId = extractVideoId(videoInput);
+  if (!videoId) {
+    UI.showError('a-error-box', 'Could not find a valid YouTube video ID in that URL. Supported formats: youtube.com/watch?v=..., youtu.be/..., shorts/...');
+    return;
+  }
+
+  const btn = document.getElementById('a-estimate-btn');
+  btn.disabled    = true;
+  btn.textContent = 'Estimating…';
+  UI.hide('a-quota-estimate');
+  UI.setText('a-quota-estimate', '');
+
+  try {
+    const info = await YouTubeAPI.getVideoInfo(videoId, apiKey);
+    if (info.commentCount > 0) {
+      const minUnits = Math.ceil(info.commentCount / 100);
+      UI.setText('a-quota-estimate',
+        `"${info.title}" — ~${minUnits.toLocaleString()} unit${minUnits === 1 ? '' : 's'} estimated ` +
+        `(${info.commentCount.toLocaleString()} comments · replies will add more)`
+      );
+    } else {
+      UI.setText('a-quota-estimate', `"${info.title}" — Comments are disabled on this video.`);
+    }
+    UI.show('a-quota-estimate');
+  } catch (e) {
+    UI.showError('a-error-box', `Could not fetch estimate: ${e.message}`);
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Estimate';
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
    ARCHIVER — fetch orchestration
    ───────────────────────────────────────────────────────────── */
 async function startFetch() {
@@ -151,7 +203,8 @@ async function startFetch() {
   AppState.videoId           = videoId;
 
   /* UI: show progress, hide previous results */
-  document.getElementById('a-fetch-btn').disabled = true;
+  document.getElementById('a-fetch-btn').disabled    = true;
+  document.getElementById('a-estimate-btn').disabled = true;
   document.getElementById('a-comment-list').innerHTML = '';
   UI.hide('a-results-section');
   UI.hide('a-open-viewer-btn');
@@ -287,7 +340,8 @@ function finishFetch(reason) {
   /* Stop the buffering dots */
   UI.hide('a-dot-loader');
 
-  document.getElementById('a-fetch-btn').disabled = false;
+  document.getElementById('a-fetch-btn').disabled    = false;
+  document.getElementById('a-estimate-btn').disabled = false;
   document.getElementById('a-progress-label').classList.remove('pulsing');
 
   if (reason === 'complete') {

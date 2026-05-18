@@ -79,6 +79,9 @@
           class="input-field"
           placeholder="https://youtube.com/watch?v=… or youtu.be/… or video ID"
         >
+        <button class="btn btn-secondary btn-sm" id="a-estimate-btn" onclick="estimateCost()">
+          Estimate
+        </button>
         <button class="btn btn-primary" id="a-fetch-btn" onclick="startFetch()">
           Fetch
         </button>
@@ -481,7 +484,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.37.1</div>
+<div id="version-badge">α 0.38.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>
