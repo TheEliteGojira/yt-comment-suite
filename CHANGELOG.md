@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #30 / α 0.29.0
+Removed tuan sprite from the About tab (file kept in assets for future use). Upscaled denton by 1.5× via `transform: scale(1.5); transform-origin: bottom right` — preserves pixel-art crispness and anchors the scale to the bottom-right position.
+*(index.html, css/styles.css, CHANGELOG.md)*
+
+---
+
 ## COMMIT #29b / α 0.29.0
 Updated version badge from α 0.28.0 to α 0.29.0 to correct the mismatch introduced in commit 29.
 *(index.html, README.md, CHANGELOG.md)*
