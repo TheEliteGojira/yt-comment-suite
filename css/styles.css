@@ -575,6 +575,48 @@ body::before {
 
 .meta-stats span { color: var(--accent); }
 
+/* Clickable video title in Viewer meta bar */
+.meta-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+.meta-title-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Description toggle button */
+.meta-desc-toggle {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+.meta-desc-toggle:hover { color: var(--text); }
+
+/* Expandable description panel */
+.meta-description {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.meta-desc-more {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0;
+}
+
 /* Channel name in meta bar is clickable when an archive is loaded */
 .meta-link {
   cursor: pointer;
@@ -882,6 +924,13 @@ body::before {
 
 /* Non-matching replies are dimmed during search so matches stand out */
 .reply-card.reply-dimmed { opacity: 0.35; }
+
+/* ── Links inside sanitised comment text ──────────────────── */
+.c-text a {
+  color: var(--blu);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 /* ── No results ───────────────────────────────────────────── */
 #v-no-results {

@@ -4,6 +4,19 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #36 / α 0.36.0
+Three zero-extra-quota Short Term features completed in one pass.
+
+**Video description toggle** — `getVideoInfo` now returns `description` from the already-fetched `snippet`. Stored in `AppState.videoDescription` and persisted in exported JSON. Viewer meta bar: `#v-desc-toggle` button + `#v-meta-description` panel added to `#v-meta-info`. Toggle label cycles "Show description ▾ / Hide description ▴". Content truncated at 500 chars with an inline "Show more" button for longer descriptions. `UI.esc()` used throughout (plain text only — no raw API HTML).
+
+**Archiver info bar + title links** — After a successful metadata fetch the Archiver tab now shows `#a-video-info-bar`: thumbnail image on the left, linked video title (`<a class="a-video-title-link">`) on the right pointing to `youtube.com/watch?v=…`. Shown as `display: flex`; cleared and hidden by `resetArchiver`. In the Viewer, the title in `#v-meta-bar` is rendered as `<a class="meta-title-link">` when `meta.videoId` is present, plain text otherwise.
+
+**Clickable links in comment text (`textDisplay` rendering)** — `parseThread` and `parseReply` now store both `text` (`textDisplay` HTML, for rendering) and `textOriginal` (plain text, for exports/search). `sanitiseDisplay(html)` added to `ui.js`: DOMParser-based allowlist (`<a>`, `<b>`, `<br>`, `<em>`, `<strong>`); forces `target="_blank" rel="noopener noreferrer"` on all anchors; only allows `https?://` hrefs; unwraps disallowed tags (keeps their text children). `applyHighlight(el, query)` added: TreeWalker-based text-node highlighter — never mutates attribute values, safe for sanitised HTML content. All comment cards render via `sanitiseDisplay`; search filter and all export formats continue using `textOriginal`. `filterThreads` updated to search `textOriginal` (avoids false matches inside HTML tag names/attributes).
+
+*(js/youtube-api.js, js/ui.js, js/archive-manager.js, js/script.js, index.html, css/styles.css, CLAUDE.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #35a / α 0.35.1
 Hotfix: Viewer export buttons only appeared when a filter was active, making it impossible to export an unfiltered archive from the Viewer. Removed the `isFiltered` gate from `_updateFilteredExportRow` — the export content now shows whenever `_renderedThreads.length > 0`. Label updates dynamically: "All (N):" when no filter is active, "Filtered (N):" when one is. *(js/script.js, index.html, CHANGELOG.md)*
 

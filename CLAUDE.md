@@ -139,19 +139,25 @@ New colours must be added to `:root` first before use anywhere else.
 5. **`AppState` is the single source of truth** for all runtime data (`script.js`):
    ```js
    {
-     allComments:       [],   // flat array used by archiver
-     threads:           [],   // nested array used by viewer
-     videoTitle:        '',
-     videoId:           '',
-     videoPublishedAt:  '',
-     videoChannelTitle: '',
-     videoChannelId:    '',   // used for authorChannelId fallback in getUserStats
-     isFetching:        false,
-     stopRequested:     false,
-     currentSort:       'newest',
-     showComments:      true,
-     showReplies:       true,
-     previewCount:      0,    // live preview item count (capped at 100)
+     allComments:         [],   // flat array used by archiver
+     threads:             [],   // nested array used by viewer
+     videoTitle:          '',
+     videoId:             '',
+     videoPublishedAt:    '',
+     videoChannelTitle:   '',
+     videoChannelId:      '',   // used for authorChannelId fallback in getUserStats
+     videoThumbnailUrl:   '',
+     videoViewCount:      0,
+     videoLikeCount:      0,
+     videoDescription:    '',
+     isFetching:          false,
+     stopRequested:       false,
+     currentSort:         'newest',
+     showComments:        true,
+     showReplies:         true,
+     showPinnedOnly:      false,
+     pinnedIds:           new Set(),
+     previewCount:        0,    // live preview item count (capped at 100)
    }
    ```
 
@@ -212,6 +218,45 @@ const avatarHtml = stats.avatarUrl
        onerror="this.style.display='none'">`
   : `<div class="modal-avatar modal-avatar--placeholder"></div>`;
 ```
+
+---
+
+## Denton
+
+Denton is a 64×64px pixel-art sprite (`assets/denton.png`) displayed in the About tab.
+
+**Placement:** `#about-sprite-wrap` sits *after* `<footer>` in the About tab HTML — not
+inside it. This prevents the scaled sprite from clipping into the footer text.
+
+**CSS rules:**
+```css
+#about-sprite-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-top: 48px;
+  position: relative;
+  min-height: 160px;  /* must be ≥ scaled height (128px) to avoid clipping */
+}
+
+.denton-sprite {
+  image-rendering: pixelated;     /* preserve pixel-art crispness at any DPI */
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  transform: scale(2);            /* 64px → 128px rendered size */
+  transform-origin: bottom right; /* anchor scale to bottom-right corner */
+}
+```
+
+**Rules:**
+- Native size is 64×64px. `scale(2)` gives 128×128px visual size.
+- `image-rendering: pixelated` is mandatory — never use `auto` or `smooth`.
+- `transform-origin: bottom right` keeps the sprite floor-anchored.
+- `min-height` on the wrapper must stay ≥ the scaled height; currently 160px leaves 32px
+  of breathing room above the sprite.
+- Do not move the sprite or alter its scale without updating `min-height` accordingly.
+- Do not apply filters, opacity, or animation to the sprite.
 
 ---
 
@@ -316,6 +361,31 @@ docs:     README, CLAUDE.md, code comments only
 ---
 
 ### ✅ Completed
+
+- [x] **Video description toggle in meta bar** — `getVideoInfo` now returns `description`
+      from the already-fetched `snippet`. Stored in `AppState.videoDescription` and in
+      exported JSON. Viewer: `#v-meta-description` panel + `#v-desc-toggle` button added
+      to `#v-meta-info`. Toggle shows "Show description ▾ / Hide description ▴". Content
+      truncated at 500 chars with an inline "Show more" button if longer. `UI.esc()` used
+      throughout — plain text only, no raw API HTML. `resetViewer` hides both elements.
+      *(js/youtube-api.js, js/script.js, index.html, css/styles.css)*
+
+- [x] **Archiver thumbnail + title link; Viewer title link** — After a successful
+      metadata fetch, `#a-video-info-bar` is populated with the video thumbnail (`<img>`)
+      and a linked title (`<a class="a-video-title-link">` → YouTube URL). Shown as
+      `display: flex`; cleared and hidden by `resetArchiver`. In the Viewer, the title
+      in `#v-meta-bar` is wrapped in `<a class="meta-title-link">` when `meta.videoId`
+      is present (links to `youtube.com/watch?v=…`), plain `textContent` otherwise.
+      *(js/script.js, index.html, css/styles.css)*
+
+- [x] **Clickable links in comment text (`textDisplay` rendering)** — Both `parseThread`
+      and `parseReply` now store `text: textDisplay` (HTML) and `textOriginal: textOriginal`
+      (plain). `sanitiseDisplay(html)` added to `ui.js`: DOMParser-based allowlist
+      (`<a>`, `<b>`, `<br>`, `<em>`, `<strong>`); forces `target="_blank" rel="noopener noreferrer"`
+      on anchors, only permits `https?://` hrefs, unwraps disallowed tags. `applyHighlight(el, query)`
+      added: TreeWalker-based text-node highlighter — never touches attribute values.
+      All comment text renders via `sanitiseDisplay`; exports/search use `textOriginal`.
+      *(js/youtube-api.js, js/ui.js, js/archive-manager.js)*
 
 - [x] **Avatar in user profile modal** — store `authorProfileImageUrl` as `authorAvatar`
       on every comment and reply; pass `avatarUrl` through `getUserStats`; render as
@@ -449,45 +519,6 @@ docs:     README, CLAUDE.md, code comments only
 ---
 
 ### 🔧 Short term
-
-#### Zero extra quota cost (data already fetched)
-
-- [x] **Video thumbnail in meta bar** — `getVideoInfo` now extracts `thumbnailUrl`
-      (prefers `maxres` → `high` → `medium` → `default`). Stored in `AppState.videoThumbnailUrl`
-      and in exported JSON. `#v-meta-bar` restructured as a flex row: `#v-meta-thumb-wrap`
-      (`107×60px`, `object-fit: cover`) on the left; `#v-meta-info` (title + stats rows) on
-      the right. Thumb wrap hidden for older archives that lack the field.
-      *(js/youtube-api.js, js/script.js, index.html, css/styles.css)*
-
-- [x] **View count and like count in meta bar** — `getVideoInfo` now returns `viewCount` and
-      `likeCount` (integers). Stored in `AppState` and persisted in exported JSON.
-      `UI.fmtCount` helper added (K/M/B abbreviation). Displayed as a second `.meta-stats`
-      row ("12.4M views · 847K likes") inside `#v-meta-info`; hidden for pre-35 archives.
-      `buildNestedExport` / `exportJSON` refactored from positional params to a single `meta`
-      object to cleanly carry all video metadata fields.
-      *(js/youtube-api.js, js/ui.js, js/archive-manager.js, js/script.js, index.html)*
-
-- [ ] **Video description toggle in meta bar** — `snippet.description` is inside the
-      already-fetched snippet but discarded. Store it and render a collapsed "Show
-      description ▾" toggle beneath the meta bar stats row. Clicking expands a
-      `<div class="meta-description">` panel; clicking again collapses it. Truncate at
-      500 characters with a "Show more" expansion if longer. Plain text only — escape
-      the value, do not render raw HTML from the API.
-      *(js/youtube-api.js, js/script.js, index.html, css/styles.css)*
-
-- [ ] **Clickable links in comment text (`textDisplay` rendering)** — the API returns
-      both `textOriginal` (raw with formatting chars) and `textDisplay` (YouTube's
-      HTML-rendered version with real `<a>` tags and `<br>` line breaks). Currently
-      `textOriginal` is stored and escaped. Switch to storing and rendering `textDisplay`
-      with a strict allowlist sanitiser: permit only `<a href target rel>`, `<b>`, `<br>`,
-      `<em>` — strip everything else. This makes URLs in comments clickable and preserves
-      bold/italic. Apply to both `parseThread` and `parseReply` in `youtube-api.js`.
-      The `esc()` function in `ui.js` must not be applied to `textDisplay` content — use
-      the sanitiser instead. Update `exportJSON`/`exportTXT` to continue using
-      `textOriginal` so exports stay clean and unescaped.
-      *(js/youtube-api.js, js/ui.js, js/archive-manager.js)*
-
----
 
 #### Higher effort
 

@@ -63,6 +63,7 @@ const YouTubeAPI = (() => {
       publishedAt:  item.snippet.publishedAt  || '',
       channelTitle: item.snippet.channelTitle || '',
       channelId:    item.snippet.channelId    || '',
+      description:  item.snippet.description  || '',
       /* commentCount is a string in the API response; 0 means disabled or unavailable */
       commentCount:  parseInt(item.statistics?.commentCount || '0', 10),
       viewCount:     parseInt(item.statistics?.viewCount    || '0', 10),
@@ -128,7 +129,8 @@ const YouTubeAPI = (() => {
       author:          s.authorDisplayName,
       authorChannelId: s.authorChannelId?.value || '',
       authorAvatar:    s.authorProfileImageUrl  || '',
-      text:            s.textOriginal || s.textDisplay || '',
+      text:            s.textDisplay   || s.textOriginal || '',  /* HTML — for rendering */
+      textOriginal:    s.textOriginal  || '',                    /* plain  — for exports/search */
       likeCount:       s.likeCount   || 0,
       publishedAt:     s.publishedAt,
       updatedAt:       s.updatedAt,
@@ -149,7 +151,8 @@ const YouTubeAPI = (() => {
       author:          s.authorDisplayName,
       authorChannelId: s.authorChannelId?.value || '',
       authorAvatar:    s.authorProfileImageUrl  || '',
-      text:            s.textOriginal || s.textDisplay || '',
+      text:            s.textDisplay   || s.textOriginal || '',  /* HTML — for rendering */
+      textOriginal:    s.textOriginal  || '',                    /* plain  — for exports/search */
       likeCount:       s.likeCount   || 0,
       publishedAt:     s.publishedAt,
       updatedAt:       s.updatedAt,

@@ -66,6 +66,7 @@ const ArchiveManager = (() => {
 
     return {
       exportedAt:            new Date().toISOString(),
+      videoId:               meta.videoId            || '',
       videoTitle:            meta.videoTitle         || '',
       videoPublishedAt:      meta.videoPublishedAt   || '',
       videoChannelTitle:     meta.videoChannelTitle  || '',
@@ -73,6 +74,7 @@ const ArchiveManager = (() => {
       videoThumbnailUrl:     meta.videoThumbnailUrl  || '',
       videoViewCount:        meta.videoViewCount      || 0,
       videoLikeCount:        meta.videoLikeCount      || 0,
+      videoDescription:      meta.videoDescription   || '',
       totalTopLevelComments: threads.length,
       totalReplies,
       totalComments:         allComments.length,
@@ -169,8 +171,12 @@ const ArchiveManager = (() => {
 
     const q = query.toLowerCase();
     return threads.filter(t => {
-      const threadMatch = t.text?.toLowerCase().includes(q);
-      const replyMatch  = includeReplies && t.replies?.some(r => r.text?.toLowerCase().includes(q));
+      /* Search textOriginal (plain text) to avoid matching HTML tags/attributes */
+      const tPlain      = (t.textOriginal || t.text || '').toLowerCase();
+      const threadMatch = tPlain.includes(q);
+      const replyMatch  = includeReplies && t.replies?.some(r =>
+        (r.textOriginal || r.text || '').toLowerCase().includes(q)
+      );
       return threadMatch || replyMatch;
     });
   }
@@ -211,6 +217,7 @@ const ArchiveManager = (() => {
     const totalReplies = threads.reduce((s, t) => s + (t.replies?.length || 0), 0);
     const payload = {
       exportedAt:            new Date().toISOString(),
+      videoId:               meta.videoId            || '',
       videoTitle:            meta.videoTitle         || '',
       videoPublishedAt:      meta.videoPublishedAt   || '',
       videoChannelTitle:     meta.videoChannelTitle  || '',
@@ -218,6 +225,7 @@ const ArchiveManager = (() => {
       videoThumbnailUrl:     meta.videoThumbnailUrl  || '',
       videoViewCount:        meta.videoViewCount      || 0,
       videoLikeCount:        meta.videoLikeCount      || 0,
+      videoDescription:      meta.videoDescription   || '',
       totalTopLevelComments: threads.length,
       totalReplies,
       totalComments:         threads.length + totalReplies,
@@ -251,7 +259,8 @@ const ArchiveManager = (() => {
     for (const c of allComments) {
       rows.push(
         headers.map(h => {
-          const v = String(c[h] ?? '');
+          /* Export plain text, not the HTML textDisplay stored in 'text' */
+          const v = h === 'text' ? String(c.textOriginal || c.text || '') : String(c[h] ?? '');
           return '"' + v.replace(/"/g, '""').replace(/\n/g, '\\n') + '"';
         }).join(',')
       );
@@ -276,7 +285,7 @@ const ArchiveManager = (() => {
       const indent = c.type === 'reply' ? '    ↳ ' : '';
       const date   = new Date(c.publishedAt).toLocaleString();
       lines.push(`${indent}[${c.author}] ${date} | ♥ ${c.likeCount}`);
-      lines.push(`${indent}${c.text}`);
+      lines.push(`${indent}${c.textOriginal || c.text}`);
       lines.push('');
     }
 

@@ -80,12 +80,73 @@ const UI = (() => {
         <span class="comment-date">${date}</span>
         <span class="comment-likes">♥ ${fmt(comment.likeCount)}</span>
       </div>
-      <div class="comment-text">${esc(comment.text)}</div>
+      <div class="comment-text">${sanitiseDisplay(comment.text || '')}</div>
     `;
 
     list.appendChild(div);
     /* Auto-scroll to newest */
     list.scrollTop = list.scrollHeight;
+  }
+
+  /* ── Sanitise YouTube's textDisplay HTML (allowlist-only) ───── */
+  /* Permits: <a href target rel>, <b>, <br>, <em>, <strong>      */
+  /* All other tags are unwrapped (children kept, tag dropped).   */
+  function sanitiseDisplay(html) {
+    if (!html) return '';
+    const ALLOWED = new Set(['a', 'b', 'br', 'em', 'strong']);
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+
+    function clean(node) {
+      if (node.nodeType === 3 /* TEXT_NODE */) {
+        return document.createTextNode(node.textContent);
+      }
+      if (node.nodeType !== 1 /* ELEMENT_NODE */) return null;
+
+      const tag = node.tagName.toLowerCase();
+      if (!ALLOWED.has(tag)) {
+        /* Unwrap — keep children, discard the enclosing tag */
+        const frag = document.createDocumentFragment();
+        node.childNodes.forEach(c => { const s = clean(c); if (s) frag.appendChild(s); });
+        return frag;
+      }
+
+      const el = document.createElement(tag);
+      if (tag === 'a') {
+        const href = node.getAttribute('href') || '';
+        if (/^https?:\/\//i.test(href)) el.setAttribute('href', href);
+        el.setAttribute('target', '_blank');
+        el.setAttribute('rel', 'noopener noreferrer');
+      }
+      node.childNodes.forEach(c => { const s = clean(c); if (s) el.appendChild(s); });
+      return el;
+    }
+
+    const frag = document.createDocumentFragment();
+    doc.body.childNodes.forEach(c => { const s = clean(c); if (s) frag.appendChild(s); });
+    const out = document.createElement('div');
+    out.appendChild(frag);
+    return out.innerHTML;
+  }
+
+  /* ── Highlight query matches inside text nodes of an element ── */
+  /* Safe for HTML content — never touches attribute values.       */
+  function applyHighlight(el, query) {
+    if (!query || !el) return;
+    const re = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    let node;
+    while ((node = walker.nextNode())) nodes.push(node);
+    for (const textNode of nodes) {
+      if (!re.test(textNode.textContent)) { re.lastIndex = 0; continue; }
+      re.lastIndex = 0;
+      const span = document.createElement('span');
+      span.innerHTML = textNode.textContent
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(re, '<mark>$&</mark>');
+      re.lastIndex = 0;
+      textNode.parentNode.replaceChild(span, textNode);
+    }
   }
 
   /* ── Highlight search query matches within escaped text ────── */
@@ -227,12 +288,13 @@ const UI = (() => {
         <button class="c-pin${isPinned ? ' c-pin--active' : ''}" data-comment-id="${esc(thread.id)}" aria-label="Pin comment">${isPinned ? '★' : '☆'}</button>
         <button class="c-copy" aria-label="Copy comment text">⧉</button>
       </div>
-      <div class="c-text">${highlight(esc(thread.text || ''), query)}</div>
+      <div class="c-text">${sanitiseDisplay(thread.text || '')}</div>
     `;
+    if (query) applyHighlight(card.querySelector('.c-text'), query);
     card.querySelector('.c-copy').addEventListener('click', e => {
       e.stopPropagation();
       const btn = e.currentTarget;
-      navigator.clipboard.writeText(thread.text || '').then(() => {
+      navigator.clipboard.writeText(thread.textOriginal || thread.text || '').then(() => {
         btn.textContent = '✓';
         btn.classList.add('c-copy--copied');
         setTimeout(() => { btn.textContent = '⧉'; btn.classList.remove('c-copy--copied'); }, 1500);
@@ -253,7 +315,7 @@ const UI = (() => {
        * When not searching: show all replies normally.
        */
       const matchingCount = q
-        ? replies.filter(r => r.text?.toLowerCase().includes(q)).length
+        ? replies.filter(r => (r.textOriginal || r.text || '').toLowerCase().includes(q)).length
         : replies.length;
 
       const toggle       = document.createElement('button');
@@ -268,7 +330,7 @@ const UI = (() => {
       replyContainer.className = 'replies-container';
 
       replies.forEach(r => {
-        const isMatch  = q ? r.text?.toLowerCase().includes(q) : true;
+        const isMatch  = q ? (r.textOriginal || r.text || '').toLowerCase().includes(q) : true;
         const rc       = document.createElement('div');
         /* Dim non-matching replies so the matching ones stand out */
         const replyLink = videoId
@@ -283,12 +345,13 @@ const UI = (() => {
             <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(r.likeCount)}</span></span>
             <button class="c-copy" aria-label="Copy reply text">⧉</button>
           </div>
-          <div class="c-text">${highlight(esc(r.text || ''), query)}</div>
+          <div class="c-text">${sanitiseDisplay(r.text || '')}</div>
         `;
+        if (query && isMatch) applyHighlight(rc.querySelector('.c-text'), query);
         rc.querySelector('.c-copy').addEventListener('click', e => {
           e.stopPropagation();
           const btn = e.currentTarget;
-          navigator.clipboard.writeText(r.text || '').then(() => {
+          navigator.clipboard.writeText(r.textOriginal || r.text || '').then(() => {
             btn.textContent = '✓';
             btn.classList.add('c-copy--copied');
             setTimeout(() => { btn.textContent = '⧉'; btn.classList.remove('c-copy--copied'); }, 1500);
@@ -461,7 +524,7 @@ const UI = (() => {
             <span class="c-date">${formatDate(c.publishedAt, tz)}</span>
             <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(c.likeCount)}</span></span>
           </div>
-          <div class="c-text">${esc(c.text || '')}</div>
+          <div class="c-text">${sanitiseDisplay(c.text || '')}</div>
         `;
         body.appendChild(card);
       }
@@ -485,9 +548,10 @@ const UI = (() => {
         /* Dimmed parent comment for context */
         const context     = document.createElement('div');
         context.className = 'modal-parent-context';
-        const parentSnippet = (parent.text || '').length > 140
-          ? esc(parent.text.substring(0, 140)) + '…'
-          : esc(parent.text || '');
+        const parentPlain   = parent.textOriginal || parent.text || '';
+        const parentSnippet = parentPlain.length > 140
+          ? esc(parentPlain.substring(0, 140)) + '…'
+          : esc(parentPlain);
         context.innerHTML = `
           <div class="comment-header">
             <span class="c-author">${esc(parent.author)}</span>
@@ -505,7 +569,7 @@ const UI = (() => {
             <span class="c-date">${formatDate(r.publishedAt, tz)}</span>
             <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(r.likeCount)}</span></span>
           </div>
-          <div class="c-text">${esc(r.text || '')}</div>
+          <div class="c-text">${sanitiseDisplay(r.text || '')}</div>
         `;
         body.appendChild(replyCard);
       }
@@ -556,6 +620,8 @@ const UI = (() => {
     esc,
     fmt,
     fmtCount,
+    sanitiseDisplay,
+    applyHighlight,
     show,
     hide,
     setText,

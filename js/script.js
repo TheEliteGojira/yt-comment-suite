@@ -25,6 +25,7 @@ const AppState = {
   videoThumbnailUrl: '',
   videoViewCount:    0,
   videoLikeCount:    0,
+  videoDescription:  '',
 
   /* Fetch control */
   isFetching:    false,
@@ -146,6 +147,7 @@ async function startFetch() {
   AppState.videoThumbnailUrl = '';
   AppState.videoViewCount    = 0;
   AppState.videoLikeCount    = 0;
+  AppState.videoDescription  = '';
   AppState.videoId           = videoId;
 
   /* UI: show progress, hide previous results */
@@ -168,6 +170,15 @@ async function startFetch() {
     AppState.videoThumbnailUrl = info.thumbnailUrl;
     AppState.videoViewCount    = info.viewCount;
     AppState.videoLikeCount    = info.likeCount;
+    AppState.videoDescription  = info.description;
+    /* Show video info bar (thumbnail + linked title) in the progress section */
+    const thumbHtml = info.thumbnailUrl
+      ? `<img id="a-video-thumb" src="${UI.esc(info.thumbnailUrl)}" alt="">`
+      : '';
+    const videoUrl  = `https://www.youtube.com/watch?v=${UI.esc(videoId)}`;
+    document.getElementById('a-video-info-bar').innerHTML =
+      `${thumbHtml}<a class="a-video-title-link" href="${videoUrl}" target="_blank" rel="noopener noreferrer">${UI.esc(info.title)}</a>`;
+    UI.show('a-video-info-bar', 'flex');
     UI.setText('a-status-line', `Video: "${info.title}"`);
 
     /* Show a quota estimate so the user knows what they're committing to.
@@ -317,6 +328,7 @@ function openInViewer() {
 
   setTimeout(() => {
     const videoMeta   = {
+      videoId:           AppState.videoId,
       videoTitle:        AppState.videoTitle,
       videoPublishedAt:  AppState.videoPublishedAt,
       videoChannelTitle: AppState.videoChannelTitle,
@@ -324,6 +336,7 @@ function openInViewer() {
       videoThumbnailUrl: AppState.videoThumbnailUrl,
       videoViewCount:    AppState.videoViewCount,
       videoLikeCount:    AppState.videoLikeCount,
+      videoDescription:  AppState.videoDescription,
     };
     const exportData  = ArchiveManager.buildNestedExport(AppState.allComments, videoMeta);
     const { threads } = ArchiveManager.parseImport(exportData);
@@ -343,9 +356,12 @@ function resetArchiver() {
   AppState.videoThumbnailUrl = '';
   AppState.videoViewCount    = 0;
   AppState.videoLikeCount    = 0;
+  AppState.videoDescription  = '';
 
-  document.getElementById('a-comment-list').innerHTML = '';
-  document.getElementById('a-video-url').value        = '';
+  document.getElementById('a-comment-list').innerHTML    = '';
+  document.getElementById('a-video-url').value           = '';
+  document.getElementById('a-video-info-bar').innerHTML  = '';
+  UI.hide('a-video-info-bar');
   UI.hide('a-results-section');
   UI.hide('a-progress-section');
   UI.hide('a-open-viewer-btn');
@@ -359,6 +375,7 @@ function resetArchiver() {
    ───────────────────────────────────────────────────────────── */
 function exportJSON() {
   ArchiveManager.exportJSON(AppState.allComments, {
+    videoId:           AppState.videoId,
     videoTitle:        AppState.videoTitle,
     videoPublishedAt:  AppState.videoPublishedAt,
     videoChannelTitle: AppState.videoChannelTitle,
@@ -366,6 +383,7 @@ function exportJSON() {
     videoThumbnailUrl: AppState.videoThumbnailUrl,
     videoViewCount:    AppState.videoViewCount,
     videoLikeCount:    AppState.videoLikeCount,
+    videoDescription:  AppState.videoDescription,
   });
 }
 function exportCSV()  { ArchiveManager.exportCSV(AppState.allComments,  AppState.videoTitle); }
@@ -373,6 +391,7 @@ function exportTXT()  { ArchiveManager.exportTXT(AppState.allComments,  AppState
 
 function exportFiltered(format) {
   const meta = {
+    videoId:           AppState.videoId,
     videoTitle:        AppState.videoTitle,
     videoPublishedAt:  AppState.videoPublishedAt,
     videoChannelTitle: AppState.videoChannelTitle,
@@ -380,6 +399,7 @@ function exportFiltered(format) {
     videoThumbnailUrl: AppState.videoThumbnailUrl,
     videoViewCount:    AppState.videoViewCount,
     videoLikeCount:    AppState.videoLikeCount,
+    videoDescription:  AppState.videoDescription,
   };
   if (format === 'json') ArchiveManager.exportFilteredJSON(_renderedThreads, meta);
   if (format === 'csv')  ArchiveManager.exportCSV(ArchiveManager.flattenThreads(_renderedThreads), AppState.videoTitle);
@@ -441,8 +461,18 @@ function readJsonFile(file) {
 
 /* ── Common viewer setup (used by both paths) ─────────────── */
 function loadViewerData(meta, threads) {
-  /* Populate meta bar */
-  UI.setText('v-meta-title',   meta.videoTitle || 'Unknown Video');
+  /* Restore videoId so renderThread can generate correct permalinks */
+  AppState.videoId = meta.videoId || '';
+
+  /* Populate meta bar — title is a link when videoId is known */
+  const titleEl   = document.getElementById('v-meta-title');
+  const titleText = meta.videoTitle || 'Unknown Video';
+  if (meta.videoId) {
+    titleEl.innerHTML = `<a class="meta-title-link" href="https://www.youtube.com/watch?v=${UI.esc(meta.videoId)}" target="_blank" rel="noopener noreferrer">${UI.esc(titleText)}</a>`;
+  } else {
+    titleEl.textContent = titleText;
+  }
+
   UI.setText('v-meta-total',   UI.fmt(meta.totalComments || threads.length));
   UI.setText('v-meta-threads', UI.fmt(meta.totalTopLevelComments || threads.length));
   UI.setText('v-meta-replies', UI.fmt(meta.totalReplies || threads.reduce((s, t) => s + (t.replies?.length || 0), 0)));
@@ -480,6 +510,34 @@ function loadViewerData(meta, threads) {
     UI.show('v-meta-video-stats');
   } else {
     UI.hide('v-meta-video-stats');
+  }
+
+  /* Description toggle — hidden for archives that predate this feature */
+  const descToggle = document.getElementById('v-desc-toggle');
+  const descPanel  = document.getElementById('v-meta-description');
+  const rawDesc    = meta.videoDescription || '';
+  if (rawDesc) {
+    const SHORT  = 500;
+    const isLong = rawDesc.length > SHORT;
+    const short  = UI.esc(rawDesc.substring(0, SHORT));
+    const full   = UI.esc(rawDesc);
+    descPanel.innerHTML = isLong
+      ? `${short}<span id="v-desc-ellipsis">… <button class="meta-desc-more" onclick="
+          document.getElementById('v-desc-ellipsis').style.display='none';
+          document.getElementById('v-desc-full').style.display='';
+        ">Show more</button></span><span id="v-desc-full" style="display:none">${full.substring(short.length)}</span>`
+      : full;
+    descPanel.style.display = 'none';
+    descToggle.textContent  = 'Show description ▾';
+    descToggle.onclick = () => {
+      const open = descPanel.style.display !== 'none';
+      descPanel.style.display   = open ? 'none' : 'block';
+      descToggle.textContent    = open ? 'Show description ▾' : 'Hide description ▴';
+    };
+    UI.show('v-desc-toggle');
+  } else {
+    UI.hide('v-desc-toggle');
+    UI.hide('v-meta-description');
   }
 
   const total = threads.reduce((s, t) => s + 1 + (t.replies?.length || 0), 0);
@@ -691,6 +749,12 @@ function resetViewer() {
   AppState.showReplies    = true;
   AppState.showPinnedOnly = false;
   AppState.pinnedIds.clear();
+
+  /* Reset description toggle */
+  UI.hide('v-desc-toggle');
+  UI.hide('v-meta-description');
+  AppState.videoId          = '';
+  AppState.videoDescription = '';
 
   UI.show('v-drop-zone');
   UI.hide('v-loading');

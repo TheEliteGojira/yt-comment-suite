@@ -109,6 +109,7 @@
         <span id="a-prog-count">0 comments</span>
         <span id="a-prog-pages">page 0</span>
       </div>
+      <div id="a-video-info-bar" style="display:none"></div>
       <div id="a-status-line"></div>
       <div class="dot-loader" id="a-dot-loader">
         <span></span><span></span><span></span>
@@ -213,6 +214,8 @@
           <div>Channel <span id="v-meta-channel">—</span></div>
         </div>
         <div class="meta-stats" id="v-meta-video-stats" style="display:none"></div>
+        <button id="v-desc-toggle" class="meta-desc-toggle" style="display:none"></button>
+        <div id="v-meta-description" class="meta-description"></div>
       </div>
     </div>
 
@@ -474,7 +477,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.35.1</div>
+<div id="version-badge">α 0.36.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>
