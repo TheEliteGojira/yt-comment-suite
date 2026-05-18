@@ -4,6 +4,15 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #37 / α 0.37.0
+Two changes to the About tab sprites and the Archiver progress section.
+
+**Sprite row** — fire and porta sprites added alongside denton in the About tab. All three 64×64px sprites are grouped in a single `.sprite-row` div and scaled together as a unit (`scale(2); transform-origin: bottom right`), appearing as one connected image. Left-to-right order: fire → porta → denton. Fire and porta have no theme variants; denton continues to swap between `denton.png` (dark) and `denton_light.png` (light). `.denton-sprite` replaced by `.sprite-img` + `.sprite-row` in CSS. *(index.html, css/styles.css, CLAUDE.md)*
+
+**Archiver duplicate title removed** — the plain-text `Video: "…"` status line that appeared below the thumbnail/linked-title info bar was a redundant duplicate. Replaced with `Channel: <name>` which is distinct information not shown elsewhere in the progress section. *(js/script.js)*
+
+---
+
 ## COMMIT #36 / α 0.36.0
 Three zero-extra-quota Short Term features completed in one pass.
 

@@ -179,7 +179,7 @@ async function startFetch() {
     document.getElementById('a-video-info-bar').innerHTML =
       `${thumbHtml}<a class="a-video-title-link" href="${videoUrl}" target="_blank" rel="noopener noreferrer">${UI.esc(info.title)}</a>`;
     UI.show('a-video-info-bar', 'flex');
-    UI.setText('a-status-line', `Video: "${info.title}"`);
+    UI.setText('a-status-line', info.channelTitle ? `Channel: ${info.channelTitle}` : '');
 
     /* Show a quota estimate so the user knows what they're committing to.
      * Each page of 100 top-level comments = 1 unit; replies add more but are

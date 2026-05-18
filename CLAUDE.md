@@ -221,12 +221,31 @@ const avatarHtml = stats.avatarUrl
 
 ---
 
-## Denton
+## About tab sprites
 
-Denton is a 64×64px pixel-art sprite (`assets/denton.png`) displayed in the About tab.
+Three 64×64px pixel-art sprites are displayed in a connected row at the bottom-right of
+the About tab: **fire** → **porta** → **denton** (left to right).
+
+**Assets:**
+- `assets/fire.png` — single variant (shown in both themes)
+- `assets/porta.png` — single variant (shown in both themes)
+- `assets/denton.png` — dark theme variant
+- `assets/denton_light.png` — light theme variant
 
 **Placement:** `#about-sprite-wrap` sits *after* `<footer>` in the About tab HTML — not
-inside it. This prevents the scaled sprite from clipping into the footer text.
+inside it. This prevents the scaled group from clipping into the footer text.
+
+**HTML structure:**
+```html
+<div id="about-sprite-wrap">
+  <div class="sprite-row">
+    <img class="sprite-img" src="assets/fire.png"  alt="">
+    <img class="sprite-img" src="assets/porta.png" alt="">
+    <img class="sprite-img denton-sprite--dark"  src="assets/denton.png"       alt="">
+    <img class="sprite-img denton-sprite--light" src="assets/denton_light.png" alt="">
+  </div>
+</div>
+```
 
 **CSS rules:**
 ```css
@@ -239,24 +258,34 @@ inside it. This prevents the scaled sprite from clipping into the footer text.
   min-height: 160px;  /* must be ≥ scaled height (128px) to avoid clipping */
 }
 
-.denton-sprite {
-  image-rendering: pixelated;     /* preserve pixel-art crispness at any DPI */
+.sprite-row {
   position: absolute;
   right: 0;
   bottom: 0;
-  transform: scale(2);            /* 64px → 128px rendered size */
-  transform-origin: bottom right; /* anchor scale to bottom-right corner */
+  display: flex;
+  align-items: flex-end;
+  transform: scale(2);            /* 64px → 128px per sprite */
+  transform-origin: bottom right; /* anchor to bottom-right corner */
+  font-size: 0;                   /* collapse inline whitespace gaps */
+}
+
+.sprite-img {
+  image-rendering: pixelated;
+  display: block;
+  width: 64px;
+  height: 64px;
 }
 ```
 
 **Rules:**
-- Native size is 64×64px. `scale(2)` gives 128×128px visual size.
+- All sprites are 64×64px native. `scale(2)` on the group gives 128px each, 384px total.
 - `image-rendering: pixelated` is mandatory — never use `auto` or `smooth`.
-- `transform-origin: bottom right` keeps the sprite floor-anchored.
-- `min-height` on the wrapper must stay ≥ the scaled height; currently 160px leaves 32px
-  of breathing room above the sprite.
-- Do not move the sprite or alter its scale without updating `min-height` accordingly.
-- Do not apply filters, opacity, or animation to the sprite.
+- `transform-origin: bottom right` keeps the group floor-anchored to the right edge.
+- `min-height` on the wrapper must stay ≥ 128px (the scaled height); currently 160px.
+- Adding a new sprite: add another `<img class="sprite-img">` to the left of fire.
+  Update `min-height` if the sprite is taller than 64px native.
+- Do not alter the scale or spacing without updating `min-height` accordingly.
+- Do not apply filters, opacity, or animation to any sprite.
 
 ---
 
