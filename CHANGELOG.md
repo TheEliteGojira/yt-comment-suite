@@ -4,6 +4,12 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #34a / α 0.34.1
+Hotfix: filtered export buttons not appearing when a filter was active. Root cause: `#v-filtered-export-content` was a `<span>` with `align-items` and `gap` baked into its inline `style` alongside `display:none`, creating a fragile cascade when JS toggled `display` to `flex`. Fixed by changing the element to a `<div>` and moving layout properties (`display: flex; align-items: center; gap: 8px; flex-shrink: 0`) into a dedicated CSS rule. Inline style now only carries `display:none` as the initial hidden state. No JS changes.
+*(index.html, css/styles.css, CHANGELOG.md)*
+
+---
+
 ## COMMIT #30 / α 0.29.0
 Removed tuan sprite from the About tab (file kept in assets for future use). Upscaled denton by 1.5× via `transform: scale(1.5); transform-origin: bottom right` — preserves pixel-art crispness and anchors the scale to the bottom-right position.
 *(index.html, css/styles.css, CHANGELOG.md)*
