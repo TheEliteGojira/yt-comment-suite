@@ -921,7 +921,7 @@ footer {
   align-items: flex-end;
   margin-top: 48px;
   position: relative;
-  min-height: 160px;
+  min-height: 200px;
 }
 
 #about-sprite {
@@ -933,10 +933,8 @@ footer {
   image-rendering: pixelated;
   position: absolute;
   right: 0;
-  top: 0;
-  bottom: 0;
-  margin: auto 0;
-  transform: scale(2);
+  top: 50%;
+  transform: translateY(calc(-50% + 36px)) scale(2);
   transform-origin: right center;
 }
 

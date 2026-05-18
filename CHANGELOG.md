@@ -16,6 +16,12 @@ Two viewer controls fixes. (1) **Reset button relocated** — "✕ Load a differ
 
 ---
 
+## COMMIT #33c / α 0.33.2
+Denton sprite vertical alignment rework. Previous `top: 0; bottom: 0; margin: auto 0` centering conflicted with the `scale(2)` transform, causing the sprite to sit too high. Replaced with `top: 50%; transform: translateY(calc(-50% + 36px)) scale(2)` — `-50%` re-centres on the midpoint, `+36px` applies the requested downward shift. `#about-sprite-wrap` `min-height` raised from 160px to 200px to give the scaled sprite room without clipping.
+*(css/styles.css, CHANGELOG.md)*
+
+---
+
 ## COMMIT #34 / α 0.33.0
 Denton sprite clipping fix. `#about-sprite-wrap` was collapsing to zero height because denton is the only child and is absolutely positioned — `bottom: 0` therefore resolved to the top of the box, pushing denton into the panel above. Fixed by adding `min-height: 160px` to the wrapper and reanchoring denton with `top: 0; bottom: 0; margin: auto 0` (standard absolute vertical-centre) and `transform-origin: right center` so the 2× scale expands leftward from the right edge while staying vertically centred in the space.
 *(css/styles.css, CHANGELOG.md)*
