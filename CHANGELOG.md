@@ -10,6 +10,12 @@ Removed tuan sprite from the About tab (file kept in assets for future use). Ups
 
 ---
 
+## COMMIT #33 / α 0.33.0
+Denton sprite upscaled from 1.5× to 2×. Four medium-effort QoL features. (1) **Author hover tooltip** — mouseover on any `.c-author` in the feed lazily calls `getUserStats` once and caches the result in a `title` attribute ("X comments · Y replies"); subsequent hovers are instant. (2) **Author highlight** — opening any profile modal dims all non-matching threads to `opacity: 0.15` via `highlightFeedAuthor`; closing the modal (✕, outside click, or Escape) removes all `.thread--dimmed` classes via `clearFeedAuthor` now wired into `closeModal`. (3) **Date range filter** — two date inputs ("Date: → ✕ Clear") added to the sticky controls bar; filters threads by `publishedAt`; integrates with the filtered export row. (4) **Pin / bookmark** — `☆/★` button on every top-level card; clicks toggle `AppState.pinnedIds` (session-only `Set`); "★ Pinned" toggle in the filter row shows only pinned threads; pins clear on viewer reset. Fixed copy button regression from commit 32: `e.currentTarget` was captured inside the async `.then()` callback where it is always `null`; moved capture to synchronous scope. Version badge corrected from α 0.29.0 (mismatch introduced in commit 32) to α 0.33.0.
+*(css/styles.css, js/ui.js, js/script.js, index.html, README.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #32 / α 0.29.0
 Four low-effort QoL features. (1) **Sticky controls bar** — `#v-controls` now uses `position: sticky; top: 52px` so search, sort, filter, and timezone stay pinned below the tab bar while scrolling the comment feed. (2) **Copy comment text** — a `.c-copy` button (`⧉`) added to every top-level and reply card header; clicks write the comment text to the clipboard and swap the icon to `✓` for 1.5 s before reverting. (3) **Escape key closes modal** — already implemented in `ui.js` via `_onModalKeydown`; confirmed and documented, no code change required. (4) **Back to top button** — `#v-back-to-top` fixed to bottom-right, hidden by default, fades in past 400 px of scroll and smooth-scrolls to top on click.
 *(js/ui.js, js/script.js, css/styles.css, index.html, CLAUDE.md, CHANGELOG.md)*

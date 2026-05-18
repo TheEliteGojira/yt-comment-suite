@@ -742,7 +742,8 @@ body::before {
 .c-date      { font-size: 10px; color: var(--text-muted); }
 .c-permalink { font-size: 10px; color: var(--text-muted); text-decoration: none; line-height: 1; }
 .c-permalink:hover { color: var(--accent); }
-.c-copy {
+.c-copy,
+.c-pin {
   background: none;
   border: none;
   color: var(--text-muted);
@@ -754,8 +755,36 @@ body::before {
   transition: color 0.15s;
   font-family: inherit;
 }
-.c-copy:hover { color: var(--accent); }
-.c-copy--copied { color: var(--accent); }
+.c-copy:hover,
+.c-pin:hover  { color: var(--accent); }
+.c-copy--copied,
+.c-pin--active { color: var(--accent); }
+
+/* Date range inputs */
+.v-date-input {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.v-date-input:focus { border-color: var(--accent); }
+.v-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+}
+[data-theme="light"] .v-date-input::-webkit-calendar-picker-indicator { filter: none; }
+
+/* Author highlight — dims non-matching threads while a modal is open */
+.comment-thread.thread--dimmed {
+  opacity: 0.15;
+  transition: opacity 0.2s;
+}
 .c-likes    { margin-left: auto; font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
 .c-likes-num { color: var(--text); font-weight: 700; }
 .heart      { color: var(--accent2); }
@@ -909,7 +938,7 @@ footer {
   position: absolute;
   right: 0;
   bottom: 0;
-  transform: scale(1.5);
+  transform: scale(2);
   transform-origin: bottom right;
 }
 

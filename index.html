@@ -236,11 +236,21 @@
         <span class="filter-label">Show:</span>
         <button class="toggle-btn active" id="v-filter-comments" onclick="toggleFilter('comments')">Comments</button>
         <button class="toggle-btn active" id="v-filter-replies"  onclick="toggleFilter('replies')">Replies</button>
+        <button class="toggle-btn"        id="v-filter-pinned"   onclick="togglePinnedFilter()">★ Pinned</button>
 
         <div class="tz-wrap">
           <span class="filter-label">TZ:</span>
           <select id="v-tz-select" onchange="applyViewerFilters()"></select>
         </div>
+      </div>
+
+      <!-- Date range filter -->
+      <div class="filter-row">
+        <span class="filter-label">Date:</span>
+        <input type="date" id="v-date-from" class="v-date-input" onchange="applyViewerFilters()">
+        <span class="filter-label">→</span>
+        <input type="date" id="v-date-to" class="v-date-input" onchange="applyViewerFilters()">
+        <button class="btn btn-secondary btn-sm" onclick="clearDateFilter()">✕ Clear</button>
       </div>
 
       <div class="filter-row" id="v-filtered-export-row" style="display:none">
@@ -457,7 +467,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.29.0</div>
+<div id="version-badge">α 0.33.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>

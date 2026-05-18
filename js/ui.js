@@ -189,7 +189,7 @@ const UI = (() => {
   }
 
   /* ── Render a single viewer comment thread ────────────────── */
-  function renderThread(thread, query, showReplies, tz, animDelay, videoId) {
+  function renderThread(thread, query, showReplies, tz, animDelay, videoId, pinnedIds) {
     const wrapper       = document.createElement('div');
     wrapper.className   = 'comment-thread';
     wrapper.style.animationDelay = Math.min(animDelay * 20, 300) + 'ms';
@@ -204,6 +204,8 @@ const UI = (() => {
       ? `<a href="https://www.youtube.com/watch?v=${videoId}&lc=${thread.id}" class="c-permalink" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">↗</a>`
       : '';
 
+    const isPinned  = pinnedIds && pinnedIds.has(thread.id);
+
     /* Top-level comment card */
     const card        = document.createElement('div');
     card.className    = 'comment-card';
@@ -213,14 +215,15 @@ const UI = (() => {
         <span class="c-date">${formatDate(thread.publishedAt, tz)}</span>
         ${threadLink}
         <span class="c-likes"><span class="heart">♥</span> <span class="c-likes-num">${fmt(thread.likeCount)}</span></span>
+        <button class="c-pin${isPinned ? ' c-pin--active' : ''}" data-comment-id="${esc(thread.id)}" aria-label="Pin comment">${isPinned ? '★' : '☆'}</button>
         <button class="c-copy" aria-label="Copy comment text">⧉</button>
       </div>
       <div class="c-text">${highlight(esc(thread.text || ''), query)}</div>
     `;
     card.querySelector('.c-copy').addEventListener('click', e => {
       e.stopPropagation();
+      const btn = e.currentTarget;
       navigator.clipboard.writeText(thread.text || '').then(() => {
-        const btn = e.currentTarget;
         btn.textContent = '✓';
         btn.classList.add('c-copy--copied');
         setTimeout(() => { btn.textContent = '⧉'; btn.classList.remove('c-copy--copied'); }, 1500);
@@ -275,8 +278,8 @@ const UI = (() => {
         `;
         rc.querySelector('.c-copy').addEventListener('click', e => {
           e.stopPropagation();
+          const btn = e.currentTarget;
           navigator.clipboard.writeText(r.text || '').then(() => {
-            const btn = e.currentTarget;
             btn.textContent = '✓';
             btn.classList.add('c-copy--copied');
             setTimeout(() => { btn.textContent = '⧉'; btn.classList.remove('c-copy--copied'); }, 1500);
@@ -305,6 +308,24 @@ const UI = (() => {
     return wrapper;
   }
 
+  /* ── Author highlight ────────────────────────────────────── */
+
+  /* Dims all threads in the feed except those authored by `authorName`.
+   * Called after opening a profile modal. Cleared when the modal closes. */
+  function highlightFeedAuthor(authorName) {
+    const feed = document.getElementById('v-comment-feed');
+    if (!feed) return;
+    feed.querySelectorAll('.comment-thread').forEach(thread => {
+      const author = thread.querySelector('.comment-card .c-author');
+      thread.classList.toggle('thread--dimmed', !author || author.textContent.trim() !== authorName);
+    });
+  }
+
+  function clearFeedAuthor() {
+    document.querySelectorAll('#v-comment-feed .thread--dimmed')
+      .forEach(el => el.classList.remove('thread--dimmed'));
+  }
+
   /* ── User profile modal ──────────────────────────────────── */
 
   /* Named so it can be removed cleanly from the document listener */
@@ -317,6 +338,7 @@ const UI = (() => {
     if (el) el.remove();
     document.removeEventListener('keydown', _onModalKeydown);
     document.body.style.overflow = '';
+    clearFeedAuthor();
   }
 
   /*
@@ -535,6 +557,8 @@ const UI = (() => {
     formatDate,
     populateTzDropdown,
     renderThread,
+    highlightFeedAuthor,
+    clearFeedAuthor,
     renderUserModal,
     closeModal,
     initTheme,

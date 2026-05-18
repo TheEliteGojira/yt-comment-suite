@@ -28,9 +28,13 @@ const AppState = {
   stopRequested: false,
 
   /* Viewer UI state */
-  currentSort:   'newest',
-  showComments:  true,
-  showReplies:   true,
+  currentSort:    'newest',
+  showComments:   true,
+  showReplies:    true,
+  showPinnedOnly: false,
+
+  /* Session-only set of pinned comment IDs */
+  pinnedIds: new Set(),
 
   /* Number of items currently shown in the archiver live preview */
   previewCount:  0,
@@ -451,6 +455,18 @@ function toggleFilter(type) {
   applyViewerFilters();
 }
 
+function togglePinnedFilter() {
+  AppState.showPinnedOnly = !AppState.showPinnedOnly;
+  document.getElementById('v-filter-pinned').classList.toggle('active', AppState.showPinnedOnly);
+  applyViewerFilters();
+}
+
+function clearDateFilter() {
+  document.getElementById('v-date-from').value = '';
+  document.getElementById('v-date-to').value   = '';
+  applyViewerFilters();
+}
+
 /* ─────────────────────────────────────────────────────────────
    VIEWER — batch / infinite-scroll rendering state
    Rendering all threads at once locks the browser for large archives.
@@ -499,6 +515,23 @@ function _renderViewer() {
   /* Sort */
   filtered = ArchiveManager.sortThreads(filtered, AppState.currentSort);
 
+  /* Date range filter */
+  const dateFrom = document.getElementById('v-date-from').value || '';
+  const dateTo   = document.getElementById('v-date-to').value   || '';
+  if (dateFrom || dateTo) {
+    filtered = filtered.filter(t => {
+      const d = (t.publishedAt || '').slice(0, 10);
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo   && d > dateTo)   return false;
+      return true;
+    });
+  }
+
+  /* Pinned-only filter */
+  if (AppState.showPinnedOnly) {
+    filtered = filtered.filter(t => AppState.pinnedIds.has(t.id));
+  }
+
   _renderedThreads = filtered;
   _renderOffset    = 0;
 
@@ -529,7 +562,10 @@ function _renderViewer() {
 }
 
 function _updateFilteredExportRow() {
-  const isFiltered = _renderQuery !== '' || !AppState.showComments || !AppState.showReplies;
+  const dateFrom   = document.getElementById('v-date-from').value || '';
+  const dateTo     = document.getElementById('v-date-to').value   || '';
+  const isFiltered = _renderQuery !== '' || !AppState.showComments || !AppState.showReplies
+                     || dateFrom || dateTo || AppState.showPinnedOnly;
   if (isFiltered && _renderedThreads.length > 0) {
     UI.setText('v-filtered-export-label', `Filtered (${UI.fmt(_renderedThreads.length)}):`);
     UI.show('v-filtered-export-row', 'flex');
@@ -545,7 +581,7 @@ function _renderBatch(feed) {
 
   for (let i = _renderOffset; i < end; i++) {
     frag.appendChild(
-      UI.renderThread(_renderedThreads[i], _renderQuery, AppState.showReplies, _renderTz, i, AppState.videoId)
+      UI.renderThread(_renderedThreads[i], _renderQuery, AppState.showReplies, _renderTz, i, AppState.videoId, AppState.pinnedIds)
     );
   }
 
@@ -589,9 +625,11 @@ function resetViewer() {
   _renderedThreads = [];
   _renderOffset    = 0;
 
-  AppState.currentSort  = 'newest';
-  AppState.showComments = true;
-  AppState.showReplies  = true;
+  AppState.currentSort    = 'newest';
+  AppState.showComments   = true;
+  AppState.showReplies    = true;
+  AppState.showPinnedOnly = false;
+  AppState.pinnedIds.clear();
 
   UI.show('v-drop-zone');
   UI.hide('v-loading');
@@ -612,8 +650,13 @@ function resetViewer() {
   document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('v-sort-newest').classList.add('active');
 
-  /* Reset filter buttons */
+  /* Reset filter buttons — comments/replies default active, pinned default inactive */
   document.querySelectorAll('.toggle-btn').forEach(b => b.classList.add('active'));
+  document.getElementById('v-filter-pinned').classList.remove('active');
+
+  /* Reset date inputs */
+  document.getElementById('v-date-from').value = '';
+  document.getElementById('v-date-to').value   = '';
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -660,19 +703,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     UI.renderUserModal(stats, cannotRender);
+    UI.highlightFeedAuthor(stats.authorName);
   });
 
   /*
-   * Author profile modal — single delegated listener on the feed container.
-   * Catches clicks on any .c-author element regardless of when it was rendered.
-   * Using delegation means we never attach per-comment listeners (important
-   * since comments are rendered in batches and may not exist yet at init time).
+   * Feed click delegation — handles pin toggles and author modal opens.
+   * Pin clicks are checked first so they don't bubble to the author handler.
    */
   document.getElementById('v-comment-feed').addEventListener('click', e => {
+    /* Pin toggle */
+    const pinBtn = e.target.closest('.c-pin');
+    if (pinBtn) {
+      e.stopPropagation();
+      const id = pinBtn.dataset.commentId;
+      if (AppState.pinnedIds.has(id)) {
+        AppState.pinnedIds.delete(id);
+        pinBtn.textContent = '☆';
+        pinBtn.classList.remove('c-pin--active');
+      } else {
+        AppState.pinnedIds.add(id);
+        pinBtn.textContent = '★';
+        pinBtn.classList.add('c-pin--active');
+      }
+      _updateFilteredExportRow();
+      return;
+    }
+
+    /* Author profile modal */
     const authorEl = e.target.closest('.c-author');
     if (!authorEl || !AppState.threads.length) return;
-
     const stats = ArchiveManager.getUserStats(AppState.threads, authorEl.textContent.trim());
     UI.renderUserModal(stats);
+    UI.highlightFeedAuthor(stats.authorName);
+  });
+
+  /*
+   * Author name hover tooltip — computed lazily on first hover and cached
+   * in the element's title attribute so getUserStats only runs once per author.
+   */
+  document.getElementById('v-comment-feed').addEventListener('mouseover', e => {
+    const authorEl = e.target.closest('.c-author');
+    if (!authorEl || authorEl.title || !AppState.threads.length) return;
+    const stats = ArchiveManager.getUserStats(AppState.threads, authorEl.textContent.trim());
+    const c = stats.commentCount;
+    const r = stats.replyCount;
+    authorEl.title = `${c} comment${c !== 1 ? 's' : ''} · ${r} ${r !== 1 ? 'replies' : 'reply'}`;
   });
 });

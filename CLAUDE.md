@@ -356,6 +356,41 @@ docs:     README, CLAUDE.md, code comments only
       `index.html` updated to two `<img>` tags with `--dark`/`--light` classes.
       *(assets/logo.svg, assets/logo-light.svg, index.html, css/styles.css)*
 
+- [x] **Author name hover tooltip** — `mouseover` delegation on `#v-comment-feed` in
+      `script.js` calls `getUserStats` on first hover of each `.c-author` and caches
+      the result as a native `title` attribute ("X comments · Y replies"). Subsequent
+      hovers on the same name are instant. *(js/script.js)*
+
+- [x] **Highlight active author in feed** — `UI.highlightFeedAuthor(authorName)` iterates
+      all rendered `.comment-thread` elements and toggles `.thread--dimmed` (opacity 0.15)
+      on non-matching threads. Called after every `renderUserModal` (both feed click and
+      meta-bar click). `clearFeedAuthor()` removes all dimming and is called inside
+      `closeModal()` so Escape, ✕, and outside-click all restore the feed.
+      `.comment-thread.thread--dimmed { opacity: 0.15; transition: opacity 0.2s }` added.
+      *(js/ui.js, js/script.js, css/styles.css)*
+
+- [x] **Date range filter** — two `<input type="date">` fields in a new `.filter-row`
+      inside `#v-controls`. `_renderViewer` reads them directly and filters threads by
+      `publishedAt.slice(0,10)` string comparison. A "✕ Clear" button calls
+      `clearDateFilter()`. Integrates with `_updateFilteredExportRow` isFiltered check.
+      `resetViewer` clears both inputs. `.v-date-input` CSS added.
+      *(index.html, js/script.js, css/styles.css)*
+
+- [x] **Pin / bookmark comments** — `AppState.pinnedIds` (session-only `Set`) and
+      `AppState.showPinnedOnly` (bool) added. `☆/★` button on every top-level card via
+      `renderThread`'s new `pinnedIds` 7th param; initial state reflects current pins on
+      re-render. Click delegation on `#v-comment-feed` handles `.c-pin` toggles before
+      the author handler. "★ Pinned" `toggle-btn` in the filter row calls
+      `togglePinnedFilter()`. `_renderViewer` applies pinned-only filter after date filter.
+      `_updateFilteredExportRow` includes `showPinnedOnly` in isFiltered check.
+      `resetViewer` clears pins, resets button, clears date inputs.
+      *(index.html, js/ui.js, js/script.js, css/styles.css)*
+
+- [x] **Copy button fix** — `e.currentTarget` was captured inside the async `.then()`
+      callback (commit 32 regression) where browsers have already nulled it out. Moved
+      capture to synchronous scope before the clipboard call. Fixed in both top-level
+      and reply card handlers. *(js/ui.js)*
+
 - [x] **Sticky controls bar** — `#v-controls` given `position: sticky; top: 52px;
       z-index: 90; background: var(--bg); border-bottom: 1px solid var(--border)`.
       Search, sort, filter, and timezone stay visible without scrolling back up.
@@ -418,26 +453,6 @@ docs:     README, CLAUDE.md, code comments only
 #### Low effort
 
 #### Medium effort
-
-- [ ] **Author name hover tooltip** — show a small tooltip (e.g. "X comments · Y replies")
-      when hovering a `.c-author` in the feed, giving a quick stats preview before
-      opening the full modal. Pure CSS `[title]` attribute approach or a lightweight
-      custom tooltip. *(js/ui.js, css/styles.css)*
-
-- [ ] **Highlight active author in feed** — when the author profile modal is open, dim
-      all comment threads whose author does not match the viewed user, so their activity
-      stands out visually in the background feed. Remove highlight on modal close.
-      *(js/ui.js, js/script.js, css/styles.css)*
-
-- [ ] **Date range filter** — two date inputs (`from` / `to`) in the Viewer controls bar.
-      When set, only threads containing at least one comment or reply within the range
-      are shown. Integrates with the existing `applyViewerFilters` / `_renderViewer`
-      pipeline. Clears with the existing reset flow. *(index.html, js/script.js, css/styles.css)*
-
-- [ ] **Pin / bookmark comments** — a pin icon on each card toggles a `pinned` flag on
-      the comment object in `AppState.threads`. A "Pinned" sort/filter mode shows only
-      pinned items. Pinned set can be exported via the filtered export row. Pins are
-      session-only (not persisted to localStorage). *(js/ui.js, js/script.js, js/archive-manager.js, css/styles.css)*
 
 #### Higher effort
 
