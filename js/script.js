@@ -513,6 +513,26 @@ function readJsonFile(file) {
   reader.readAsText(file);
 }
 
+/* ── Word frequency toggle ────────────────────────────────── */
+function toggleWordFreq() {
+  const content = document.getElementById('v-word-freq-content');
+  const arrow   = document.getElementById('v-word-freq-arrow');
+  const isOpen  = content.style.display !== 'none';
+
+  if (isOpen) {
+    UI.hide('v-word-freq-content');
+    arrow.classList.remove('open');
+  } else {
+    /* Compute on first open; reuse cache on subsequent opens */
+    if (!_wordFreqCache) {
+      _wordFreqCache = ArchiveManager.getWordFrequency(AppState.threads);
+    }
+    UI.renderWordFrequency(_wordFreqCache);
+    UI.show('v-word-freq-content');
+    arrow.classList.add('open');
+  }
+}
+
 /* ── Common viewer setup (used by both paths) ─────────────── */
 function loadViewerData(meta, threads) {
   /* Restore videoId so renderThread can generate correct permalinks */
@@ -599,6 +619,7 @@ function loadViewerData(meta, threads) {
 
   /* Show viewer chrome (dots will be hidden by the first render) */
   UI.show('v-meta-bar', 'flex');
+  UI.show('v-word-freq-panel');
   UI.show('v-controls', 'flex');
   UI.show('v-result-count');
   UI.show('v-filtered-export-row', 'flex');
@@ -651,6 +672,7 @@ let _filterTimer      = null;
 let _renderedThreads  = [];   /* current filtered+sorted list */
 let _renderOffset     = 0;    /* how many threads have been painted so far */
 let _renderQuery      = '';   /* captured at render time for batch callbacks */
+let _wordFreqCache    = null; /* computed once per loaded archive, cleared on reset */
 let _renderTz         = 'UTC';
 let _scrollObserver   = null; /* IntersectionObserver watching the sentinel */
 
@@ -809,6 +831,13 @@ function resetViewer() {
   UI.hide('v-meta-description');
   AppState.videoId          = '';
   AppState.videoDescription = '';
+
+  /* Reset word frequency panel */
+  _wordFreqCache = null;
+  UI.hide('v-word-freq-content');
+  UI.hide('v-word-freq-panel');
+  const wfArrow = document.getElementById('v-word-freq-arrow');
+  if (wfArrow) wfArrow.classList.remove('open');
 
   UI.show('v-drop-zone');
   UI.hide('v-loading');

@@ -4,6 +4,15 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #40 / α 0.40.0
+Word frequency panel added to the Viewer. A collapsible "Word Frequency" toggle appears between the meta bar and the controls once an archive is loaded. Clicking it computes — on first open only — the top 30 words across all comments and replies using `ArchiveManager.getWordFrequency`: tokenises `textOriginal`, strips URLs, removes a hardcoded English stop-word set (including common contraction fragments), and filters tokens shorter than 3 characters. Results are cached in `_wordFreqCache` for the session and rendered by `UI.renderWordFrequency` as a ranked list (rank · word · proportional bar · count). Cache and panel state clear on viewer reset. Toggle arrow rotates 90° when open.
+
+**Sentiment distribution removed from plan.** A keyword-lexicon classifier is unreliable against YouTube comment language (heavy sarcasm, slang, multilingual content) and risks producing misleading results. Removed from Short Term; noted in the Shelved section of CLAUDE.md for potential future revisit with a stronger approach.
+
+*(js/archive-manager.js, js/ui.js, js/script.js, index.html, css/styles.css, CLAUDE.md, CHANGELOG.md)*
+
+---
+
 ## COMMIT #39 / α 0.39.0
 Three changes.
 

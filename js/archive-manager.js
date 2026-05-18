@@ -292,6 +292,63 @@ const ArchiveManager = (() => {
     downloadBlob(lines.join('\n'), `${safeFilename(videoTitle)}_comments.txt`, 'text/plain');
   }
 
+  /* ── Word frequency counter ─────────────────────────────── */
+  /* Returns an array of [word, count] pairs, sorted descending, */
+  /* capped at topN. Uses textOriginal to avoid matching HTML.   */
+  function getWordFrequency(threads, topN) {
+    topN = topN || 30;
+
+    /* Common English stop words plus contraction fragments */
+    const STOP = new Set([
+      'a','an','the','and','or','but','if','in','on','at','to','for','of',
+      'with','by','from','up','as','is','was','are','were','be','been',
+      'being','have','has','had','do','does','did','will','would','could',
+      'should','may','might','shall','can','not','no','nor','so','yet',
+      'both','either','neither','each','few','more','most','other','some',
+      'such','than','too','very','just','that','this','these','those',
+      'i','you','he','she','it','we','they','me','him','her','us','them',
+      'my','your','his','its','our','their','what','which','who','whom',
+      'how','when','where','why','all','any','there','then','into','out',
+      'about','over','after','back','well','even','still','own','also',
+      'only','same','because','through','before','while','get','got',
+      'like','know','see','one','two','time','way','day','new','want',
+      'make','come','go','said','much','many','here','every','never',
+      'always','really','actually','already','now','re','ve','ll','d',
+      'm','s','t','dont','cant','wont','didnt','wasnt','isnt','arent',
+      'havent','hadnt','shouldnt','wouldnt','couldnt','doesnt',
+      'im','ive','ill','id','youre','youve','youll','youd',
+      'hes','shes','theyre','theyve','theyll','weve','whos','whats',
+      'thats','let','say','think','yeah','yes','okay','ok','lol','omg',
+    ]);
+
+    const counts = new Map();
+
+    function tokenize(text) {
+      if (!text) return;
+      text
+        .toLowerCase()
+        .replace(/https?:\/\/\S+/g, '')        /* strip URLs */
+        .replace(/[^a-z0-9'\-\s]/g, ' ')       /* keep letters, digits, apostrophes, hyphens */
+        .split(/\s+/)
+        .forEach(w => {
+          const clean = w.replace(/^['\-]+|['\-]+$/g, '');  /* trim flanking punctuation */
+          if (clean.length < 3 || STOP.has(clean)) return;
+          counts.set(clean, (counts.get(clean) || 0) + 1);
+        });
+    }
+
+    for (const thread of threads) {
+      tokenize(thread.textOriginal || thread.text || '');
+      for (const r of (thread.replies || [])) {
+        tokenize(r.textOriginal || r.text || '');
+      }
+    }
+
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, topN);
+  }
+
   /* ── Public API ───────────────────────────────────────────── */
   return {
     parseImport,
@@ -304,6 +361,7 @@ const ArchiveManager = (() => {
     exportCSV,
     exportTXT,
     exportFilteredJSON,
+    getWordFrequency,
   };
 
 })();

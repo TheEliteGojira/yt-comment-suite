@@ -615,6 +615,25 @@ const UI = (() => {
     applyTheme(current === 'dark' ? 'light' : 'dark');
   }
 
+  /* ── Word frequency renderer ────────────────────────────── */
+  function renderWordFrequency(freqData) {
+    const list = document.getElementById('v-word-freq-list');
+    if (!list) return;
+    if (!freqData || freqData.length === 0) {
+      list.innerHTML = '<div class="wf-empty">No words found.</div>';
+      return;
+    }
+    const max = freqData[0][1];
+    list.innerHTML = freqData.map(([word, count], i) =>
+      `<div class="wf-row">
+        <span class="wf-rank">${i + 1}</span>
+        <span class="wf-word">${esc(word)}</span>
+        <div class="wf-bar-wrap"><div class="wf-bar" style="width:${Math.round(count / max * 100)}%"></div></div>
+        <span class="wf-count">${fmt(count)}</span>
+      </div>`
+    ).join('');
+  }
+
   /* ── Public API ───────────────────────────────────────────── */
   return {
     esc,
@@ -637,6 +656,7 @@ const UI = (() => {
     clearFeedAuthor,
     renderUserModal,
     closeModal,
+    renderWordFrequency,
     initTheme,
     toggleTheme,
   };

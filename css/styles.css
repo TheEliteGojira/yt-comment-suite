@@ -1160,6 +1160,89 @@ footer {
   border-bottom-color: transparent;
 }
 
+/* ── Word frequency panel ─────────────────────────────────── */
+#v-word-freq-panel {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: -1px; /* collapse with controls top border */
+}
+
+.wf-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 10px 0;
+  text-align: left;
+}
+
+.wf-toggle-btn:hover { color: var(--text); }
+
+.wf-toggle-arrow {
+  font-size: 8px;
+  display: inline-block;
+  transition: transform 0.2s;
+}
+
+.wf-toggle-arrow.open { transform: rotate(90deg); }
+
+#v-word-freq-content { padding-bottom: 14px; }
+
+.wf-row {
+  display: grid;
+  grid-template-columns: 24px 120px 1fr 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 0;
+}
+
+.wf-rank {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.wf-word {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wf-bar-wrap {
+  height: 5px;
+  background: var(--border);
+}
+
+.wf-bar {
+  height: 100%;
+  background: var(--accent);
+  min-width: 2px;
+}
+
+.wf-count {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.wf-empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
 /* ── User profile modal ───────────────────────────────────── */
 .modal-overlay {
   position: fixed;

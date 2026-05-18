@@ -551,20 +551,29 @@ docs:     README, CLAUDE.md, code comments only
 
 #### Higher effort
 
-- [ ] **Word frequency panel** — scan the loaded archive and surface the N most-used
-      words or phrases (excluding stop words). Display as a ranked list in the About or
-      Viewer tab. No external libraries — implement client-side with a plain word-count
-      `Map`. *(js/archive-manager.js, js/ui.js, index.html, css/styles.css)*
-
-- [ ] **Sentiment distribution** — lightweight client-side classifier (positive / neutral /
-      negative) using a small keyword lexicon. Display a simple three-bar breakdown
-      below the Viewer meta bar or in a new panel. No external API or library.
-      *(js/archive-manager.js, js/ui.js, index.html, css/styles.css)*
+- [x] **Word frequency panel** — `ArchiveManager.getWordFrequency(threads, topN)` added:
+      tokenises `textOriginal` across all threads and replies, strips URLs, filters a
+      hardcoded stop-word set, returns top 30 `[word, count]` pairs. `UI.renderWordFrequency`
+      renders a ranked list with rank, word, proportional bar, and count into
+      `#v-word-freq-list`. Panel sits between the meta bar and controls; toggle button
+      computes on first open and caches result in `_wordFreqCache` for the session.
+      Cache and panel state cleared on `resetViewer`.
+      *(js/archive-manager.js, js/ui.js, js/script.js, index.html, css/styles.css)*
 
 - [ ] **Multi-archive merge** — allow dropping a second `.json` export onto the Viewer
       while one is already loaded. Merge the thread arrays, deduplicate by comment ID,
       and re-render. Useful for comparing comment sections across related videos.
       *(js/archive-manager.js, js/script.js, js/ui.js)*
+
+---
+
+#### Shelved / revisit later
+
+- **Sentiment distribution** — removed from active plan. A keyword-lexicon classifier
+  is unreliable against YouTube comment language (heavy sarcasm, slang, multilingual
+  content). Could be worth revisiting if a credible lightweight approach presents itself,
+  but would risk producing misleading results in its current form. Not a priority for the
+  current audience.
 
 ---
 

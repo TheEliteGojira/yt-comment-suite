@@ -222,6 +222,17 @@
       </div>
     </div>
 
+    <!-- Word frequency panel (shown once data is loaded) -->
+    <div id="v-word-freq-panel" style="display:none">
+      <button class="wf-toggle-btn" id="v-word-freq-toggle" onclick="toggleWordFreq()">
+        <span class="wf-toggle-arrow" id="v-word-freq-arrow">▶</span>
+        Word Frequency
+      </button>
+      <div id="v-word-freq-content" style="display:none">
+        <div id="v-word-freq-list"></div>
+      </div>
+    </div>
+
     <!-- Search / sort / filter controls -->
     <div id="v-controls">
 
@@ -489,7 +500,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.39.0</div>
+<div id="version-badge">α 0.40.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>
