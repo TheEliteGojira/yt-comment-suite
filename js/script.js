@@ -429,7 +429,7 @@ function loadViewerData(meta, threads) {
   UI.show('v-meta-bar');
   UI.show('v-controls', 'flex');
   UI.show('v-result-count');
-  UI.show('v-reset-btn');
+  UI.show('v-reset-row', 'flex');
 
   applyViewerFilters();
 }
@@ -638,7 +638,7 @@ function resetViewer() {
   UI.hide('v-result-count');
   UI.hide('v-comment-feed');
   UI.hide('v-no-results');
-  UI.hide('v-reset-btn');
+  UI.hide('v-reset-row');
   UI.hide('v-filtered-export-row');
 
   document.getElementById('v-comment-feed').innerHTML = '';

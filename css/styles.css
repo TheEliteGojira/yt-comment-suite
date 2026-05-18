@@ -771,14 +771,11 @@ body::before {
   padding: 6px 8px;
   cursor: pointer;
   outline: none;
+  color-scheme: dark;
   transition: border-color 0.15s;
 }
 .v-date-input:focus { border-color: var(--accent); }
-.v-date-input::-webkit-calendar-picker-indicator {
-  filter: invert(0.6);
-  cursor: pointer;
-}
-[data-theme="light"] .v-date-input::-webkit-calendar-picker-indicator { filter: none; }
+[data-theme="light"] .v-date-input { color-scheme: light; }
 
 /* Author highlight — dims non-matching threads while a modal is open */
 .comment-thread.thread--dimmed {
@@ -886,7 +883,6 @@ body::before {
 
 /* ── Reset / utility buttons ──────────────────────────────── */
 #v-reset-btn {
-  display: none;
   font-family: 'Space Mono', monospace;
   font-size: 10px;
   font-weight: 700;
@@ -897,7 +893,7 @@ body::before {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-left: auto;
   transition: all 0.15s;
 }
 
@@ -925,6 +921,7 @@ footer {
   align-items: flex-end;
   margin-top: 48px;
   position: relative;
+  min-height: 160px;
 }
 
 #about-sprite {
@@ -934,12 +931,13 @@ footer {
 
 .denton-sprite {
   image-rendering: pixelated;
-  display: block;
   position: absolute;
   right: 0;
+  top: 0;
   bottom: 0;
+  margin: auto 0;
   transform: scale(2);
-  transform-origin: bottom right;
+  transform-origin: right center;
 }
 
 .denton-sprite--light { display: none; }

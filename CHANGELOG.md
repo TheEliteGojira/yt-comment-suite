@@ -10,6 +10,18 @@ Removed tuan sprite from the About tab (file kept in assets for future use). Ups
 
 ---
 
+## COMMIT #33b / α 0.33.1
+Two viewer controls fixes. (1) **Reset button relocated** — "✕ Load a different file" moved from below the comment feed into the sticky controls bar as its own `#v-reset-row` filter-row, right-aligned via `margin-left: auto`. `script.js` updated to show/hide `v-reset-row` instead of `v-reset-btn` directly; `display: none` removed from `#v-reset-btn` CSS since visibility is now inherited from the parent row. (2) **Date input dark mode** — `color-scheme: dark` added to `.v-date-input`; overridden to `color-scheme: light` for `[data-theme="light"]`. This instructs the browser to render the native date chrome (placeholder digits, calendar icon) using the system dark/light palette, matching the surrounding UI without requiring pseudo-element hacks.
+*(index.html, js/script.js, css/styles.css, CHANGELOG.md)*
+
+---
+
+## COMMIT #34 / α 0.33.0
+Denton sprite clipping fix. `#about-sprite-wrap` was collapsing to zero height because denton is the only child and is absolutely positioned — `bottom: 0` therefore resolved to the top of the box, pushing denton into the panel above. Fixed by adding `min-height: 160px` to the wrapper and reanchoring denton with `top: 0; bottom: 0; margin: auto 0` (standard absolute vertical-centre) and `transform-origin: right center` so the 2× scale expands leftward from the right edge while staying vertically centred in the space.
+*(css/styles.css, CHANGELOG.md)*
+
+---
+
 ## COMMIT #33 / α 0.33.0
 Denton sprite upscaled from 1.5× to 2×. Four medium-effort QoL features. (1) **Author hover tooltip** — mouseover on any `.c-author` in the feed lazily calls `getUserStats` once and caches the result in a `title` attribute ("X comments · Y replies"); subsequent hovers are instant. (2) **Author highlight** — opening any profile modal dims all non-matching threads to `opacity: 0.15` via `highlightFeedAuthor`; closing the modal (✕, outside click, or Escape) removes all `.thread--dimmed` classes via `clearFeedAuthor` now wired into `closeModal`. (3) **Date range filter** — two date inputs ("Date: → ✕ Clear") added to the sticky controls bar; filters threads by `publishedAt`; integrates with the filtered export row. (4) **Pin / bookmark** — `☆/★` button on every top-level card; clicks toggle `AppState.pinnedIds` (session-only `Set`); "★ Pinned" toggle in the filter row shows only pinned threads; pins clear on viewer reset. Fixed copy button regression from commit 32: `e.currentTarget` was captured inside the async `.then()` callback where it is always `null`; moved capture to synchronous scope. Version badge corrected from α 0.29.0 (mismatch introduced in commit 32) to α 0.33.0.
 *(css/styles.css, js/ui.js, js/script.js, index.html, README.md, CHANGELOG.md)*
