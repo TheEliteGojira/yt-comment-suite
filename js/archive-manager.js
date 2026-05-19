@@ -54,7 +54,7 @@ const ArchiveManager = (() => {
     const threads = allComments
       .filter(c => c.type === 'comment')
       .map(c => {
-        const { type, parentId, ...rest } = c;
+        const { type, parentId, _source, ...rest } = c;
         return {
           ...rest,
           replies: (replyMap.get(c.id) || []).map(r => {
@@ -203,7 +203,7 @@ const ArchiveManager = (() => {
   function flattenThreads(threads) {
     const flat = [];
     for (const t of threads) {
-      const { replies, ...rest } = t;
+      const { replies, _source, ...rest } = t;
       flat.push({ ...rest, type: 'comment', parentId: null });
       for (const r of (replies || [])) {
         flat.push({ ...r, type: 'reply', parentId: t.id });
@@ -229,7 +229,8 @@ const ArchiveManager = (() => {
       totalTopLevelComments: threads.length,
       totalReplies,
       totalComments:         threads.length + totalReplies,
-      comments:              threads,
+      /* Strip internal _source tag before export */
+      comments:              threads.map(({ _source, ...t }) => t),
     };
     downloadBlob(
       JSON.stringify(payload, null, 2),
@@ -350,15 +351,24 @@ const ArchiveManager = (() => {
   }
 
   /* ── Merge two thread arrays ─────────────────────────────── */
-  /* Deduplicates by thread id — incoming threads whose id already */
-  /* exists in the existing set are silently dropped.              */
-  function mergeArchives(existingThreads, incomingThreads) {
+  /* Deduplicates by thread id — incoming threads whose id already  */
+  /* exists in the existing set are silently dropped. Each accepted  */
+  /* thread is tagged with _source (sourceLabel) so it can be        */
+  /* selectively removed later. _source is stripped on all exports.  */
+  function mergeArchives(existingThreads, incomingThreads, sourceLabel) {
     const seen = new Set(existingThreads.map(t => t.id));
-    const added = incomingThreads.filter(t => !seen.has(t.id));
+    const added = incomingThreads
+      .filter(t => !seen.has(t.id))
+      .map(t => ({ ...t, _source: sourceLabel }));
     return {
       threads:    [...existingThreads, ...added],
       addedCount: added.length,
     };
+  }
+
+  /* ── Remove all threads belonging to a named source ─────── */
+  function removeSource(threads, label) {
+    return threads.filter(t => t._source !== label);
   }
 
   /* ── Public API ───────────────────────────────────────────── */
@@ -375,6 +385,7 @@ const ArchiveManager = (() => {
     exportFilteredJSON,
     getWordFrequency,
     mergeArchives,
+    removeSource,
   };
 
 })();

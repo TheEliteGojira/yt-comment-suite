@@ -561,6 +561,12 @@ All planned features implemented as of α 0.41.0.
       input added to `#v-filtered-export-row`. Archiver reset also resets the Viewer.
       *(js/archive-manager.js, js/script.js, index.html, css/styles.css)*
 
+- [x] **Per-source merge tracking** — each merged thread is tagged `_source: filename` in
+      memory. `#v-source-list` chip bar appears after any merge; each chip has a × to remove
+      that source's threads and re-render. `AppState.sources` tracks active sources; cleared
+      on `resetViewer`. `_source` stripped from all export paths. All-duplicate merges show
+      a distinct notification. *(js/archive-manager.js, js/script.js, index.html, css/styles.css)*
+
 ---
 
 ### 🔧 Short term

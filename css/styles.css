@@ -982,6 +982,59 @@ body::before {
   flex-shrink: 0;
 }
 
+/* ── Merged source chip list ──────────────────────────────── */
+#v-source-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 4px;
+  border-top: 1px solid var(--border);
+}
+
+.v-source-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+
+.v-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text);
+  max-width: 240px;
+}
+
+.v-source-chip-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.v-source-chip-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.v-source-chip-remove:hover { color: var(--accent2); }
+
 /* ── Reset / utility buttons ──────────────────────────────── */
 .v-action-btns {
   display: flex;
@@ -1053,6 +1106,8 @@ footer {
   width: 64px;
   height: 64px;
 }
+
+#fire-sprite { margin-right: 192px; }
 
 .denton-sprite--light { display: none; }
 [data-theme="light"] .denton-sprite--dark  { display: none; }

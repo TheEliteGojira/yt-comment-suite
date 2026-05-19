@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #42 / α 0.42.0
+Per-source merge tracking added to the Viewer. Each thread merged via ⊕ Merge archive is now tagged with `_source: filename` in memory. After a merge, a chip bar (`#v-source-list`) appears below the controls listing every merged source; each chip has a × button that removes all threads from that source, recomputes meta bar counts, invalidates the word frequency cache, and re-runs filters. `AppState.sources` (array of `{ label, count }`) tracks active sources and is cleared on `resetViewer`. `_source` is stripped from all export paths (`buildNestedExport`, `exportFilteredJSON`, `flattenThreads`) so it never appears in downloaded files. All-duplicate merges now show a distinct "No new threads found" notification rather than "Merged 0". *(js/archive-manager.js, js/script.js, index.html, css/styles.css)*
+
+---
+
 ## COMMIT #41 / α 0.41.0
 Multi-archive merge added to the Viewer. A hidden `<input type="file">` and **⊕ Merge archive** button appear in the bottom row of the Viewer controls once an archive is loaded. Selecting a second `.json` file calls `mergeJsonFile`: parses and validates it via `ArchiveManager.parseImport`, deduplicates threads by ID via `ArchiveManager.mergeArchives`, merges into `AppState.threads`, refreshes the meta bar counts, re-runs filters, and shows a brief "⊕ Merged N new threads" notification in the result-count row for 2.5 seconds before restoring the normal count text. Invalid files surface an `alert`. Word frequency cache is invalidated on merge.
 

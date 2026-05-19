@@ -42,6 +42,9 @@ const AppState = {
 
   /* Number of items currently shown in the archiver live preview */
   previewCount:  0,
+
+  /* Merged archive sources — array of { label, count } for the source list */
+  sources: [],
 };
 
 /* ─────────────────────────────────────────────────────────────
@@ -845,6 +848,11 @@ function resetViewer() {
   _wordFreqCache = null;
   UI.hide('v-word-freq-content');
   UI.hide('v-word-freq-panel');
+
+  /* Reset merged sources */
+  AppState.sources = [];
+  const sourceList = document.getElementById('v-source-list');
+  if (sourceList) { sourceList.innerHTML = ''; sourceList.style.display = 'none'; }
   const wfArrow = document.getElementById('v-word-freq-arrow');
   if (wfArrow) wfArrow.classList.remove('open');
 
@@ -899,26 +907,36 @@ function mergeJsonFile(file) {
       return;
     }
 
+    const sourceLabel = file.name;
     const { threads: merged, addedCount } = ArchiveManager.mergeArchives(
       AppState.threads,
-      parsed.threads
+      parsed.threads,
+      sourceLabel
     );
 
+    if (addedCount === 0) {
+      applyViewerFilters();
+      setTimeout(() => {
+        const rc = document.getElementById('v-result-count');
+        if (rc) rc.textContent = '⊕ No new threads found — all duplicates.';
+        setTimeout(() => applyViewerFilters(), 2500);
+      }, 180);
+      return;
+    }
+
     AppState.threads = merged;
+    AppState.sources.push({ label: sourceLabel, count: addedCount });
     _wordFreqCache   = null;
 
     /* Recompute meta bar counts from the merged thread set */
-    const totalReplies  = merged.reduce((s, t) => s + (t.replies?.length || 0), 0);
-    const totalComments = merged.length + totalReplies;
-    UI.setText('v-meta-total',   UI.fmt(totalComments));
-    UI.setText('v-meta-threads', UI.fmt(merged.length));
-    UI.setText('v-meta-replies', UI.fmt(totalReplies));
+    _updateMergedMetaBar();
+    _renderSourceList();
 
     /* Apply filters first (80ms debounce), then briefly show merge count */
     applyViewerFilters();
     setTimeout(() => {
       const rc = document.getElementById('v-result-count');
-      if (rc) rc.textContent = `⊕ Merged ${addedCount} new thread${addedCount !== 1 ? 's' : ''}`;
+      if (rc) rc.textContent = `⊕ Merged ${addedCount} new thread${addedCount !== 1 ? 's' : ''} from "${sourceLabel}"`;
       setTimeout(() => applyViewerFilters(), 2500);
     }, 180);
   };
@@ -926,6 +944,47 @@ function mergeJsonFile(file) {
   reader.readAsText(file);
   /* Reset input so the same file can be selected again */
   document.getElementById('v-merge-input').value = '';
+}
+
+/* ── Shared meta bar count update after any merge/removal ─── */
+function _updateMergedMetaBar() {
+  const totalReplies  = AppState.threads.reduce((s, t) => s + (t.replies?.length || 0), 0);
+  const totalComments = AppState.threads.length + totalReplies;
+  UI.setText('v-meta-total',   UI.fmt(totalComments));
+  UI.setText('v-meta-threads', UI.fmt(AppState.threads.length));
+  UI.setText('v-meta-replies', UI.fmt(totalReplies));
+}
+
+/* ── Render the merged-sources chip list ─────────────────── */
+function _renderSourceList() {
+  const container = document.getElementById('v-source-list');
+  if (!container) return;
+
+  if (!AppState.sources.length) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'flex';
+  container.innerHTML =
+    '<span class="v-source-label">Merged:</span>' +
+    AppState.sources.map(s =>
+      `<span class="v-source-chip" data-source="${UI.esc(s.label)}">` +
+        `<span class="v-source-chip-name" title="${UI.esc(s.label)}">${UI.esc(s.label)}</span>` +
+        `<button class="v-source-chip-remove" title="Remove this archive">×</button>` +
+      `</span>`
+    ).join('');
+}
+
+/* ── Remove a merged source and its threads from the viewer ─ */
+function removeSource(label) {
+  AppState.threads = ArchiveManager.removeSource(AppState.threads, label);
+  AppState.sources = AppState.sources.filter(s => s.label !== label);
+  _wordFreqCache   = null;
+
+  _updateMergedMetaBar();
+  _renderSourceList();
+  applyViewerFilters();
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -940,6 +999,14 @@ document.addEventListener('DOMContentLoaded', () => {
   /* Merge file input — triggers mergeJsonFile when a file is chosen */
   document.getElementById('v-merge-input').addEventListener('change', e => {
     if (e.target.files[0]) mergeJsonFile(e.target.files[0]);
+  });
+
+  /* Source chip remove — delegated click on the source list container */
+  document.getElementById('v-source-list').addEventListener('click', e => {
+    const btn = e.target.closest('.v-source-chip-remove');
+    if (!btn) return;
+    const chip = btn.closest('.v-source-chip');
+    if (chip?.dataset.source) removeSource(chip.dataset.source);
   });
 
   /* Back to top — show after 400px of scroll, smooth-scroll to top on click */
