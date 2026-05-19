@@ -271,7 +271,7 @@ const UI = (() => {
     }
 
     const threadLink = videoId
-      ? `<a href="https://www.youtube.com/watch?v=${videoId}&lc=${thread.id}" class="c-permalink" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">↗</a>`
+      ? `<a href="https://www.youtube.com/watch?v=${videoId}&lc=${thread.id}" class="c-permalink" target="_blank" rel="noopener noreferrer" title="Open this comment on YouTube" onclick="event.stopPropagation()">↗</a>`
       : '';
 
     const isPinned  = pinnedIds && pinnedIds.has(thread.id);
@@ -334,7 +334,7 @@ const UI = (() => {
         const rc       = document.createElement('div');
         /* Dim non-matching replies so the matching ones stand out */
         const replyLink = videoId
-          ? `<a href="https://www.youtube.com/watch?v=${videoId}&lc=${r.id}" class="c-permalink" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">↗</a>`
+          ? `<a href="https://www.youtube.com/watch?v=${videoId}&lc=${r.id}" class="c-permalink" target="_blank" rel="noopener noreferrer" title="Open this comment on YouTube" onclick="event.stopPropagation()">↗</a>`
           : '';
         rc.className   = 'reply-card' + (!isMatch && q ? ' reply-dimmed' : '');
         rc.innerHTML   = `

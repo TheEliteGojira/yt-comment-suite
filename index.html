@@ -224,7 +224,7 @@
 
     <!-- Word frequency panel (shown once data is loaded) -->
     <div id="v-word-freq-panel" style="display:none">
-      <button class="wf-toggle-btn" id="v-word-freq-toggle" onclick="toggleWordFreq()">
+      <button class="wf-toggle-btn" id="v-word-freq-toggle" onclick="toggleWordFreq()" title="Show the top 30 most-used words across all loaded comments">
         <span class="wf-toggle-arrow" id="v-word-freq-arrow">▶</span>
         Word Frequency
       </button>
@@ -249,45 +249,45 @@
 
       <!-- Sort buttons -->
       <div class="sort-group">
-        <button class="sort-btn active" id="v-sort-newest" onclick="setSort('newest')">Newest</button>
-        <button class="sort-btn"        id="v-sort-oldest" onclick="setSort('oldest')">Oldest</button>
-        <button class="sort-btn"        id="v-sort-likes"  onclick="setSort('likes')">Most Liked</button>
+        <button class="sort-btn active" id="v-sort-newest" onclick="setSort('newest')" title="Sort by most recently posted">Newest</button>
+        <button class="sort-btn"        id="v-sort-oldest" onclick="setSort('oldest')" title="Sort by oldest first">Oldest</button>
+        <button class="sort-btn"        id="v-sort-likes"  onclick="setSort('likes')"  title="Sort by highest like count">Most Liked</button>
       </div>
 
       <!-- Toggle filters + timezone -->
       <div class="filter-row">
         <span class="filter-label">Show:</span>
-        <button class="toggle-btn active" id="v-filter-comments" onclick="toggleFilter('comments')">Comments</button>
-        <button class="toggle-btn active" id="v-filter-replies"  onclick="toggleFilter('replies')">Replies</button>
-        <button class="toggle-btn"        id="v-filter-pinned"   onclick="togglePinnedFilter()">★ Pinned</button>
+        <button class="toggle-btn active" id="v-filter-comments" onclick="toggleFilter('comments')" title="Toggle top-level comments on or off">Comments</button>
+        <button class="toggle-btn active" id="v-filter-replies"  onclick="toggleFilter('replies')"  title="Toggle replies on or off">Replies</button>
+        <button class="toggle-btn"        id="v-filter-pinned"   onclick="togglePinnedFilter()"     title="Show only comments you have pinned this session">★ Pinned</button>
 
         <div class="tz-wrap">
           <span class="filter-label">TZ:</span>
-          <select id="v-tz-select" onchange="applyViewerFilters()"></select>
+          <select id="v-tz-select" onchange="applyViewerFilters()" title="Convert all timestamps to this timezone"></select>
         </div>
       </div>
 
       <!-- Date range filter -->
       <div class="filter-row">
         <span class="filter-label">Date:</span>
-        <input type="date" id="v-date-from" class="v-date-input" onchange="applyViewerFilters()">
+        <input type="date" id="v-date-from" class="v-date-input" onchange="applyViewerFilters()" title="Show comments posted on or after this date">
         <span class="filter-label">→</span>
-        <input type="date" id="v-date-to" class="v-date-input" onchange="applyViewerFilters()">
-        <button class="btn btn-secondary btn-sm" onclick="clearDateFilter()">✕ Clear</button>
+        <input type="date" id="v-date-to" class="v-date-input" onchange="applyViewerFilters()" title="Show comments posted on or before this date">
+        <button class="btn btn-secondary btn-sm" onclick="clearDateFilter()" title="Clear the date filter">✕ Clear</button>
       </div>
 
       <!-- Bottom row: filtered export (conditional) + reset button (always when loaded) -->
       <div class="filter-row" id="v-filtered-export-row" style="display:none">
         <div id="v-filtered-export-content" style="display:none">
           <span class="filter-label" id="v-filtered-export-label">Filtered (0):</span>
-          <button class="btn btn-secondary btn-sm" onclick="exportFiltered('json')">↓ JSON</button>
-          <button class="btn btn-secondary btn-sm" onclick="exportFiltered('csv')">↓ CSV</button>
-          <button class="btn btn-secondary btn-sm" onclick="exportFiltered('txt')">↓ TXT</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportFiltered('json')" title="Export current view as a re-importable JSON archive">↓ JSON</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportFiltered('csv')"  title="Export current view as a flat CSV spreadsheet">↓ CSV</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportFiltered('txt')"  title="Export current view as plain text">↓ TXT</button>
         </div>
         <div class="v-action-btns">
           <input type="file" id="v-merge-input" accept=".json" style="display:none">
           <div class="v-merge-wrap">
-            <button class="btn btn-secondary btn-sm" id="v-merge-btn" onclick="toggleMergeMenu()">⊕ Merge archive</button>
+            <button class="btn btn-secondary btn-sm" id="v-merge-btn" onclick="toggleMergeMenu()" title="Merge another archive alongside this one">⊕ Merge archive</button>
             <div id="v-merge-menu" style="display:none">
               <button class="merge-opt merge-opt--primary" id="v-merge-url-opt">
                 <span class="merge-opt-title">Fetch from YouTube</span>
@@ -299,18 +299,18 @@
               </button>
             </div>
           </div>
-          <button id="v-reset-btn" onclick="resetViewer()">✕ Load a different file</button>
+          <button id="v-reset-btn" onclick="resetViewer()" title="Unload the current archive and return to the drop zone">✕ Load a different file</button>
         </div>
       </div>
 
       <!-- Merge-from-URL input row — shown after choosing "Fetch from YouTube" -->
       <div class="filter-row" id="v-merge-url-row" style="display:none">
         <input type="text" id="v-merge-url-input" class="v-merge-url-input" placeholder="youtube.com/watch?v=... or video ID" autocomplete="off">
-        <button class="btn btn-primary btn-sm" id="v-merge-fetch-btn" onclick="startMergeFetch()">Fetch &amp; Merge</button>
-        <button class="btn btn-secondary btn-sm" id="v-merge-estimate-btn" onclick="estimateMergeCost()">Estimate</button>
-        <button class="btn btn-secondary btn-sm" onclick="cancelMergeUrl()">Cancel</button>
+        <button class="btn btn-primary btn-sm"    id="v-merge-fetch-btn"    onclick="startMergeFetch()"   title="Fetch all comments from this video and merge them in">Fetch &amp; Merge</button>
+        <button class="btn btn-secondary btn-sm"  id="v-merge-estimate-btn" onclick="estimateMergeCost()" title="Preview the estimated quota cost before fetching (uses 1 unit)">Estimate</button>
+        <button class="btn btn-secondary btn-sm"  onclick="cancelMergeUrl()"                              title="Close this input and return to the controls">Cancel</button>
         <span id="v-merge-fetch-status"></span>
-        <button class="btn btn-secondary btn-sm" id="v-merge-stop-btn" style="display:none" onclick="stopMergeFetch()">Stop</button>
+        <button class="btn btn-secondary btn-sm"  id="v-merge-stop-btn" style="display:none" onclick="stopMergeFetch()" title="Stop fetching after the current page completes">Stop</button>
       </div>
 
       <!-- Merged source chips — shown when at least one archive has been merged in -->
@@ -375,6 +375,9 @@
         <li><strong>Archiver</strong> — connects to the YouTube Data API v3 with your key, paginates through all comment threads and replies, and streams them into a live preview. Estimate the quota cost before committing to a full fetch. When done, open the archive directly in the Viewer or export it to a file.</li>
         <li><strong>Viewer</strong> — browse, search, sort, filter, and export comments. Load data from the Archiver in memory, drop a saved JSON file, or fetch a second video directly from the Viewer and merge it in alongside the first.</li>
       </ul>
+      <p class="about-body" style="margin-top: 12px;">
+        A dark/light theme toggle sits in the top-right of the tab bar and persists between sessions.
+      </p>
     </div>
 
     <!-- API key setup -->
@@ -461,7 +464,8 @@
       <ul class="about-list">
         <li><strong>Estimate before fetching:</strong> Click <strong>Estimate</strong> next to the URL field to fetch just the video metadata (1 unit) and see the projected quota cost before committing to a full fetch.</li>
         <li><strong>Live preview:</strong> Comments stream into the preview pane as they are fetched, capped at 100 visible items. The full archive is always available in the Viewer regardless of preview size.</li>
-        <li><strong>Stop and resume:</strong> The Stop button halts after the current page finishes and disappears once the fetch is complete. You can export or open in the Viewer with whatever was captured.</li>
+        <li><strong>Stop and resume:</strong> The Stop button halts after the current page finishes and disappears once the fetch is complete. You can export or open in the Viewer with whatever was captured up to that point.</li>
+        <li><strong>Sort order:</strong> Choose between <em>newest first</em> (default, chronological) and <em>top comments</em> (YouTube's relevance ranking). Set before fetching — cannot be changed mid-fetch.</li>
         <li><strong>Include replies toggle:</strong> Disable reply fetching to reduce quota usage on reply-heavy videos. Fetches top-level comments only.</li>
         <li><strong>Export formats:</strong> JSON (re-importable, nested structure), CSV (spreadsheet-compatible, flat), and plain TXT. All exports use the original unformatted text — no HTML tags.</li>
         <li><strong>Open in Viewer:</strong> Passes the archive directly to the Viewer in memory — no file download required.</li>
@@ -531,7 +535,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.45.0</div>
+<div id="version-badge">β 1.0.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>

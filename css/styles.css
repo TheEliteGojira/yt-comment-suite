@@ -610,11 +610,12 @@ body::before {
 
 /* Merged-archive count suffix in Viewer meta bar title */
 .v-meta-title-suffix {
-  font-size: 14px;
-  font-weight: 400;
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-muted);
   margin-left: 10px;
-  letter-spacing: 0.5px;
+  vertical-align: middle;
 }
 
 /* Description toggle button */

@@ -388,9 +388,9 @@ docs:     README, CLAUDE.md, code comments only
 
 ---
 
-### ✅ Completed — v1.0
+### ✅ Completed — β 1.0.0
 
-All planned features implemented as of α 0.41.0.
+All planned features implemented. Promoted from α to β at commit #46.
 
 - [x] **Video description toggle in meta bar** — `getVideoInfo` now returns `description`
       from the already-fetched `snippet`. Stored in `AppState.videoDescription` and in
@@ -567,6 +567,16 @@ All planned features implemented as of α 0.41.0.
       on `resetViewer`. `_source` stripped from all export paths. All-duplicate merges show
       a distinct notification. *(js/archive-manager.js, js/script.js, index.html, css/styles.css)*
 
+- [x] **Hover descriptors, About tab polish, README rewrite** — `title` attributes added to
+      all notable Viewer interactive elements (sort buttons, filter toggles, timezone select,
+      date inputs and clear button, filtered export buttons, ⊕ Merge archive, Reset, Fetch &
+      Merge, Estimate, Cancel, Stop, Word Frequency toggle). Permalink anchors in `ui.js`
+      updated with `title="Open this comment on YouTube"` on both thread and reply renderers.
+      About tab Viewer section expanded to cover merge workflow, source chip bar, word
+      frequency panel, author profiles, and channel-author filtering. README fully rewritten
+      to β 1.0.0 feature set. Also matched `.v-meta-title-suffix` font to the Viewer title
+      (Syne 16px 700) and promoted the version from α to β. *(index.html, css/styles.css, js/ui.js, README.md)*
+
 ---
 
 ### 🔧 Short term
@@ -578,7 +588,7 @@ All planned features implemented as of α 0.41.0.
 
 ### 🗺 Long term
 
-> This section is intentionally empty as of v1.0. The project is feature-complete for
+> This section is intentionally empty as of β 1.0.0. The project is feature-complete for
 > its original scope. If you return to it, consider the following starting points:
 
 - **`yt-channel-suite/` — separate project** for channel-level tooling (video performance
