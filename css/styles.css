@@ -1052,6 +1052,23 @@ footer {
 [data-theme="light"] .denton-sprite--dark  { display: none; }
 [data-theme="light"] .denton-sprite--light { display: block; }
 
+.fire-sprite {
+  display: block;
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  background-image: url('../assets/fire.png');
+  background-repeat: no-repeat;
+  background-size: 64px 256px; /* 4 frames stacked vertically at native size */
+  background-position: 0 0;
+  animation: fire-anim 0.5s steps(4) infinite;
+}
+
+@keyframes fire-anim {
+  from { background-position: 0 0; }
+  to   { background-position: 0 -256px; }
+}
+
 /* ── About tab ────────────────────────────────────────────── */
 .about-body {
   font-size: 13px;

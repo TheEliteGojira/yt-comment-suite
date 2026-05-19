@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #40c / α 0.40.2
+Fire sprite animated. `assets/fire.png` is now a 64×256 vertical spritesheet (4 frames of 64×64). The `<img>` replaced with a `<div class="fire-sprite">` using `background-image` + `background-size: 64px 256px` + `animation: fire-anim 0.5s steps(4) infinite` to snap cleanly through frames at 8fps. Sits in the same `.sprite-row` slot — `scale(2)` upscaling and positioning unchanged. *(index.html, css/styles.css)*
+
+---
+
 ## COMMIT #40b / α 0.40.1
 Hotfix: word frequency cache not clearing when a new archive was loaded. Both `openInViewer` and the file-drop path call `loadViewerData` directly without going through `resetViewer`, so `_wordFreqCache` was never invalidated. Fixed by moving the cache clear and panel collapse into `loadViewerData` itself, guaranteeing it fires on every load path. *(js/script.js, index.html)*
 
