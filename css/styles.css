@@ -1052,27 +1052,6 @@ footer {
 [data-theme="light"] .denton-sprite--dark  { display: none; }
 [data-theme="light"] .denton-sprite--light { display: block; }
 
-.fire-sprite-wrap {
-  display: block;
-  width: 64px;
-  height: 64px;
-  overflow: hidden;   /* clips to one frame */
-  flex-shrink: 0;
-}
-
-.fire-sprite-img {
-  display: block;
-  width: 64px;        /* natural frame width */
-  image-rendering: pixelated;
-  animation: fire-anim 0.5s step-end infinite;
-}
-
-@keyframes fire-anim {
-  0%  { transform: translateY(0); }
-  25% { transform: translateY(-64px); }
-  50% { transform: translateY(-128px); }
-  75% { transform: translateY(-192px); }
-}
 
 /* ── About tab ────────────────────────────────────────────── */
 .about-body {

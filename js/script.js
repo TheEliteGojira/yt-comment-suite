@@ -881,6 +881,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initDropZone();
   UI.populateTzDropdown('v-tz-select');
 
+  /* Fire sprite animation — cycle through 4 individual frame PNGs at 8fps */
+  const fireEl     = document.getElementById('fire-sprite');
+  const firePaths  = ['assets/fire/1.png','assets/fire/2.png','assets/fire/3.png','assets/fire/4.png'];
+  let   fireFrame  = 0;
+  setInterval(() => {
+    fireFrame = (fireFrame + 1) % firePaths.length;
+    fireEl.src = firePaths[fireFrame];
+  }, 125);
+
   /* Back to top — show after 400px of scroll, smooth-scroll to top on click */
   const backToTopBtn = document.getElementById('v-back-to-top');
   window.addEventListener('scroll', () => {

@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #40f / α 0.40.5
+Fire sprite animation reworked. Spritesheet approach abandoned after persistent CSS animation loop-boundary flicker across multiple attempts. `fire.png` removed; replaced with four individual frames in `assets/fire/` (`1.png`–`4.png`). A `setInterval` (125ms, 8fps) in `DOMContentLoaded` cycles `#fire-sprite` src through the four paths — no CSS animation, no timing quirks. `.fire-sprite-wrap` / `.fire-sprite-img` CSS removed; element reverts to `.sprite-img` for consistent sizing. *(js/script.js, index.html, css/styles.css)*
+
+---
+
 ## COMMIT #40e / α 0.40.4
 Hotfix: fire sprite flashing at animation loop boundary. Root cause: `steps(4)` with `to { translateY(-256px) }` momentarily computes the out-of-bounds position at exactly 100% before the loop resets, pushing the entire image above the clipping window for one render frame. Fixed by replacing `from/to` with explicit percentage keyframes (0%, 25%, 50%, 75%) capped at `translateY(-192px)`, combined with `step-end` timing. `-256px` is never a target so the image never leaves the wrapper. *(css/styles.css, index.html)*
 
