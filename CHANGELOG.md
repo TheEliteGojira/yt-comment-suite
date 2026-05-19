@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #40g / α 0.40.6
+Hotfix: fire sprite animation still static. Root cause: `document.getElementById('fire-sprite')` was likely returning null inside `DOMContentLoaded`, causing `fireEl.src` to throw silently on every tick with no visible effect. Moved animation to a standalone IIFE at script load time (safe since scripts are at end of body). Element is now queried inside each tick with a null guard so a missing element can never silently break the loop. All 4 frames preloaded via `new Image()` to eliminate fetch delays between swaps. *(js/script.js, index.html)*
+
+---
+
 ## COMMIT #40f / α 0.40.5
 Fire sprite animation reworked. Spritesheet approach abandoned after persistent CSS animation loop-boundary flicker across multiple attempts. `fire.png` removed; replaced with four individual frames in `assets/fire/` (`1.png`–`4.png`). A `setInterval` (125ms, 8fps) in `DOMContentLoaded` cycles `#fire-sprite` src through the four paths — no CSS animation, no timing quirks. `.fire-sprite-wrap` / `.fire-sprite-img` CSS removed; element reverts to `.sprite-img` for consistent sizing. *(js/script.js, index.html, css/styles.css)*
 

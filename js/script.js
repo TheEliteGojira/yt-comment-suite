@@ -881,15 +881,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initDropZone();
   UI.populateTzDropdown('v-tz-select');
 
-  /* Fire sprite animation — cycle through 4 individual frame PNGs at 8fps */
-  const fireEl     = document.getElementById('fire-sprite');
-  const firePaths  = ['assets/fire/1.png','assets/fire/2.png','assets/fire/3.png','assets/fire/4.png'];
-  let   fireFrame  = 0;
-  setInterval(() => {
-    fireFrame = (fireFrame + 1) % firePaths.length;
-    fireEl.src = firePaths[fireFrame];
-  }, 125);
-
   /* Back to top — show after 400px of scroll, smooth-scroll to top on click */
   const backToTopBtn = document.getElementById('v-back-to-top');
   window.addEventListener('scroll', () => {
@@ -972,3 +963,29 @@ document.addEventListener('DOMContentLoaded', () => {
     authorEl.title = `${c} comment${c !== 1 ? 's' : ''} · ${r} ${r !== 1 ? 'replies' : 'reply'}`;
   });
 });
+
+/* ─────────────────────────────────────────────────────────────
+   FIRE SPRITE — frame cycling via setInterval (8fps)
+   Runs at script load time (scripts are deferred to end of body
+   so the DOM is fully parsed). Queries element each tick so a
+   null fireEl can never silently break the loop.
+   ───────────────────────────────────────────────────────────── */
+(function () {
+  const paths = [
+    'assets/fire/1.png',
+    'assets/fire/2.png',
+    'assets/fire/3.png',
+    'assets/fire/4.png',
+  ];
+
+  /* Preload all frames so swaps are instant */
+  paths.forEach(src => { const img = new Image(); img.src = src; });
+
+  let frame = 0;
+  setInterval(() => {
+    const el = document.getElementById('fire-sprite');
+    if (!el) return;
+    frame = (frame + 1) % paths.length;
+    el.src = paths[frame];
+  }, 125);
+}());
