@@ -384,12 +384,13 @@ docs:     README, CLAUDE.md, code comments only
 > After completing a task, change `[ ]` to `[x]` and append a short completion note
 > on the same line describing what was done and which files changed.
 > Do not delete completed items — the history is useful.
-> Move any completed items from the "Short Term" section to the "Completed" section.
 > Run the full syntax check and the testing checklist after every task.
 
 ---
 
-### ✅ Completed
+### ✅ Completed — v1.0
+
+All planned features implemented as of α 0.41.0.
 
 - [x] **Video description toggle in meta bar** — `getVideoInfo` now returns `description`
       from the already-fetched `snippet`. Stored in `AppState.videoDescription` and in
@@ -545,12 +546,6 @@ docs:     README, CLAUDE.md, code comments only
       CSV, TXT buttons and a "Filtered (N):" label. Hidden on reset.
       *(js/archive-manager.js, js/script.js, index.html)*
 
----
-
-### 🔧 Short term
-
-#### Higher effort
-
 - [x] **Word frequency panel** — `ArchiveManager.getWordFrequency(threads, topN)` added:
       tokenises `textOriginal` across all threads and replies, strips URLs, filters a
       hardcoded stop-word set, returns top 30 `[word, count]` pairs. `UI.renderWordFrequency`
@@ -560,26 +555,40 @@ docs:     README, CLAUDE.md, code comments only
       Cache and panel state cleared on `resetViewer`.
       *(js/archive-manager.js, js/ui.js, js/script.js, index.html, css/styles.css)*
 
-- [x] **Multi-archive merge** — allow dropping a second `.json` export onto the Viewer
-      while one is already loaded. Merge the thread arrays, deduplicate by comment ID,
-      and re-render. Useful for comparing comment sections across related videos.
-      **Done:** `ArchiveManager.mergeArchives` deduplicates by thread ID; `mergeJsonFile`
-      in script.js handles file reading, parsing, state update, meta bar refresh, filter
-      re-run, and 2.5s notification. ⊕ Merge archive button + hidden file input added to
-      `#v-filtered-export-row`. Archiver reset also resets the Viewer via `resetViewer()`
-      call at end of `resetArchiver`.
+- [x] **Multi-archive merge** — `ArchiveManager.mergeArchives` deduplicates by thread ID;
+      `mergeJsonFile` in `script.js` handles file reading, parsing, state update, meta bar
+      refresh, filter re-run, and 2.5s notification. ⊕ Merge archive button + hidden file
+      input added to `#v-filtered-export-row`. Archiver reset also resets the Viewer.
       *(js/archive-manager.js, js/script.js, index.html, css/styles.css)*
 
 ---
 
-#### Shelved / revisit later
+### 🔧 Short term
 
-- **Sentiment distribution** — removed from active plan. A keyword-lexicon classifier
-  is unreliable against YouTube comment language (heavy sarcasm, slang, multilingual
-  content). Could be worth revisiting if a credible lightweight approach presents itself,
-  but would risk producing misleading results in its current form. Not a priority for the
-  current audience.
+> Nothing outstanding. All short-term goals are complete.
+> If new work is scoped, add items here before starting — don't work from memory.
 
 ---
 
 ### 🗺 Long term
+
+> This section is intentionally empty as of v1.0. The project is feature-complete for
+> its original scope. If you return to it, consider the following starting points:
+
+- **`yt-channel-suite/` — separate project** for channel-level tooling (video performance
+  dashboard, upload calendar heatmap, subscriber milestone tracker, top commenter
+  leaderboard). Shares the same visual language but lives in its own folder. Do not add
+  channel-level features to this codebase.
+
+- **Sentiment analysis — shelved** — a keyword-lexicon classifier is unreliable against
+  YouTube comment language (sarcasm, slang, multilingual content). Worth revisiting only
+  if a credible lightweight in-browser approach presents itself (e.g. a small ONNX model).
+
+- **OAuth integration** — would unlock comment moderation status filtering, posting replies,
+  and private video support. Requires a backend for the OAuth flow — out of scope for a
+  purely client-side tool but the right direction if this ever becomes a hosted product.
+
+- **Web Worker for large archives** — `getWordFrequency` and large sort/filter passes
+  could be offloaded to a Web Worker to avoid any main-thread blocking on 500k+ comment
+  archives. Current debounce + batching handles it well enough for now.
+
