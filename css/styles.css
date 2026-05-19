@@ -567,12 +567,12 @@ body::before {
   margin-bottom: 20px;
 }
 
-#v-meta-thumb-wrap { flex-shrink: 0; }
+#v-meta-thumb-wrap { flex-shrink: 0; align-self: center; }
 
 #v-meta-thumb {
   display: block;
-  width: 107px; /* 16:9 at 60px height */
-  height: 60px;
+  width: 160px; /* 16:9 at 90px height */
+  height: 90px;
   object-fit: cover;
 }
 
@@ -610,10 +610,10 @@ body::before {
 
 /* Merged-archive count suffix in Viewer meta bar title */
 .v-meta-title-suffix {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 400;
   color: var(--text-muted);
-  margin-left: 8px;
+  margin-left: 10px;
   letter-spacing: 0.5px;
 }
 

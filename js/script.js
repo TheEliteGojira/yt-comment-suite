@@ -212,6 +212,7 @@ async function startFetch() {
   UI.hide('a-results-section');
   UI.hide('a-open-viewer-btn');
   UI.show('a-progress-section');
+  UI.show('a-stop-wrap');
   UI.setProgress('a-progress-bar', 0);
   document.getElementById('a-progress-label').textContent = 'Fetching comments…';
   document.getElementById('a-progress-label').classList.add('pulsing');
@@ -340,8 +341,9 @@ function finishFetch(reason) {
   AppState.isFetching    = false;
   AppState.stopRequested = false;
 
-  /* Stop the buffering dots */
+  /* Stop the buffering dots and hide the stop button */
   UI.hide('a-dot-loader');
+  UI.hide('a-stop-wrap');
 
   document.getElementById('a-fetch-btn').disabled    = false;
   document.getElementById('a-estimate-btn').disabled = false;
@@ -855,8 +857,9 @@ function resetViewer() {
   document.getElementById('v-merge-menu').style.display = 'none';
   UI.hide('v-merge-url-row');
   document.getElementById('v-merge-url-input').value       = '';
-  document.getElementById('v-merge-fetch-status').textContent = '';
-  document.getElementById('v-merge-fetch-btn').disabled    = false;
+  document.getElementById('v-merge-fetch-status').textContent   = '';
+  document.getElementById('v-merge-fetch-btn').disabled         = false;
+  document.getElementById('v-merge-estimate-btn').disabled      = false;
   UI.hide('v-merge-stop-btn');
   const wfArrow = document.getElementById('v-word-freq-arrow');
   if (wfArrow) wfArrow.classList.remove('open');
@@ -986,8 +989,9 @@ function cancelMergeUrl() {
   _mergeFetchStopped = true;
   UI.hide('v-merge-url-row');
   document.getElementById('v-merge-url-input').value      = '';
-  document.getElementById('v-merge-fetch-status').textContent = '';
-  document.getElementById('v-merge-fetch-btn').disabled   = false;
+  document.getElementById('v-merge-fetch-status').textContent   = '';
+  document.getElementById('v-merge-fetch-btn').disabled         = false;
+  document.getElementById('v-merge-estimate-btn').disabled      = false;
   UI.hide('v-merge-stop-btn');
 }
 
@@ -995,6 +999,37 @@ function cancelMergeUrl() {
 function stopMergeFetch() {
   _mergeFetchStopped = true;
   document.getElementById('v-merge-fetch-status').textContent = 'Stopping…';
+}
+
+/* ── Estimate quota cost for a merge URL (1 API unit) ─────── */
+async function estimateMergeCost() {
+  const videoId  = extractVideoId(document.getElementById('v-merge-url-input').value.trim());
+  const statusEl = document.getElementById('v-merge-fetch-status');
+  const btn      = document.getElementById('v-merge-estimate-btn');
+
+  if (!videoId) { statusEl.textContent = '⚠ Invalid URL or video ID.'; return; }
+
+  const apiKey = localStorage.getItem(API_KEY_STORAGE) || '';
+  if (!apiKey) { statusEl.textContent = '⚠ No API key saved — enter one in the Archiver tab first.'; return; }
+
+  btn.disabled = true;
+  statusEl.textContent = 'Estimating…';
+
+  try {
+    const info = await YouTubeAPI.getVideoInfo(videoId, apiKey);
+    if (info.commentCount > 0) {
+      const minUnits = Math.ceil(info.commentCount / 100);
+      statusEl.textContent =
+        `~${minUnits.toLocaleString()} units estimated` +
+        ` (${info.commentCount.toLocaleString()} comments · replies will add more)`;
+    } else {
+      statusEl.textContent = 'Comments appear to be disabled for this video.';
+    }
+  } catch (e) {
+    statusEl.textContent = `⚠ ${e.message}`;
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 /* ── Fetch comments from a YouTube URL and merge them in ── */
@@ -1015,7 +1050,8 @@ async function startMergeFetch() {
   }
 
   _mergeFetchStopped = false;
-  document.getElementById('v-merge-fetch-btn').disabled = true;
+  document.getElementById('v-merge-fetch-btn').disabled    = true;
+  document.getElementById('v-merge-estimate-btn').disabled = true;
   UI.show('v-merge-stop-btn');
   statusEl.textContent = 'Fetching video info…';
 
@@ -1041,7 +1077,8 @@ async function startMergeFetch() {
     statusEl.textContent = `"${info.title}" — fetching comments…`;
   } catch (e) {
     statusEl.textContent = `⚠ ${e.message}`;
-    document.getElementById('v-merge-fetch-btn').disabled = false;
+    document.getElementById('v-merge-fetch-btn').disabled    = false;
+    document.getElementById('v-merge-estimate-btn').disabled = false;
     UI.hide('v-merge-stop-btn');
     return;
   }
@@ -1092,7 +1129,8 @@ async function startMergeFetch() {
 
     if (addedCount === 0) {
       statusEl.textContent = '⊕ No new threads found — all duplicates.';
-      document.getElementById('v-merge-fetch-btn').disabled = false;
+      document.getElementById('v-merge-fetch-btn').disabled    = false;
+    document.getElementById('v-merge-estimate-btn').disabled = false;
       UI.hide('v-merge-stop-btn');
       return;
     }
@@ -1115,7 +1153,8 @@ async function startMergeFetch() {
 
   } catch (e) {
     statusEl.textContent = `⚠ ${e.message}`;
-    document.getElementById('v-merge-fetch-btn').disabled = false;
+    document.getElementById('v-merge-fetch-btn').disabled    = false;
+    document.getElementById('v-merge-estimate-btn').disabled = false;
     UI.hide('v-merge-stop-btn');
   }
 }

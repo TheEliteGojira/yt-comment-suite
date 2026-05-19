@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #45 / α 0.45.0
+Four polish items and About tab refresh. (1) **Archiver stop button** — wrapper given `id="a-stop-wrap"`; shown at start of `startFetch`, hidden in `finishFetch` so it disappears once a fetch completes or errors. (2) **"+ N archives" suffix** — `.v-meta-title-suffix` bumped from `11px` to `14px` with `margin-left: 10px`. (3) **Estimate in merge URL row** — `estimateMergeCost()` added to `script.js`; calls `getVideoInfo` (1 unit) and writes projected units + comment count into `#v-merge-fetch-status`. `id="v-merge-estimate-btn"` added to the HTML between Fetch & Merge and Cancel; disabled alongside the fetch button during an active fetch. (4) **Viewer meta bar thumbnail** — `#v-meta-thumb` enlarged from `107×60` to `160×90` (both exact 16:9). (5) **About tab** — intro, Archiver, and Viewer panels rewritten to reflect multi-archive merge, fetch-from-URL, source chip bar, word frequency panel, estimate option, and stop-button behaviour. *(js/script.js, index.html, css/styles.css)*
+
+---
+
 ## COMMIT #44 / α 0.44.0
 Merge-from-URL added to the Viewer. The ⊕ Merge archive button now opens a two-option menu (upward-opening, dismisses on outside click): **Fetch from YouTube** (primary, accent left border) and **Load from disk** (secondary). Choosing Fetch from YouTube shows a `#v-merge-url-row` with a URL/ID text input, Fetch & Merge button, Cancel, a status span, and a Stop button. Enter key submits. The fetch loop reuses `YouTubeAPI.getVideoInfo`, `getCommentThreadPage`, `parseThread`, `parseInlineReplies`, and `getAllReplies` — same pipeline as the Archiver but without any Archiver UI side effects. On completion, `ArchiveManager.buildNestedExport` converts the flat result to nested threads, which are passed to `mergeArchives` with the video title as the source label. `_mergeFetchStopped` flag stops the loop cleanly. `resetViewer` cancels any in-progress URL fetch and closes the menu. *(js/script.js, index.html, css/styles.css)*
 

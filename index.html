@@ -117,7 +117,7 @@
       <div class="dot-loader" id="a-dot-loader">
         <span></span><span></span><span></span>
       </div>
-      <div style="margin-top: 14px;">
+      <div id="a-stop-wrap" style="margin-top: 14px;">
         <button class="btn btn-danger btn-sm" onclick="stopFetch()">⏹ Stop</button>
       </div>
     </div>
@@ -307,6 +307,7 @@
       <div class="filter-row" id="v-merge-url-row" style="display:none">
         <input type="text" id="v-merge-url-input" class="v-merge-url-input" placeholder="youtube.com/watch?v=... or video ID" autocomplete="off">
         <button class="btn btn-primary btn-sm" id="v-merge-fetch-btn" onclick="startMergeFetch()">Fetch &amp; Merge</button>
+        <button class="btn btn-secondary btn-sm" id="v-merge-estimate-btn" onclick="estimateMergeCost()">Estimate</button>
         <button class="btn btn-secondary btn-sm" onclick="cancelMergeUrl()">Cancel</button>
         <span id="v-merge-fetch-status"></span>
         <button class="btn btn-secondary btn-sm" id="v-merge-stop-btn" style="display:none" onclick="stopMergeFetch()">Stop</button>
@@ -372,7 +373,7 @@
       </p>
       <ul class="about-list">
         <li><strong>Archiver</strong> — connects to the YouTube Data API v3 with your key, paginates through all comment threads and replies, and streams them into a live preview. Estimate the quota cost before committing to a full fetch. When done, open the archive directly in the Viewer or export it to a file.</li>
-        <li><strong>Viewer</strong> — browse, search, sort, filter, and export comments. Load data directly from the Archiver (no file needed) or drop a previously saved JSON archive at any time.</li>
+        <li><strong>Viewer</strong> — browse, search, sort, filter, and export comments. Load data from the Archiver in memory, drop a saved JSON file, or fetch a second video directly from the Viewer and merge it in alongside the first.</li>
       </ul>
     </div>
 
@@ -458,10 +459,10 @@
     <div class="panel">
       <div class="panel-label">Archiver</div>
       <ul class="about-list">
-        <li><strong>Estimate before fetching:</strong> Click <strong>Estimate</strong> next to the URL field to fetch just the video metadata (1 unit) and see the projected quota cost before starting a full fetch.</li>
-        <li><strong>Live preview:</strong> Comments stream in as they are fetched, up to 100 in the preview pane. The full archive is always available in the Viewer.</li>
-        <li><strong>Stop and resume:</strong> The Stop button halts after the current page finishes. You can export or open in the Viewer with whatever was captured.</li>
-        <li><strong>Include replies toggle:</strong> Disable reply fetching to reduce quota usage on reply-heavy videos. Top-level comments only.</li>
+        <li><strong>Estimate before fetching:</strong> Click <strong>Estimate</strong> next to the URL field to fetch just the video metadata (1 unit) and see the projected quota cost before committing to a full fetch.</li>
+        <li><strong>Live preview:</strong> Comments stream into the preview pane as they are fetched, capped at 100 visible items. The full archive is always available in the Viewer regardless of preview size.</li>
+        <li><strong>Stop and resume:</strong> The Stop button halts after the current page finishes and disappears once the fetch is complete. You can export or open in the Viewer with whatever was captured.</li>
+        <li><strong>Include replies toggle:</strong> Disable reply fetching to reduce quota usage on reply-heavy videos. Fetches top-level comments only.</li>
         <li><strong>Export formats:</strong> JSON (re-importable, nested structure), CSV (spreadsheet-compatible, flat), and plain TXT. All exports use the original unformatted text — no HTML tags.</li>
         <li><strong>Open in Viewer:</strong> Passes the archive directly to the Viewer in memory — no file download required.</li>
       </ul>
@@ -471,18 +472,20 @@
     <div class="panel">
       <div class="panel-label">Viewer</div>
       <ul class="about-list">
-        <li><strong>Search:</strong> Filters comments and replies in real time. Matches are highlighted; non-matching replies in a matched thread are dimmed so you can read the full conversation context. Search operates on plain text — it never matches inside HTML formatting.</li>
+        <li><strong>Search:</strong> Filters comments and replies in real time. Matches are highlighted; non-matching replies in a matched thread are dimmed so you can read the full conversation context. Search operates on plain text — never matches inside HTML formatting.</li>
         <li><strong>Sort:</strong> Newest first, oldest first, or most liked. Applies to top-level comments; replies always stay in chronological order under their parent.</li>
         <li><strong>Filter toggles:</strong> Show or hide top-level comments and/or replies independently. Combine with search for fine-grained results.</li>
         <li><strong>Date range:</strong> Narrow the feed to comments posted between two dates. Clears with the ✕ button.</li>
         <li><strong>Pin / bookmark:</strong> Click ☆ on any top-level comment to pin it. Use the ★ Pinned filter to view only pinned comments. Pins are session-only and clear on reset.</li>
-        <li><strong>Export filtered results:</strong> The export row shows the current count and always visible once a file is loaded. Label reads "All (N):" or "Filtered (N):" depending on active filters. Exports the current view as JSON, CSV, or TXT.</li>
-        <li><strong>Permalinks ↗:</strong> Every comment and reply card has a link that opens that specific comment on YouTube in a new tab.</li>
+        <li><strong>Multi-archive merge:</strong> Click <strong>⊕ Merge archive</strong> to bring in a second archive alongside the first. Choose <strong>Fetch from YouTube</strong> to enter a URL and pull comments directly (uses your saved API key, includes an Estimate option), or <strong>Load from disk</strong> to import a saved .json file. Merged threads are deduplicated by comment ID. Each merged source appears as a chip in the source bar — click × on any chip to remove that source and its threads from the current session. The title bar shows a <em>+N archives</em> count while sources are active.</li>
+        <li><strong>Word frequency:</strong> The collapsible <strong>Word Frequency</strong> panel (between the meta bar and controls) shows the top 30 words across all loaded comments, ranked by count with a proportional bar. Computed once on first open and cached until a new archive is loaded.</li>
+        <li><strong>Export filtered results:</strong> Always visible once an archive is loaded. Label reads "All (N):" or "Filtered (N):" depending on active filters. Exports the current view as JSON, CSV, or TXT. Merged archives export as a single unified file.</li>
+        <li><strong>Permalinks ↗:</strong> Every comment and reply card links directly to that comment on YouTube in a new tab.</li>
         <li><strong>Copy ⧉:</strong> Copies the plain text of any comment or reply to the clipboard. Confirms with ✓ for 1.5 seconds.</li>
-        <li><strong>Timezone:</strong> All timestamps are stored as UTC. The Viewer converts to your chosen timezone on the fly — switch freely without reloading.</li>
-        <li><strong>Author profiles:</strong> Click any commenter's name to open a profile panel showing all their activity in the loaded archive — comment count, reply count, total likes, and full history. Hover a name for a quick summary tooltip. Click the channel name in the meta bar to see the video author's comments. Profiles are scoped to the current archive only.</li>
-        <li><strong>Video meta bar:</strong> Shows the video thumbnail, linked title, view and like counts, and a collapsible description panel. All data is stored in the JSON so it survives re-import.</li>
-        <li><strong>Profile picture expiry:</strong> Avatar URLs are captured at fetch time. They may expire if a user changes their picture. Failed avatars show a grey placeholder. Re-fetching captures the current picture.</li>
+        <li><strong>Timezone:</strong> All timestamps are stored as UTC. Switch timezone freely — the Viewer converts on the fly without reloading.</li>
+        <li><strong>Author profiles:</strong> Click any commenter's name to open a profile panel showing all their activity in the loaded archive — comment count, reply count, total likes, and full history. Hover a name for a quick tooltip. Click the channel name in the meta bar to see the video author's comments.</li>
+        <li><strong>Video meta bar:</strong> Shows the video thumbnail, linked title, view and like counts, and a collapsible description. All metadata is stored in the JSON and survives re-import.</li>
+        <li><strong>Profile picture expiry:</strong> Avatar URLs are captured at fetch time and may expire if a user changes their picture. Failed avatars show a grey placeholder — re-fetching the video captures the current picture.</li>
       </ul>
     </div>
 
@@ -528,7 +531,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.44.0</div>
+<div id="version-badge">α 0.45.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>
