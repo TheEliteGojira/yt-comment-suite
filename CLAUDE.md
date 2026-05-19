@@ -560,10 +560,15 @@ docs:     README, CLAUDE.md, code comments only
       Cache and panel state cleared on `resetViewer`.
       *(js/archive-manager.js, js/ui.js, js/script.js, index.html, css/styles.css)*
 
-- [ ] **Multi-archive merge** — allow dropping a second `.json` export onto the Viewer
+- [x] **Multi-archive merge** — allow dropping a second `.json` export onto the Viewer
       while one is already loaded. Merge the thread arrays, deduplicate by comment ID,
       and re-render. Useful for comparing comment sections across related videos.
-      *(js/archive-manager.js, js/script.js, js/ui.js)*
+      **Done:** `ArchiveManager.mergeArchives` deduplicates by thread ID; `mergeJsonFile`
+      in script.js handles file reading, parsing, state update, meta bar refresh, filter
+      re-run, and 2.5s notification. ⊕ Merge archive button + hidden file input added to
+      `#v-filtered-export-row`. Archiver reset also resets the Viewer via `resetViewer()`
+      call at end of `resetArchiver`.
+      *(js/archive-manager.js, js/script.js, index.html, css/styles.css)*
 
 ---
 

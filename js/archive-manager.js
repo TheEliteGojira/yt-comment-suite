@@ -349,6 +349,18 @@ const ArchiveManager = (() => {
       .slice(0, topN);
   }
 
+  /* ── Merge two thread arrays ─────────────────────────────── */
+  /* Deduplicates by thread id — incoming threads whose id already */
+  /* exists in the existing set are silently dropped.              */
+  function mergeArchives(existingThreads, incomingThreads) {
+    const seen = new Set(existingThreads.map(t => t.id));
+    const added = incomingThreads.filter(t => !seen.has(t.id));
+    return {
+      threads:    [...existingThreads, ...added],
+      addedCount: added.length,
+    };
+  }
+
   /* ── Public API ───────────────────────────────────────────── */
   return {
     parseImport,
@@ -362,6 +374,7 @@ const ArchiveManager = (() => {
     exportTXT,
     exportFilteredJSON,
     getWordFrequency,
+    mergeArchives,
   };
 
 })();

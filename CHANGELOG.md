@@ -4,6 +4,13 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #41 / α 0.41.0
+Multi-archive merge added to the Viewer. A hidden `<input type="file">` and **⊕ Merge archive** button appear in the bottom row of the Viewer controls once an archive is loaded. Selecting a second `.json` file calls `mergeJsonFile`: parses and validates it via `ArchiveManager.parseImport`, deduplicates threads by ID via `ArchiveManager.mergeArchives`, merges into `AppState.threads`, refreshes the meta bar counts, re-runs filters, and shows a brief "⊕ Merged N new threads" notification in the result-count row for 2.5 seconds before restoring the normal count text. Invalid files surface an `alert`. Word frequency cache is invalidated on merge.
+
+Archiver reset now also resets the Viewer. `resetArchiver` calls `resetViewer()` at the end so switching to a fresh fetch always starts from a clean state. *(js/script.js, js/archive-manager.js, index.html, css/styles.css)*
+
+---
+
 ## COMMIT #40g / α 0.40.6
 Hotfix: fire sprite animation still static. Root cause: `document.getElementById('fire-sprite')` was likely returning null inside `DOMContentLoaded`, causing `fireEl.src` to throw silently on every tick with no visible effect. Moved animation to a standalone IIFE at script load time (safe since scripts are at end of body). Element is now queried inside each tick with a null guard so a missing element can never silently break the loop. All 4 frames preloaded via `new Image()` to eliminate fetch delays between swaps. *(js/script.js, index.html)*
 

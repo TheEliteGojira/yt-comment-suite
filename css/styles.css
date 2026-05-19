@@ -983,6 +983,13 @@ body::before {
 }
 
 /* ── Reset / utility buttons ──────────────────────────────── */
+.v-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
 #v-reset-btn {
   font-family: 'Space Mono', monospace;
   font-size: 10px;
@@ -994,7 +1001,6 @@ body::before {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  margin-left: auto;
   transition: all 0.15s;
 }
 

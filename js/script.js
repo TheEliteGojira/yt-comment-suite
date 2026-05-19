@@ -422,6 +422,9 @@ function resetArchiver() {
   UI.hide('a-quota-estimate');
   UI.setText('a-quota-estimate', '');
   UI.hideError('a-error-box');
+
+  /* Also clear any archive loaded in the Viewer */
+  resetViewer();
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -873,6 +876,59 @@ function resetViewer() {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   VIEWER — merge a second JSON archive into the loaded one
+   ───────────────────────────────────────────────────────────── */
+function mergeJsonFile(file) {
+  if (!file || !AppState.threads.length) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    let data;
+    try {
+      data = JSON.parse(e.target.result);
+    } catch (_) {
+      alert('Could not parse the selected file as JSON.');
+      return;
+    }
+
+    let parsed;
+    try {
+      parsed = ArchiveManager.parseImport(data);
+    } catch (err) {
+      alert(err.message);
+      return;
+    }
+
+    const { threads: merged, addedCount } = ArchiveManager.mergeArchives(
+      AppState.threads,
+      parsed.threads
+    );
+
+    AppState.threads = merged;
+    _wordFreqCache   = null;
+
+    /* Recompute meta bar counts from the merged thread set */
+    const totalReplies  = merged.reduce((s, t) => s + (t.replies?.length || 0), 0);
+    const totalComments = merged.length + totalReplies;
+    UI.setText('v-meta-total',   UI.fmt(totalComments));
+    UI.setText('v-meta-threads', UI.fmt(merged.length));
+    UI.setText('v-meta-replies', UI.fmt(totalReplies));
+
+    /* Apply filters first (80ms debounce), then briefly show merge count */
+    applyViewerFilters();
+    setTimeout(() => {
+      const rc = document.getElementById('v-result-count');
+      if (rc) rc.textContent = `⊕ Merged ${addedCount} new thread${addedCount !== 1 ? 's' : ''}`;
+      setTimeout(() => applyViewerFilters(), 2500);
+    }, 180);
+  };
+
+  reader.readAsText(file);
+  /* Reset input so the same file can be selected again */
+  document.getElementById('v-merge-input').value = '';
+}
+
+/* ─────────────────────────────────────────────────────────────
    INIT — runs once DOM is ready
    ───────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -880,6 +936,11 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSavedApiKey();
   initDropZone();
   UI.populateTzDropdown('v-tz-select');
+
+  /* Merge file input — triggers mergeJsonFile when a file is chosen */
+  document.getElementById('v-merge-input').addEventListener('change', e => {
+    if (e.target.files[0]) mergeJsonFile(e.target.files[0]);
+  });
 
   /* Back to top — show after 400px of scroll, smooth-scroll to top on click */
   const backToTopBtn = document.getElementById('v-back-to-top');
