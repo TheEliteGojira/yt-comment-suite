@@ -991,6 +991,85 @@ body::before {
   flex-shrink: 0;
 }
 
+/* ── Merge archive menu ───────────────────────────────────── */
+.v-merge-wrap {
+  position: relative;
+}
+
+#v-merge-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  width: 280px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  z-index: 200;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+.merge-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.merge-opt:last-child { border-bottom: none; }
+.merge-opt:hover { background: var(--panel-hover); }
+
+.merge-opt--primary { border-left: 3px solid var(--accent); padding-left: 10px; }
+
+.merge-opt-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+.merge-opt--primary .merge-opt-title { color: var(--accent); }
+
+.merge-opt-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ── Merge-from-URL input row ─────────────────────────────── */
+#v-merge-url-row {
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.v-merge-url-input {
+  flex: 1;
+  min-width: 200px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.v-merge-url-input:focus { border-color: var(--accent); }
+
+#v-merge-fetch-status {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex: 1;
+  min-width: 120px;
+}
+
 /* ── Merged source chip list ──────────────────────────────── */
 #v-source-list {
   display: flex;

@@ -286,9 +286,30 @@
         </div>
         <div class="v-action-btns">
           <input type="file" id="v-merge-input" accept=".json" style="display:none">
-          <button class="btn btn-secondary btn-sm" id="v-merge-btn" onclick="document.getElementById('v-merge-input').click()" title="Merge another archive JSON into the current one">⊕ Merge archive</button>
+          <div class="v-merge-wrap">
+            <button class="btn btn-secondary btn-sm" id="v-merge-btn" onclick="toggleMergeMenu()">⊕ Merge archive</button>
+            <div id="v-merge-menu" style="display:none">
+              <button class="merge-opt merge-opt--primary" id="v-merge-url-opt">
+                <span class="merge-opt-title">Fetch from YouTube</span>
+                <span class="merge-opt-desc">Enter a video URL or ID to fetch and merge its comments directly.</span>
+              </button>
+              <button class="merge-opt" id="v-merge-file-opt">
+                <span class="merge-opt-title">Load from disk</span>
+                <span class="merge-opt-desc">Import a previously exported .json archive.</span>
+              </button>
+            </div>
+          </div>
           <button id="v-reset-btn" onclick="resetViewer()">✕ Load a different file</button>
         </div>
+      </div>
+
+      <!-- Merge-from-URL input row — shown after choosing "Fetch from YouTube" -->
+      <div class="filter-row" id="v-merge-url-row" style="display:none">
+        <input type="text" id="v-merge-url-input" class="v-merge-url-input" placeholder="youtube.com/watch?v=... or video ID" autocomplete="off">
+        <button class="btn btn-primary btn-sm" id="v-merge-fetch-btn" onclick="startMergeFetch()">Fetch &amp; Merge</button>
+        <button class="btn btn-secondary btn-sm" onclick="cancelMergeUrl()">Cancel</button>
+        <span id="v-merge-fetch-status"></span>
+        <button class="btn btn-secondary btn-sm" id="v-merge-stop-btn" style="display:none" onclick="stopMergeFetch()">Stop</button>
       </div>
 
       <!-- Merged source chips — shown when at least one archive has been merged in -->
@@ -507,7 +528,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">α 0.43.0</div>
+<div id="version-badge">α 0.44.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>

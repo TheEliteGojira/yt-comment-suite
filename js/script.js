@@ -681,6 +681,7 @@ let _renderOffset     = 0;    /* how many threads have been painted so far */
 let _renderQuery      = '';   /* captured at render time for batch callbacks */
 let _wordFreqCache    = null; /* computed once per loaded archive, cleared on reset */
 let _renderTz         = 'UTC';
+let _mergeFetchStopped = false; /* signals the URL-merge fetch loop to stop */
 let _scrollObserver   = null; /* IntersectionObserver watching the sentinel */
 
 /* Debounced entry point — shows loading dots immediately, defers heavy render */
@@ -848,6 +849,15 @@ function resetViewer() {
   AppState.sources = [];
   const sourceList = document.getElementById('v-source-list');
   if (sourceList) { sourceList.innerHTML = ''; sourceList.style.display = 'none'; }
+
+  /* Cancel any in-progress URL merge and close the menu */
+  _mergeFetchStopped = true;
+  document.getElementById('v-merge-menu').style.display = 'none';
+  UI.hide('v-merge-url-row');
+  document.getElementById('v-merge-url-input').value       = '';
+  document.getElementById('v-merge-fetch-status').textContent = '';
+  document.getElementById('v-merge-fetch-btn').disabled    = false;
+  UI.hide('v-merge-stop-btn');
   const wfArrow = document.getElementById('v-word-freq-arrow');
   if (wfArrow) wfArrow.classList.remove('open');
 
@@ -958,6 +968,158 @@ function _updateMetaTitle() {
   }
 }
 
+/* ── Merge archive menu toggle ───────────────────────────── */
+function toggleMergeMenu() {
+  const menu = document.getElementById('v-merge-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+/* ── Show URL input row (called by menu option click) ────── */
+function showMergeUrlInput() {
+  document.getElementById('v-merge-menu').style.display = 'none';
+  UI.show('v-merge-url-row', 'flex');
+  document.getElementById('v-merge-url-input').focus();
+}
+
+/* ── Hide URL input row and reset its state ─────────────── */
+function cancelMergeUrl() {
+  _mergeFetchStopped = true;
+  UI.hide('v-merge-url-row');
+  document.getElementById('v-merge-url-input').value      = '';
+  document.getElementById('v-merge-fetch-status').textContent = '';
+  document.getElementById('v-merge-fetch-btn').disabled   = false;
+  UI.hide('v-merge-stop-btn');
+}
+
+/* ── Signal the fetch loop to stop ─────────────────────── */
+function stopMergeFetch() {
+  _mergeFetchStopped = true;
+  document.getElementById('v-merge-fetch-status').textContent = 'Stopping…';
+}
+
+/* ── Fetch comments from a YouTube URL and merge them in ── */
+async function startMergeFetch() {
+  const urlInput = document.getElementById('v-merge-url-input');
+  const videoId  = extractVideoId(urlInput.value.trim());
+  const statusEl = document.getElementById('v-merge-fetch-status');
+
+  if (!videoId) {
+    statusEl.textContent = '⚠ Invalid URL or video ID.';
+    return;
+  }
+
+  const apiKey = localStorage.getItem(API_KEY_STORAGE) || '';
+  if (!apiKey) {
+    statusEl.textContent = '⚠ No API key saved — enter one in the Archiver tab first.';
+    return;
+  }
+
+  _mergeFetchStopped = false;
+  document.getElementById('v-merge-fetch-btn').disabled = true;
+  UI.show('v-merge-stop-btn');
+  statusEl.textContent = 'Fetching video info…';
+
+  const allComments = [];
+  let meta          = { videoId };
+  let videoTitle    = videoId;
+
+  /* Step 1: video metadata */
+  try {
+    const info = await YouTubeAPI.getVideoInfo(videoId, apiKey);
+    videoTitle = info.title;
+    meta = {
+      videoId,
+      videoTitle:        info.title,
+      videoPublishedAt:  info.publishedAt,
+      videoChannelTitle: info.channelTitle,
+      videoChannelId:    info.channelId,
+      videoThumbnailUrl: info.thumbnailUrl,
+      videoViewCount:    info.viewCount,
+      videoLikeCount:    info.likeCount,
+      videoDescription:  info.description,
+    };
+    statusEl.textContent = `"${info.title}" — fetching comments…`;
+  } catch (e) {
+    statusEl.textContent = `⚠ ${e.message}`;
+    document.getElementById('v-merge-fetch-btn').disabled = false;
+    UI.hide('v-merge-stop-btn');
+    return;
+  }
+
+  /* Step 2: paginate through threads + replies */
+  let pageToken = '';
+  let page      = 0;
+
+  try {
+    do {
+      if (_mergeFetchStopped) break;
+
+      const data = await YouTubeAPI.getCommentThreadPage(videoId, apiKey, 'time', pageToken);
+
+      for (const thread of (data.items || [])) {
+        if (_mergeFetchStopped) break;
+
+        const top = YouTubeAPI.parseThread(thread);
+        allComments.push(top);
+
+        if (top._totalReplies <= 5 && top._inlineReplies.length > 0) {
+          YouTubeAPI.parseInlineReplies(top._inlineReplies, top.id)
+            .forEach(r => allComments.push(r));
+        } else if (top._totalReplies > 5) {
+          await YouTubeAPI.getAllReplies(
+            top.id, apiKey,
+            reply => allComments.push(reply),
+            ()    => _mergeFetchStopped
+          );
+        }
+      }
+
+      page++;
+      statusEl.textContent =
+        `Fetching… ${allComments.length.toLocaleString()} comments (page ${page})`;
+
+      pageToken = data.nextPageToken || '';
+      await new Promise(r => setTimeout(r, 0)); /* yield to browser */
+
+    } while (pageToken && !_mergeFetchStopped);
+
+    /* Step 3: build nested threads and merge */
+    const payload     = ArchiveManager.buildNestedExport(allComments, meta);
+    const sourceLabel = videoTitle;
+    const { threads: merged, addedCount } = ArchiveManager.mergeArchives(
+      AppState.threads, payload.comments, sourceLabel
+    );
+
+    if (addedCount === 0) {
+      statusEl.textContent = '⊕ No new threads found — all duplicates.';
+      document.getElementById('v-merge-fetch-btn').disabled = false;
+      UI.hide('v-merge-stop-btn');
+      return;
+    }
+
+    AppState.threads = merged;
+    AppState.sources.push({ label: sourceLabel, count: addedCount });
+    _wordFreqCache   = null;
+
+    _updateMergedMetaBar();
+    _renderSourceList();
+    applyViewerFilters();
+    setTimeout(() => {
+      const rc = document.getElementById('v-result-count');
+      if (rc) rc.textContent =
+        `⊕ Merged ${addedCount} new thread${addedCount !== 1 ? 's' : ''} from "${sourceLabel}"`;
+      setTimeout(() => applyViewerFilters(), 2500);
+    }, 180);
+
+    cancelMergeUrl();
+
+  } catch (e) {
+    statusEl.textContent = `⚠ ${e.message}`;
+    document.getElementById('v-merge-fetch-btn').disabled = false;
+    UI.hide('v-merge-stop-btn');
+  }
+}
+
 /* ── Shared meta bar count update after any merge/removal ─── */
 function _updateMergedMetaBar() {
   const totalReplies  = AppState.threads.reduce((s, t) => s + (t.replies?.length || 0), 0);
@@ -1014,6 +1176,25 @@ document.addEventListener('DOMContentLoaded', () => {
   /* Merge file input — triggers mergeJsonFile when a file is chosen */
   document.getElementById('v-merge-input').addEventListener('change', e => {
     if (e.target.files[0]) mergeJsonFile(e.target.files[0]);
+  });
+
+  /* Merge menu options */
+  document.getElementById('v-merge-url-opt').addEventListener('click', showMergeUrlInput);
+  document.getElementById('v-merge-file-opt').addEventListener('click', () => {
+    document.getElementById('v-merge-menu').style.display = 'none';
+    document.getElementById('v-merge-input').click();
+  });
+
+  /* Close merge menu on click outside */
+  document.addEventListener('click', e => {
+    const menu = document.getElementById('v-merge-menu');
+    if (menu.style.display === 'none') return;
+    if (!e.target.closest('.v-merge-wrap')) menu.style.display = 'none';
+  });
+
+  /* Enter key submits the merge URL input */
+  document.getElementById('v-merge-url-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') startMergeFetch();
   });
 
   /* Source chip remove — delegated click on the source list container */

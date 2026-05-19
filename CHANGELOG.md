@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #44 / α 0.44.0
+Merge-from-URL added to the Viewer. The ⊕ Merge archive button now opens a two-option menu (upward-opening, dismisses on outside click): **Fetch from YouTube** (primary, accent left border) and **Load from disk** (secondary). Choosing Fetch from YouTube shows a `#v-merge-url-row` with a URL/ID text input, Fetch & Merge button, Cancel, a status span, and a Stop button. Enter key submits. The fetch loop reuses `YouTubeAPI.getVideoInfo`, `getCommentThreadPage`, `parseThread`, `parseInlineReplies`, and `getAllReplies` — same pipeline as the Archiver but without any Archiver UI side effects. On completion, `ArchiveManager.buildNestedExport` converts the flat result to nested threads, which are passed to `mergeArchives` with the video title as the source label. `_mergeFetchStopped` flag stops the loop cleanly. `resetViewer` cancels any in-progress URL fetch and closes the menu. *(js/script.js, index.html, css/styles.css)*
+
+---
+
 ## COMMIT #43 / α 0.43.0
 Meta bar title now shows a `+ N archive(s)` suffix (`.v-meta-title-suffix`, muted text) whenever merged sources are present; disappears when all sources are removed. Extracted `_updateMetaTitle()` helper in `script.js` — reads `AppState.videoTitle`, `AppState.videoId`, and `AppState.sources.length`; called from `loadViewerData` (initial load), `_renderSourceList` (merge and removal). `AppState.videoTitle` now persisted in `loadViewerData` so the helper always has the correct value on the file-import path. Porta and denton sprites shifted 64 sprite-px (128px visual at 2×) to the right via `position: relative; left: 64px` on `.sprite-row img:not(#fire-sprite)`. *(js/script.js, css/styles.css)*
 
