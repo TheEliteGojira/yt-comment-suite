@@ -1052,21 +1052,24 @@ footer {
 [data-theme="light"] .denton-sprite--dark  { display: none; }
 [data-theme="light"] .denton-sprite--light { display: block; }
 
-.fire-sprite {
+.fire-sprite-wrap {
   display: block;
   width: 64px;
   height: 64px;
+  overflow: hidden;   /* clips to one frame */
+  flex-shrink: 0;
+}
+
+.fire-sprite-img {
+  display: block;
+  width: 64px;        /* natural frame width */
   image-rendering: pixelated;
-  background-image: url('../assets/fire.png');
-  background-repeat: no-repeat;
-  background-size: 64px 256px; /* 4 frames stacked vertically at native size */
-  background-position: 0 0;
   animation: fire-anim 0.5s steps(4) infinite;
 }
 
 @keyframes fire-anim {
-  from { background-position: 0 0; }
-  to   { background-position: 0 -256px; }
+  from { transform: translateY(0); }
+  to   { transform: translateY(-256px); }
 }
 
 /* ── About tab ────────────────────────────────────────────── */

@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #40d / α 0.40.3
+Hotfix: fire sprite rendering glitch. The `background-position` animation approach was unreliable. Replaced with an `overflow: hidden` wrapper (`.fire-sprite-wrap`, 64×64) containing the full-height `<img>` (`.fire-sprite-img`, 64×256 natural size). `steps(4)` now animates `translateY` from `0` to `-256px`, sliding the spritesheet upward by one frame per step. Clipping is explicit and unambiguous. *(index.html, css/styles.css)*
+
+---
+
 ## COMMIT #40c / α 0.40.2
 Fire sprite animated. `assets/fire.png` is now a 64×256 vertical spritesheet (4 frames of 64×64). The `<img>` replaced with a `<div class="fire-sprite">` using `background-image` + `background-size: 64px 256px` + `animation: fire-anim 0.5s steps(4) infinite` to snap cleanly through frames at 8fps. Sits in the same `.sprite-row` slot — `scale(2)` upscaling and positioning unchanged. *(index.html, css/styles.css)*
 
