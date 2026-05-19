@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #43 / α 0.43.0
+Meta bar title now shows a `+ N archive(s)` suffix (`.v-meta-title-suffix`, muted text) whenever merged sources are present; disappears when all sources are removed. Extracted `_updateMetaTitle()` helper in `script.js` — reads `AppState.videoTitle`, `AppState.videoId`, and `AppState.sources.length`; called from `loadViewerData` (initial load), `_renderSourceList` (merge and removal). `AppState.videoTitle` now persisted in `loadViewerData` so the helper always has the correct value on the file-import path. Porta and denton sprites shifted 64 sprite-px (128px visual at 2×) to the right via `position: relative; left: 64px` on `.sprite-row img:not(#fire-sprite)`. *(js/script.js, css/styles.css)*
+
+---
+
 ## COMMIT #42 / α 0.42.0
 Per-source merge tracking added to the Viewer. Each thread merged via ⊕ Merge archive is now tagged with `_source: filename` in memory. After a merge, a chip bar (`#v-source-list`) appears below the controls listing every merged source; each chip has a × button that removes all threads from that source, recomputes meta bar counts, invalidates the word frequency cache, and re-runs filters. `AppState.sources` (array of `{ label, count }`) tracks active sources and is cleared on `resetViewer`. `_source` is stripped from all export paths (`buildNestedExport`, `exportFilteredJSON`, `flattenThreads`) so it never appears in downloaded files. All-duplicate merges now show a distinct "No new threads found" notification rather than "Merged 0". *(js/archive-manager.js, js/script.js, index.html, css/styles.css)*
 

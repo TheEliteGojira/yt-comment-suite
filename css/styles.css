@@ -608,6 +608,15 @@ body::before {
 }
 .meta-title-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 
+/* Merged-archive count suffix in Viewer meta bar title */
+.v-meta-title-suffix {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 8px;
+  letter-spacing: 0.5px;
+}
+
 /* Description toggle button */
 .meta-desc-toggle {
   margin-top: 8px;
@@ -1108,6 +1117,9 @@ footer {
 }
 
 #fire-sprite { margin-right: 192px; }
+
+/* Shift porta + denton 64 sprite-px (128px visual at 2×) to the right */
+.sprite-row img:not(#fire-sprite) { position: relative; left: 64px; }
 
 .denton-sprite--light { display: none; }
 [data-theme="light"] .denton-sprite--dark  { display: none; }

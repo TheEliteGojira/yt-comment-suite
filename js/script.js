@@ -547,17 +547,12 @@ function loadViewerData(meta, threads) {
   const wfArrow = document.getElementById('v-word-freq-arrow');
   if (wfArrow) wfArrow.classList.remove('open');
 
-  /* Restore videoId so renderThread can generate correct permalinks */
-  AppState.videoId = meta.videoId || '';
+  /* Restore videoId and title so _updateMetaTitle can read them */
+  AppState.videoId    = meta.videoId    || '';
+  AppState.videoTitle = meta.videoTitle || '';
 
   /* Populate meta bar — title is a link when videoId is known */
-  const titleEl   = document.getElementById('v-meta-title');
-  const titleText = meta.videoTitle || 'Unknown Video';
-  if (meta.videoId) {
-    titleEl.innerHTML = `<a class="meta-title-link" href="https://www.youtube.com/watch?v=${UI.esc(meta.videoId)}" target="_blank" rel="noopener noreferrer">${UI.esc(titleText)}</a>`;
-  } else {
-    titleEl.textContent = titleText;
-  }
+  _updateMetaTitle();
 
   UI.setText('v-meta-total',   UI.fmt(meta.totalComments || threads.length));
   UI.setText('v-meta-threads', UI.fmt(meta.totalTopLevelComments || threads.length));
@@ -946,6 +941,23 @@ function mergeJsonFile(file) {
   document.getElementById('v-merge-input').value = '';
 }
 
+/* ── Update meta bar title with optional merged-archive suffix ─ */
+function _updateMetaTitle() {
+  const titleEl   = document.getElementById('v-meta-title');
+  if (!titleEl) return;
+
+  const titleText = AppState.videoTitle || 'Unknown Video';
+  const n         = AppState.sources.length;
+  const suffix    = n > 0 ? ` <span class="v-meta-title-suffix">+ ${n} archive${n !== 1 ? 's' : ''}</span>` : '';
+
+  if (AppState.videoId) {
+    titleEl.innerHTML =
+      `<a class="meta-title-link" href="https://www.youtube.com/watch?v=${UI.esc(AppState.videoId)}" target="_blank" rel="noopener noreferrer">${UI.esc(titleText)}</a>${suffix}`;
+  } else {
+    titleEl.innerHTML = UI.esc(titleText) + suffix;
+  }
+}
+
 /* ── Shared meta bar count update after any merge/removal ─── */
 function _updateMergedMetaBar() {
   const totalReplies  = AppState.threads.reduce((s, t) => s + (t.replies?.length || 0), 0);
@@ -962,8 +974,11 @@ function _renderSourceList() {
 
   if (!AppState.sources.length) {
     container.style.display = 'none';
+    _updateMetaTitle();
     return;
   }
+
+  _updateMetaTitle();
 
   container.style.display = 'flex';
   container.innerHTML =
