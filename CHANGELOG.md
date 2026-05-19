@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #47 / β 1.0.1
+Documentation and roadmap. (1) **Stop/resume accuracy** — About tab quota paragraph rewritten to correctly describe the re-fetch + merge workaround for interrupted fetches; "Stop and resume" Archiver bullet renamed to "Stop" with an explicit note that no mid-session resume exists. README features bullet and Notes on large archives entry updated to match. (2) **Fetch resume — Planned** — new `## Planned` section added to the README describing the `nextPageToken` persistence approach; Stop bullet links to it. Long Term goal added to `CLAUDE.md` covering implementation details, token expiry handling, and the merge-based completion workflow. *(index.html, README.md, CLAUDE.md)*
+
+---
+
 ## COMMIT #46 / β 1.0.0
 **Beta milestone.** Version promoted from α to β, reflecting a complete and stable feature set. Polish pass focused on discoverability and documentation. (1) **Hover descriptors** — `title` attributes added to all notable Viewer interactive elements: sort buttons, filter toggles (Comments, Replies, ★ Pinned), timezone select, date range inputs and clear button, filtered export buttons, ⊕ Merge archive, Reset, Fetch & Merge, Estimate, Cancel, Stop, and the Word Frequency toggle. Permalink anchors in `ui.js` (`renderThread` and reply renderer) updated with `title="Open this comment on YouTube"`. (2) **"+ N archives" suffix** — font matched to the Viewer title (`Syne`, `16px`, weight `700`); muted colour retained; `vertical-align: middle` added for correct baseline alignment. (3) **About tab** — Viewer section expanded with merge workflow, word frequency panel, source chip bar, author profiles, and channel-author filtering. (4) **README rewrite** — full rewrite to β 1.0.0 covering all Archiver and Viewer features, API key setup, running locally, deploying, usage walkthrough, file structure, performance table, large-archive notes, browser support, and architecture reference. *(index.html, css/styles.css, js/ui.js, README.md)*
 

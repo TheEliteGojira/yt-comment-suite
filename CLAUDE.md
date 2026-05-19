@@ -577,6 +577,12 @@ All planned features implemented. Promoted from α to β at commit #46.
       to β 1.0.0 feature set. Also matched `.v-meta-title-suffix` font to the Viewer title
       (Syne 16px 700) and promoted the version from α to β. *(index.html, css/styles.css, js/ui.js, README.md)*
 
+- [x] **Stop/resume accuracy + fetch-resume roadmap** — About tab and README corrected to
+      accurately describe the re-fetch + merge workaround (no true mid-session resume exists).
+      "Stop and resume" renamed to "Stop" in both. New `## Planned` section added to README
+      describing the `nextPageToken` persistence approach for a future resume feature. Long
+      Term goal added to CLAUDE.md with full implementation notes. *(index.html, README.md, CLAUDE.md)*
+
 ---
 
 ### 🔧 Short term
@@ -607,4 +613,14 @@ All planned features implemented. Promoted from α to β at commit #46.
 - **Web Worker for large archives** — `getWordFrequency` and large sort/filter passes
   could be offloaded to a Web Worker to avoid any main-thread blocking on 500k+ comment
   archives. Current debounce + batching handles it well enough for now.
+
+- **Fetch resume via persisted page token** — YouTube's `nextPageToken` is not
+  session-bound; it survives across browser sessions and quota resets. When a fetch is
+  stopped or errors on quota, save `{ videoId, nextPageToken, pagesFetched }` to
+  `localStorage`. On the next session, if the user enters the same video ID, detect the
+  saved token and offer a **Resume from page N** option alongside the normal Fetch button.
+  The resumed fetch produces a second partial archive that the user merges with the first
+  in the Viewer (deduplication handles any seam overlap). Token expiry is not documented
+  by Google — handle the invalid-token error explicitly and inform the user if the resume
+  point has expired rather than failing silently.
 

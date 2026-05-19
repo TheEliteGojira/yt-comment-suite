@@ -452,9 +452,10 @@
       <p class="about-body" style="margin-top: 14px;">
         Reply-heavy videos cost more — each thread with more than 5 replies requires its own
         API call. A video with long reply chains can cost 2–3× more than the top-level count
-        alone suggests. If you hit the limit mid-fetch, the app shows a clear error. You can
-        export whatever was captured and continue the next day, or use a second key from a
-        different Google Cloud project.
+        alone suggests. If you hit the limit mid-fetch, the app shows a clear error. Export
+        whatever was captured, then fetch the same video again the next day (or with a second
+        key from a different Google Cloud project) and use <strong>⊕ Merge archive</strong> in
+        the Viewer to combine the two — duplicate comments are removed automatically.
       </p>
     </div>
 
@@ -464,7 +465,7 @@
       <ul class="about-list">
         <li><strong>Estimate before fetching:</strong> Click <strong>Estimate</strong> next to the URL field to fetch just the video metadata (1 unit) and see the projected quota cost before committing to a full fetch.</li>
         <li><strong>Live preview:</strong> Comments stream into the preview pane as they are fetched, capped at 100 visible items. The full archive is always available in the Viewer regardless of preview size.</li>
-        <li><strong>Stop and resume:</strong> The Stop button halts after the current page finishes and disappears once the fetch is complete. You can export or open in the Viewer with whatever was captured up to that point.</li>
+        <li><strong>Stop:</strong> The Stop button halts after the current page finishes and disappears once the fetch is complete. Export or open in the Viewer with whatever was captured up to that point. There is no mid-session resume — to complete an interrupted archive, re-fetch the video and merge the two exports in the Viewer.</li>
         <li><strong>Sort order:</strong> Choose between <em>newest first</em> (default, chronological) and <em>top comments</em> (YouTube's relevance ranking). Set before fetching — cannot be changed mid-fetch.</li>
         <li><strong>Include replies toggle:</strong> Disable reply fetching to reduce quota usage on reply-heavy videos. Fetches top-level comments only.</li>
         <li><strong>Export formats:</strong> JSON (re-importable, nested structure), CSV (spreadsheet-compatible, flat), and plain TXT. All exports use the original unformatted text — no HTML tags.</li>
@@ -535,7 +536,7 @@ python3 -m http.server 8080
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">β 1.0.0</div>
+<div id="version-badge">β 1.0.1</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>

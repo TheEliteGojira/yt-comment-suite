@@ -1,6 +1,6 @@
 # TubeArchiver
 
-**β 1.0.0** — A self-contained, client-side web app for fetching, browsing, and exporting YouTube comments.
+**β 1.0.1** — A self-contained, client-side web app for fetching, browsing, and exporting YouTube comments.
 No server. No backend. No cloud storage. Everything runs in your browser and stays on your machine.
 
 ---
@@ -13,7 +13,7 @@ No server. No backend. No cloud storage. Everything runs in your browser and sta
 - **Quota estimate** — click Estimate before fetching to see the projected unit cost from just the video metadata (1 unit)
 - **Sort order** — fetch newest-first (chronological) or top comments (YouTube relevance ranking)
 - **Include replies toggle** — disable reply fetching to reduce quota usage on reply-heavy videos
-- **Stop and resume** — halt after the current API page; export or open in the Viewer with whatever was captured
+- **Stop** — halt after the current API page; export or open in the Viewer with whatever was captured. There is no mid-session resume — to complete an interrupted archive, re-fetch the video and merge the two exports in the Viewer
 - **Export** — save as JSON (nested, re-importable), CSV (flat, spreadsheet-compatible), or TXT (plain text)
 - **Open in Viewer** — pass the archive directly to the Viewer in memory with no file download
 
@@ -153,7 +153,7 @@ Tested with archives up to 140,000 comments. Fetch time scales with reply count 
 
 ## Notes on large archives
 
-- The **Stop** button halts after the current API page finishes — export or open in the Viewer with whatever was captured up to that point
+- The **Stop** button halts after the current API page finishes — export or open in the Viewer with whatever was captured. There is no mid-session resume yet (see [Planned](#planned)); to complete an interrupted archive in the meantime, re-fetch the same video and merge the two exports in the Viewer (duplicates are removed automatically by comment ID)
 - JSON exports are nested (replies under their parent thread); CSV exports are flat with a `parentId` column; both include `authorAvatar` URLs
 - When multiple archives are merged, export produces a single deduplicated file — `_source` tracking tags are stripped before any export
 - Avatar URLs are captured at fetch time from Google's CDN. They may expire if a user changes their profile picture — a grey placeholder is shown on failure. Re-fetching the video captures the current picture
@@ -164,6 +164,12 @@ Tested with archives up to 140,000 comments. Fetch time scales with reply count 
 ## Browser support
 
 All modern browsers (Chrome, Firefox, Safari, Edge). Requires `fetch`, `Intl.DateTimeFormat`, `IntersectionObserver`, `FileReader`, and `localStorage` — all standard since 2018.
+
+---
+
+## Planned
+
+- **Fetch resume** — YouTube's `nextPageToken` is not session-bound, meaning it survives browser restarts and quota resets. A future update will save the token to `localStorage` when a fetch is stopped or hits the quota limit. On the next session, entering the same video ID will offer a **Resume from page N** option — the resumed fetch picks up exactly where it left off and produces a second archive that can be merged with the first in the Viewer. This makes large videos (millions of comments, spanning multiple quota days) practical to archive in chunks.
 
 ---
 
