@@ -4,6 +4,11 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #40e / α 0.40.4
+Hotfix: fire sprite flashing at animation loop boundary. Root cause: `steps(4)` with `to { translateY(-256px) }` momentarily computes the out-of-bounds position at exactly 100% before the loop resets, pushing the entire image above the clipping window for one render frame. Fixed by replacing `from/to` with explicit percentage keyframes (0%, 25%, 50%, 75%) capped at `translateY(-192px)`, combined with `step-end` timing. `-256px` is never a target so the image never leaves the wrapper. *(css/styles.css, index.html)*
+
+---
+
 ## COMMIT #40d / α 0.40.3
 Hotfix: fire sprite rendering glitch. The `background-position` animation approach was unreliable. Replaced with an `overflow: hidden` wrapper (`.fire-sprite-wrap`, 64×64) containing the full-height `<img>` (`.fire-sprite-img`, 64×256 natural size). `steps(4)` now animates `translateY` from `0` to `-256px`, sliding the spritesheet upward by one frame per step. Clipping is explicit and unambiguous. *(index.html, css/styles.css)*
 

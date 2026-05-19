@@ -1064,12 +1064,14 @@ footer {
   display: block;
   width: 64px;        /* natural frame width */
   image-rendering: pixelated;
-  animation: fire-anim 0.5s steps(4) infinite;
+  animation: fire-anim 0.5s step-end infinite;
 }
 
 @keyframes fire-anim {
-  from { transform: translateY(0); }
-  to   { transform: translateY(-256px); }
+  0%  { transform: translateY(0); }
+  25% { transform: translateY(-64px); }
+  50% { transform: translateY(-128px); }
+  75% { transform: translateY(-192px); }
 }
 
 /* ── About tab ────────────────────────────────────────────── */
