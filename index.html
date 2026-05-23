@@ -26,6 +26,10 @@
   <button class="tab-btn" onclick="switchTab('about', this)">
     ③ About
   </button>
+  <button class="tab-btn" id="tab-btn-discovery" onclick="openDiscoveryTab(this)"
+          disabled title="Load an archive in the Viewer first">
+    ④ Discovery
+  </button>
 
   <!-- Dark / light mode toggle -->
   <button id="theme-toggle" onclick="UI.toggleTheme()" title="Toggle dark/light mode">
@@ -530,13 +534,208 @@ python3 -m http.server 8080
 </div><!-- /tab-about -->
 
 
+<!-- ============================================================
+     DISCOVERY TAB
+     Explore connections and search YouTube from your archive.
+     Requires at least one archive loaded in the Viewer.
+     ============================================================ -->
+<div id="tab-discovery" class="tab-panel">
+  <div class="page-wrap">
+
+    <header class="page-header">
+      <div class="logo-tag">▶ Tube Archive</div>
+      <h1 class="page-title">Comment<span>Discovery.</span></h1>
+      <p class="page-subtitle">
+        Find shared audiences across merged archives, explore what your commenters
+        watch, and search YouTube using terms and tags from your data.
+      </p>
+    </header>
+
+    <!-- Quota overview -->
+    <div class="panel">
+      <div class="panel-label">Quota Overview</div>
+      <p class="hint" style="margin-bottom: 12px;">
+        Each panel's cost is listed below. Panel ① is free. Panels ③ and ④ each
+        cost a flat 100 units per search — this is a fixed YouTube API cost and
+        does not scale with the number of results returned.
+      </p>
+      <table class="about-table">
+        <thead>
+          <tr><th>Panel</th><th>Method</th><th>Cost</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>① Shared Audience</td>
+            <td>In-memory scan — no API calls made</td>
+            <td class="units">0 units</td>
+            <td id="d-status-audience" class="d-status-cell">—</td>
+          </tr>
+          <tr>
+            <td>② What This Audience Watches</td>
+            <td>Channel info batch (1 unit) + 1 unit per uploads playlist, up to 10</td>
+            <td class="units">~11 units</td>
+            <td id="d-status-watches" class="d-status-cell">—</td>
+          </tr>
+          <tr>
+            <td>③ Search YouTube</td>
+            <td>YouTube <code>search</code> endpoint — flat cost regardless of result count</td>
+            <td class="units">100 units/query</td>
+            <td id="d-status-search" class="d-status-cell">—</td>
+          </tr>
+          <tr>
+            <td>④ Related by Tags</td>
+            <td>YouTube <code>search</code> using this video's own tags</td>
+            <td class="units">100 units</td>
+            <td id="d-status-tags" class="d-status-cell">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Panel 1: Shared Audience -->
+    <div class="panel">
+      <div class="panel-label">
+        ① Shared Audience
+        <span class="d-cost-chip">0 units · in-memory</span>
+      </div>
+      <p class="hint" style="margin-bottom: 14px;">
+        Finds commenters who appear in 2 or more of your loaded archives.
+        Scans in memory — no API calls. Runs automatically each time you open
+        this tab. Requires at least 2 archives loaded in the Viewer
+        (use <strong>⊕ Merge archive</strong>).
+      </p>
+      <div id="d-audience-placeholder" class="d-placeholder">
+        Load at least 2 archives via ⊕ Merge archive in the Viewer to see shared audience.
+      </div>
+      <div id="d-audience-results"></div>
+    </div>
+
+    <!-- Panel 2: What This Audience Watches -->
+    <div class="panel">
+      <div class="panel-label">
+        ② What This Audience Watches
+        <span class="d-cost-chip">~11 units · cached</span>
+      </div>
+      <p class="hint" style="margin-bottom: 14px;">
+        Fetches channel info for the top 10 most active commenters with known channel IDs,
+        then retrieves their 5 most recent uploads. Uses 1 unit for the channel batch +
+        1 unit per uploads playlist fetched. Results are cached for the session — reopening
+        this tab or running again will not re-fetch.
+      </p>
+      <div class="d-action-row">
+        <button class="btn-primary" id="d-watches-btn" onclick="runDiscoveryWatches()">Explore (~11 units)</button>
+        <span id="d-watches-status" class="d-status-text"></span>
+      </div>
+      <div id="d-watches-channels" style="display:none">
+        <div class="d-section-label">Top Commenter Channels</div>
+        <div id="d-channel-grid" class="d-grid"></div>
+      </div>
+      <div id="d-watches-uploads" style="display:none">
+        <div class="d-section-label">Recent Uploads</div>
+        <div id="d-uploads-grid" class="d-grid"></div>
+      </div>
+    </div>
+
+    <!-- Panel 3: Search YouTube -->
+    <div class="panel">
+      <div class="panel-label">
+        ③ Search YouTube
+        <span class="d-cost-chip">100 units · per query</span>
+      </div>
+      <p class="hint" style="margin-bottom: 14px;">
+        Search YouTube using terms derived from your archive. The YouTube search
+        endpoint costs <strong>100 units per query</strong> — a fixed fee that does
+        not change with result count. Returns up to 25 results.
+      </p>
+
+      <!-- Mode selector -->
+      <div class="d-mode-row">
+        <button class="d-mode-btn active" id="d-mode-btn-terms"   onclick="setDiscoverySearchMode('terms')">By Comment Terms</button>
+        <button class="d-mode-btn"        id="d-mode-btn-tags"    onclick="setDiscoverySearchMode('tags')">By Video Tags</button>
+        <button class="d-mode-btn"        id="d-mode-btn-uploads" onclick="setDiscoverySearchMode('uploads')">By Channel Uploads</button>
+      </div>
+
+      <!-- Terms mode -->
+      <div id="d-search-terms-section">
+        <div class="d-chip-label">Top terms from this archive — click × to remove, or add your own:</div>
+        <div id="d-search-term-chips" class="d-chip-row"></div>
+        <div class="d-chip-add-row">
+          <input type="text" id="d-search-term-input" class="input-field"
+                 placeholder="Add a term and press Enter…"
+                 style="max-width:260px; font-size:12px; padding:8px 12px;">
+          <button class="btn-secondary" onclick="addDiscoverySearchTerm()">Add</button>
+        </div>
+      </div>
+
+      <!-- Tags mode -->
+      <div id="d-search-tags-section" style="display:none">
+        <div class="d-chip-label">Tags from this video's metadata — click × to narrow the search:</div>
+        <div id="d-search-tag-chips" class="d-chip-row"></div>
+        <div id="d-search-no-tags" class="d-placeholder" style="display:none">
+          No tags found for this video.
+        </div>
+      </div>
+
+      <!-- Uploads mode (reuses Panel 2 cache — 0 extra units) -->
+      <div id="d-search-uploads-section" style="display:none">
+        <div id="d-search-uploads-note" class="d-placeholder">
+          Run ② What This Audience Watches first — recent uploads will appear here at no extra cost.
+        </div>
+        <div id="d-search-uploads-grid" class="d-grid" style="display:none"></div>
+      </div>
+
+      <!-- Search button (hidden in uploads mode) -->
+      <div id="d-search-controls" class="d-action-row" style="margin-top:14px;">
+        <button class="btn-primary" id="d-search-btn" onclick="runDiscoverySearch()">Search YouTube (100 units)</button>
+        <span id="d-search-status" class="d-status-text"></span>
+      </div>
+
+      <div id="d-search-results" style="display:none; margin-top:16px;">
+        <div class="d-section-label" id="d-search-results-label"></div>
+        <div id="d-search-grid" class="d-grid"></div>
+      </div>
+    </div>
+
+    <!-- Panel 4: Related by Tags -->
+    <div class="panel">
+      <div class="panel-label">
+        ④ Related by Tags
+        <span class="d-cost-chip">100 units · per search</span>
+      </div>
+      <p class="hint" style="margin-bottom: 14px;">
+        Searches YouTube using this video's own tags — the closest replacement for
+        the retired <code>relatedVideos</code> API parameter. Tags are fetched with
+        the video metadata at no extra quota cost. Remove individual tags before
+        searching to narrow the query. Returns up to 25 results.
+      </p>
+      <div id="d-tags-no-tags" class="d-placeholder">
+        No tags found for this video. Tags are available for archives fetched with the current version of the app.
+      </div>
+      <div id="d-tags-section" style="display:none">
+        <div class="d-chip-label">Video tags driving this search — click × to remove:</div>
+        <div id="d-tags-chip-row" class="d-chip-row"></div>
+        <div class="d-action-row" style="margin-top:14px;">
+          <button class="btn-primary" id="d-tags-btn" onclick="runDiscoveryTagSearch()">Search by Tags (100 units)</button>
+          <span id="d-tags-status" class="d-status-text"></span>
+        </div>
+      </div>
+      <div id="d-tags-results" style="display:none; margin-top:16px;">
+        <div class="d-section-label">Related Videos</div>
+        <div id="d-tags-grid" class="d-grid"></div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /tab-discovery -->
+
+
 <script src="js/youtube-api.js"></script>
 <script src="js/archive-manager.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/script.js"></script>
 
 <!-- Version badge — fixed bottom-left, visible on all tabs -->
-<div id="version-badge">β 1.0.1</div>
+<div id="version-badge">β 1.1.0</div>
 
 <!-- Back to top — fixed bottom-right, shown after scrolling past threshold -->
 <button id="v-back-to-top" aria-label="Back to top">↑ Top</button>

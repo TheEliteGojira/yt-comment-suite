@@ -1,6 +1,6 @@
 # TubeArchiver
 
-**β 1.0.1** — A self-contained, client-side web app for fetching, browsing, and exporting YouTube comments.
+**β 1.1.0** — A self-contained, client-side web app for fetching, browsing, and exporting YouTube comments.
 No server. No backend. No cloud storage. Everything runs in your browser and stays on your machine.
 
 ---
@@ -40,6 +40,18 @@ No server. No backend. No cloud storage. Everything runs in your browser and sta
 - **Sticky controls** — search, sort, filter, and timezone stay pinned at the top while scrolling
 - **Back to top** — button appears after scrolling 400px; smooth-scrolls to the top
 - **Dark / light theme** — toggle in the tab bar; persists across sessions
+
+### Discovery
+*Requires an archive loaded in the Viewer. The tab button is disabled until one is.*
+
+- **Shared audience** — instantly finds commenters who appear across two or more merged archives (0 units); shows avatar, name, source overlap count, and a link to open their profile
+- **What this audience watches** — fetches channel info and recent uploads for the top 10 commenters by comment count (~11 units total via one batched channel lookup + individual playlist calls); results cached for the session
+- **Search YouTube** — three modes, all using the YouTube Search API (100 units per query):
+  - *By comment terms* — pre-populated from the top 8 most-frequent words in the archive; add/remove chips freely
+  - *By video tags* — uses the uploader-set tags from the loaded video; chips are independently editable
+  - *By channel uploads* — re-displays the Panel 2 upload results at zero extra cost (served from cache)
+- **Related by tags** — searches YouTube using the video's own tags as a query (100 units); chips editable independently from Panel 3
+- **Quota overview** — a cost table at the top of the tab shows the unit cost and live status for each panel
 
 ---
 
@@ -109,6 +121,13 @@ npx serve yt-comment-suite
 - **Word frequency:** click the Word Frequency panel above the controls to see the top 30 terms
 - **Author deep-dive:** click any commenter's name for their full activity profile; hover for a quick summary
 - **Exporting:** use the export row at the bottom of the controls (always visible once loaded); exports reflect current filters
+
+### Discovery tab
+1. Load an archive in the Viewer — the **④ Discovery** tab button activates automatically
+2. **Panel 1 (Shared Audience)** runs instantly when you open the tab — no button press needed; requires two or more merged archives to show results
+3. **Panel 2 (What This Audience Watches)** — click **Fetch audience data** to make ~11 units of API calls; results persist for the session
+4. **Panel 3 (Search YouTube)** — pick a mode (Terms / Tags / Uploads), adjust the chips, then click **Search** (100 units); Uploads mode is free (served from Panel 2 cache)
+5. **Panel 4 (Related by Tags)** — adjust the tag chips if needed, then click **Search by tags** (100 units)
 
 ---
 

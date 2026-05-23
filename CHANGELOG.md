@@ -4,6 +4,56 @@ All commits and version changes are recorded here in reverse chronological order
 
 ---
 
+## COMMIT #48 / β 1.1.0
+**Discovery tab.** Fourth tab added to the app — a zero-install audience-research panel that works entirely from comment data already in memory or via lightweight API calls.
+
+**youtube-api.js** — three new API functions, all with inline quota documentation:
+- `getChannelInfo(channelIds, apiKey)` — batches up to 50 channel IDs into a single `channels` call (1 unit total, not 1-per-channel); returns title, avatar, subscriber count, uploads playlist ID
+- `getRecentUploads(playlistId, apiKey, maxResults)` — fetches recent videos from a channel's uploads playlist via `playlistItems` (1 unit per call); returns video stubs with id, title, thumbnail, channel name, publish date
+- `searchVideos(query, apiKey, maxResults)` — wraps the `search` endpoint (fixed 100 units per call regardless of `maxResults`); returns video stubs with description
+`getVideoInfo` updated to expose `tags: item.snippet.tags || []` (uploader-set tags).
+
+**archive-manager.js** — two new in-memory data functions (0 API units):
+- `getSharedAudience(threads)` — scans all threads + replies; finds authors whose `_source` membership spans 2+ distinct archives; uses `__base__` sentinel for threads without a source tag; replies inherit their parent thread's source; returns top 50 results sorted by source overlap then total comment count
+- `getTopCommenters(threads, n)` — ranks authors by total comment + reply count; filters to authors with `authorChannelId` (required for the channel batch fetch); returns top N (default 10)
+`videoTags` added to both `buildNestedExport` and `exportFilteredJSON` envelopes.
+
+**script.js** — full Discovery orchestration layer:
+- `AppState.videoTags` added; populated in `startFetch` and `loadViewerData`
+- Discovery session state: `_discoveryCache`, `_discoverySearchMode`, `_discoveryTerms`, `_discoverySearchTags`, `_discoveryTagsSet`
+- `_updateDiscoveryTabBtn()` — enables/disables the tab button based on `AppState.threads.length`; called from `loadViewerData` and `resetDiscovery`
+- `openDiscoveryTab(btn)` — switches tab, auto-runs Panel 1, pre-fills chips, restores cache if present
+- `runDiscoveryAudience()` — Panel 1, 0 units; renders audience rows with avatar, name, source badge, comment count, and profile link
+- `runDiscoveryWatches()` — Panel 2, ~11 units; batches channel IDs into one `getChannelInfo` call then one `getRecentUploads` call per channel; caches full result
+- `_renderDiscoveryWatches(cache)` — renders channel cards and a recent-uploads video grid from cache
+- `setDiscoverySearchMode(mode)` — toggles terms/tags/uploads modes with active chip on mode buttons; shows/hides relevant sections
+- `runDiscoverySearch()` — Panel 3, 100 units; builds query from active chip set (terms or tags) and renders results
+- `runDiscoveryTagSearch()` — Panel 4, 100 units; queries YouTube with current `_discoveryTagsSet`
+- `_renderVideoGrid(videos)` — shared video card renderer used by Panels 2, 3, and 4
+- `_populateDiscoveryTerms()` — seeds Panel 3 term chips from `_wordFreqCache` top 8; falls back to empty
+- `_populateDiscoveryTags()` — seeds both Panel 3 tag chips and Panel 4 tag chips from `AppState.videoTags`
+- `addDiscoverySearchTerm()` — adds a term chip from the text input
+- `_setDiscoveryStatus(panel, text)` — updates the live status column in the quota overview table
+- `resetDiscovery()` — clears all state and DOM, resets mode buttons, calls `_updateDiscoveryTabBtn`
+- `resetViewer` updated to call `resetDiscovery()`
+- `openInViewer` updated to pass `videoTags` into the videoMeta object
+- Event delegation: `[data-view-author]` on `#d-audience-results` opens author profile in Viewer; `.d-chip-remove` on `document` handles chip removal for all three chip sets; Enter on `#d-search-term-input` triggers `addDiscoverySearchTerm`
+
+**index.html** — Discovery tab button (`#tab-btn-discovery`, disabled by default with tooltip) and full `#tab-discovery` panel:
+- Quota overview table (Panel | Method | Cost | Status) with live `id="d-status-*"` cells
+- Panel 1: audience placeholder and results list
+- Panel 2: fetch button, channel card grid, uploads video grid
+- Panel 3: mode row (Terms / Tags / Uploads), chip rows for both terms and tags, tag-less notice, uploads section, search controls, and results grid
+- Panel 4: no-tags notice, tag chip row, search button, and results grid
+- Badge updated to **β 1.1.0**
+
+**css/styles.css** — full Discovery visual system appended after existing styles: `.tab-btn:disabled`, `.d-cost-chip`, `.d-placeholder`, `.d-section-label`, `.d-action-row`, `.d-status-text`, `.d-status-cell`, `.d-grid`, `.d-channel-card`, `.d-channel-name/subs/link`, `.d-video-card/thumb/info/title/meta`, `.d-mode-row/btn`, `.d-chip-label/row`, `.d-chip`, `.d-chip-remove`, `.d-chip-add-row`, `.d-audience-row`, `.d-avatar/--placeholder`, `.d-author-name/meta`, `.d-audience-info`. Responsive breakpoint at 600px.
+
+**README.md** — Discovery features section, Discovery usage walkthrough, badge updated to β 1.1.0.
+*(js/youtube-api.js, js/archive-manager.js, js/script.js, index.html, css/styles.css, README.md)*
+
+---
+
 ## COMMIT #47 / β 1.0.1
 Documentation and roadmap. (1) **Stop/resume accuracy** — About tab quota paragraph rewritten to correctly describe the re-fetch + merge workaround for interrupted fetches; "Stop and resume" Archiver bullet renamed to "Stop" with an explicit note that no mid-session resume exists. README features bullet and Notes on large archives entry updated to match. (2) **Fetch resume — Planned** — new `## Planned` section added to the README describing the `nextPageToken` persistence approach; Stop bullet links to it. Long Term goal added to `CLAUDE.md` covering implementation details, token expiry handling, and the merge-based completion workflow. *(index.html, README.md, CLAUDE.md)*
 

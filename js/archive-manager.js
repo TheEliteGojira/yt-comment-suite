@@ -75,6 +75,7 @@ const ArchiveManager = (() => {
       videoViewCount:        meta.videoViewCount      || 0,
       videoLikeCount:        meta.videoLikeCount      || 0,
       videoDescription:      meta.videoDescription   || '',
+      videoTags:             meta.videoTags           || [],
       totalTopLevelComments: threads.length,
       totalReplies,
       totalComments:         allComments.length,
@@ -226,6 +227,7 @@ const ArchiveManager = (() => {
       videoViewCount:        meta.videoViewCount      || 0,
       videoLikeCount:        meta.videoLikeCount      || 0,
       videoDescription:      meta.videoDescription   || '',
+      videoTags:             meta.videoTags           || [],
       totalTopLevelComments: threads.length,
       totalReplies,
       totalComments:         threads.length + totalReplies,
@@ -350,6 +352,103 @@ const ArchiveManager = (() => {
       .slice(0, topN);
   }
 
+  /* ── Find authors appearing in 2 or more distinct archive sources ─
+   *
+   * Threads from the base (first-loaded) archive carry no _source tag.
+   * Merged threads carry _source: <label>. Reply objects do not receive
+   * _source directly — they inherit their parent thread's source here.
+   *
+   * Returns up to 50 results sorted by source-count desc then by total
+   * activity desc. Only meaningful when AppState.sources.length >= 1
+   * (i.e. at least one archive has been merged into the base).
+   */
+  function getSharedAudience(threads) {
+    const BASE = '__base__';
+    const map  = new Map();
+
+    for (const thread of threads) {
+      const src  = thread._source || BASE;
+      const tKey = thread.authorChannelId || thread.author;
+
+      if (!map.has(tKey)) {
+        map.set(tKey, {
+          name:      thread.author,
+          channelId: thread.authorChannelId || '',
+          avatar:    thread.authorAvatar    || '',
+          sources:   new Set(),
+          count:     0,
+        });
+      }
+      const te = map.get(tKey);
+      te.sources.add(src);
+      te.count++;
+
+      for (const reply of (thread.replies || [])) {
+        const rKey = reply.authorChannelId || reply.author;
+        if (!map.has(rKey)) {
+          map.set(rKey, {
+            name:      reply.author,
+            channelId: reply.authorChannelId || '',
+            avatar:    reply.authorAvatar    || '',
+            sources:   new Set(),
+            count:     0,
+          });
+        }
+        const re = map.get(rKey);
+        re.sources.add(src);   /* replies inherit their thread's source */
+        re.count++;
+      }
+    }
+
+    return [...map.values()]
+      .filter(a  => a.sources.size >= 2)
+      .sort((a, b) => b.sources.size - a.sources.size || b.count - a.count)
+      .slice(0, 50);
+  }
+
+  /* ── Top N commenters by total activity (comments + replies) ──
+   *
+   * Restricted to authors with a known authorChannelId because the
+   * Discovery tab's "What This Audience Watches" panel requires a
+   * channel ID to fetch channel info and uploads. Authors without
+   * one are skipped silently. Sorted descending by total count.
+   */
+  function getTopCommenters(threads, n) {
+    const map = new Map();
+
+    for (const thread of threads) {
+      if (!thread.authorChannelId) continue;
+      const key = thread.authorChannelId;
+      if (!map.has(key)) {
+        map.set(key, {
+          name:      thread.author,
+          channelId: key,
+          avatar:    thread.authorAvatar || '',
+          count:     0,
+        });
+      }
+      map.get(key).count++;
+
+      for (const reply of (thread.replies || [])) {
+        if (!reply.authorChannelId) continue;
+        const rKey = reply.authorChannelId;
+        if (!map.has(rKey)) {
+          map.set(rKey, {
+            name:      reply.author,
+            channelId: rKey,
+            avatar:    reply.authorAvatar || '',
+            count:     0,
+          });
+        }
+        map.get(rKey).count++;
+      }
+    }
+
+    return [...map.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, n || 10);
+  }
+
   /* ── Merge two thread arrays ─────────────────────────────── */
   /* Deduplicates by thread id — incoming threads whose id already  */
   /* exists in the existing set are silently dropped. Each accepted  */
@@ -386,6 +485,8 @@ const ArchiveManager = (() => {
     getWordFrequency,
     mergeArchives,
     removeSource,
+    getSharedAudience,
+    getTopCommenters,
   };
 
 })();

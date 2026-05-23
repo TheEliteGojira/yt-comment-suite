@@ -150,6 +150,7 @@ New colours must be added to `:root` first before use anywhere else.
      videoViewCount:      0,
      videoLikeCount:      0,
      videoDescription:    '',
+     videoTags:           [],   // uploader-set tags — used by Discovery tab (Panel 3 & 4)
      isFetching:          false,
      stopRequested:       false,
      currentSort:         'newest',
@@ -388,9 +389,9 @@ docs:     README, CLAUDE.md, code comments only
 
 ---
 
-### ✅ Completed — β 1.0.0
+### ✅ Completed — β 1.1.0
 
-All planned features implemented. Promoted from α to β at commit #46.
+All planned features implemented. Discovery tab added at commit #48.
 
 - [x] **Video description toggle in meta bar** — `getVideoInfo` now returns `description`
       from the already-fetched `snippet`. Stored in `AppState.videoDescription` and in
@@ -583,6 +584,16 @@ All planned features implemented. Promoted from α to β at commit #46.
       describing the `nextPageToken` persistence approach for a future resume feature. Long
       Term goal added to CLAUDE.md with full implementation notes. *(index.html, README.md, CLAUDE.md)*
 
+- [x] **Discovery tab (④)** — Full audience-research and content-discovery tab added.
+      Four panels: (1) Shared Audience (0 units, in-memory), (2) What This Audience Watches
+      (~11 units, batched channel + playlist calls), (3) Search YouTube (100 units, three
+      modes: terms/tags/uploads), (4) Related by Tags (100 units). `getVideoInfo` extended
+      with `tags`. Three new API functions in `youtube-api.js`: `getChannelInfo` (batched,
+      1 unit), `getRecentUploads` (1 unit/call), `searchVideos` (100 units fixed). Two new
+      data functions in `archive-manager.js`: `getSharedAudience` and `getTopCommenters`.
+      `AppState.videoTags` added. Full CSS system added. Badge to β 1.1.0.
+      *(js/youtube-api.js, js/archive-manager.js, js/script.js, index.html, css/styles.css, README.md)*
+
 ---
 
 ### 🔧 Short term
@@ -594,8 +605,8 @@ All planned features implemented. Promoted from α to β at commit #46.
 
 ### 🗺 Long term
 
-> This section is intentionally empty as of β 1.0.0. The project is feature-complete for
-> its original scope. If you return to it, consider the following starting points:
+> This section is intentionally empty as of β 1.1.0. The project is feature-complete for
+> its current scope. If you return to it, consider the following starting points:
 
 - **`yt-channel-suite/` — separate project** for channel-level tooling (video performance
   dashboard, upload calendar heatmap, subscriber milestone tracker, top commenter
@@ -623,4 +634,5 @@ All planned features implemented. Promoted from α to β at commit #46.
   in the Viewer (deduplication handles any seam overlap). Token expiry is not documented
   by Google — handle the invalid-token error explicitly and inform the user if the resume
   point has expired rather than failing silently.
+
 

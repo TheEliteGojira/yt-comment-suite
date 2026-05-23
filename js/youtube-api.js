@@ -70,6 +70,8 @@ const YouTubeAPI = (() => {
       likeCount:     parseInt(item.statistics?.likeCount    || '0', 10),
       /* Prefer the highest-res thumbnail available */
       thumbnailUrl: thumb?.maxres?.url || thumb?.high?.url || thumb?.medium?.url || thumb?.default?.url || '',
+      /* Tags set by the uploader — empty array when absent or not provided */
+      tags: item.snippet.tags || [],
     };
   }
 
@@ -79,6 +81,74 @@ const YouTubeAPI = (() => {
     const data = await apiFetch(url);
     const thumbnails = data.items?.[0]?.snippet?.thumbnails;
     return thumbnails?.medium?.url || thumbnails?.default?.url || '';
+  }
+
+  /* ── Fetch info for one or more channels in a single batch ─── */
+  /* channelIds: string | string[] — up to 50 IDs per call (1 unit total).  */
+  /* Returns an array of channel objects; order matches the API response,   */
+  /* not necessarily the input order.                                        */
+  async function getChannelInfo(channelIds, apiKey) {
+    const ids  = Array.isArray(channelIds) ? channelIds.join(',') : channelIds;
+    const url  = buildUrl('channels', {
+      part: 'snippet,contentDetails,statistics',
+      id:   ids,
+      key:  apiKey,
+    });
+    const data = await apiFetch(url);
+    return (data.items || []).map(item => ({
+      channelId:         item.id,
+      title:             item.snippet.title                                       || '',
+      avatar:            item.snippet.thumbnails?.medium?.url
+                      || item.snippet.thumbnails?.default?.url                    || '',
+      subscriberCount:   parseInt(item.statistics?.subscriberCount || '0', 10),
+      /* The uploads playlist ID is needed to fetch recent videos via getRecentUploads */
+      uploadsPlaylistId: item.contentDetails?.relatedPlaylists?.uploads           || '',
+    }));
+  }
+
+  /* ── Fetch recent uploads from a channel's uploads playlist ─── */
+  /* playlistId: from channel.uploadsPlaylistId (via getChannelInfo).  */
+  /* Costs 1 unit per call; returns up to maxResults video stubs.      */
+  async function getRecentUploads(playlistId, apiKey, maxResults) {
+    const url  = buildUrl('playlistItems', {
+      part:       'snippet',
+      playlistId,
+      maxResults: maxResults || 5,
+      key:        apiKey,
+    });
+    const data = await apiFetch(url);
+    return (data.items || []).map(item => ({
+      videoId:      item.snippet.resourceId?.videoId || '',
+      title:        item.snippet.title               || '',
+      thumbnail:    item.snippet.thumbnails?.medium?.url
+                 || item.snippet.thumbnails?.default?.url || '',
+      channelTitle: item.snippet.channelTitle        || '',
+      publishedAt:  item.snippet.publishedAt         || '',
+    }));
+  }
+
+  /* ── Search YouTube videos by a free-text query string ─────── */
+  /* WARNING: costs 100 quota units per call regardless of maxResults. */
+  /* This is a fixed cost — it does not scale with the number of results. */
+  /* Returns up to maxResults (max 50) video stubs sorted by relevance.  */
+  async function searchVideos(query, apiKey, maxResults) {
+    const url  = buildUrl('search', {
+      part:       'snippet',
+      type:       'video',
+      q:          query,
+      maxResults: maxResults || 25,
+      key:        apiKey,
+    });
+    const data = await apiFetch(url);
+    return (data.items || []).map(item => ({
+      videoId:      item.id?.videoId                      || '',
+      title:        item.snippet.title                    || '',
+      thumbnail:    item.snippet.thumbnails?.medium?.url
+                 || item.snippet.thumbnails?.default?.url || '',
+      channelTitle: item.snippet.channelTitle             || '',
+      publishedAt:  item.snippet.publishedAt              || '',
+      description:  item.snippet.description              || '',
+    }));
   }
 
   /* ── Fetch one page of top-level comment threads ──────────── */
@@ -172,6 +242,9 @@ const YouTubeAPI = (() => {
   return {
     getVideoInfo,
     getChannelThumbnail,
+    getChannelInfo,
+    getRecentUploads,
+    searchVideos,
     getCommentThreadPage,
     getAllReplies,
     parseThread,

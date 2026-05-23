@@ -26,6 +26,7 @@ const AppState = {
   videoViewCount:    0,
   videoLikeCount:    0,
   videoDescription:  '',
+  videoTags:         [],   /* uploader-set tags — used by Discovery tab */
 
   /* Fetch control */
   isFetching:    false,
@@ -228,6 +229,7 @@ async function startFetch() {
     AppState.videoViewCount    = info.viewCount;
     AppState.videoLikeCount    = info.likeCount;
     AppState.videoDescription  = info.description;
+    AppState.videoTags         = info.tags         || [];
     /* Show video info bar (thumbnail + linked title) in the progress section */
     const thumbHtml = info.thumbnailUrl
       ? `<img id="a-video-thumb" src="${UI.esc(info.thumbnailUrl)}" alt="">`
@@ -396,6 +398,7 @@ function openInViewer() {
       videoViewCount:    AppState.videoViewCount,
       videoLikeCount:    AppState.videoLikeCount,
       videoDescription:  AppState.videoDescription,
+      videoTags:         AppState.videoTags         || [],
     };
     const exportData  = ArchiveManager.buildNestedExport(AppState.allComments, videoMeta);
     const { threads } = ArchiveManager.parseImport(exportData);
@@ -549,9 +552,13 @@ function loadViewerData(meta, threads) {
   const wfArrow = document.getElementById('v-word-freq-arrow');
   if (wfArrow) wfArrow.classList.remove('open');
 
-  /* Restore videoId and title so _updateMetaTitle can read them */
+  /* Restore videoId, title, and tags so Discovery tab can read them */
   AppState.videoId    = meta.videoId    || '';
   AppState.videoTitle = meta.videoTitle || '';
+  AppState.videoTags  = meta.videoTags  || [];
+
+  /* Enable the Discovery tab button now that an archive is loaded */
+  _updateDiscoveryTabBtn();
 
   /* Populate meta bar — title is a link when videoId is known */
   _updateMetaTitle();
@@ -685,6 +692,15 @@ let _wordFreqCache    = null; /* computed once per loaded archive, cleared on re
 let _renderTz         = 'UTC';
 let _mergeFetchStopped = false; /* signals the URL-merge fetch loop to stop */
 let _scrollObserver   = null; /* IntersectionObserver watching the sentinel */
+
+/* ── Discovery tab state ──────────────────────────────────────
+   All cleared by resetDiscovery(), which is called from resetViewer().
+   ─────────────────────────────────────────────────────────── */
+let _discoveryCache       = null;    /* Panel 2 results: { channels, uploads } */
+let _discoverySearchMode  = 'terms'; /* active mode for Panel 3 */
+let _discoveryTerms       = [];      /* current term chips for Panel 3 search */
+let _discoverySearchTags  = [];      /* tag chips for Panel 3 "By Video Tags" mode */
+let _discoveryTagsSet     = [];      /* tag chips for Panel 4 "Related by Tags" */
 
 /* Debounced entry point — shows loading dots immediately, defers heavy render */
 function applyViewerFilters() {
@@ -889,6 +905,9 @@ function resetViewer() {
   /* Reset date inputs */
   document.getElementById('v-date-from').value = '';
   document.getElementById('v-date-to').value   = '';
+
+  /* Clear Discovery tab state */
+  resetDiscovery();
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1204,6 +1223,456 @@ function removeSource(label) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   DISCOVERY TAB — orchestration
+   All rendering is done via innerHTML into pre-existing containers.
+   State lives in the _discovery* module-level vars declared above.
+   ───────────────────────────────────────────────────────────── */
+
+/* Enable / disable the Discovery tab button based on archive state */
+function _updateDiscoveryTabBtn() {
+  const btn = document.getElementById('tab-btn-discovery');
+  if (!btn) return;
+  const has = AppState.threads.length > 0;
+  btn.disabled = !has;
+  btn.title    = has ? '' : 'Load an archive in the Viewer first';
+}
+
+/* Called when user clicks ④ Discovery — initialises all panels */
+function openDiscoveryTab(btn) {
+  switchTab('discovery', btn);
+  runDiscoveryAudience();
+  _populateDiscoveryTerms();
+  _populateDiscoveryTags();
+  /* Restore Panel 2 grid if already fetched this session */
+  if (_discoveryCache) _renderDiscoveryWatches(_discoveryCache);
+  /* Restore uploads grid in Panel 3 if uploads mode is active */
+  if (_discoverySearchMode === 'uploads') _refreshDiscoveryUploadsMode();
+}
+
+/* Update the status column in the quota overview table */
+function _setDiscoveryStatus(panel, text) {
+  const el = document.getElementById('d-status-' + panel);
+  if (el) el.textContent = text;
+}
+
+/* ── Panel 1: Shared Audience (0 units) ──────────────────────
+   Scans AppState.threads for authors appearing in 2+ _source
+   values. Runs automatically every time the tab is opened.
+   ─────────────────────────────────────────────────────────── */
+function runDiscoveryAudience() {
+  const resultsEl     = document.getElementById('d-audience-results');
+  const placeholderEl = document.getElementById('d-audience-placeholder');
+  if (!resultsEl || !placeholderEl) return;
+
+  /* Require at least 1 merged source (base + 1 merge = 2 distinct sources) */
+  if (AppState.sources.length < 1) {
+    resultsEl.innerHTML        = '';
+    placeholderEl.style.display = '';
+    _setDiscoveryStatus('audience', '—');
+    return;
+  }
+
+  const audience = ArchiveManager.getSharedAudience(AppState.threads);
+
+  if (audience.length === 0) {
+    placeholderEl.textContent   = 'No commenters found in common across the loaded archives.';
+    placeholderEl.style.display = '';
+    resultsEl.innerHTML         = '';
+    _setDiscoveryStatus('audience', '0 shared');
+    return;
+  }
+
+  placeholderEl.style.display = 'none';
+  resultsEl.innerHTML = audience.map(a =>
+    `<div class="d-audience-row" data-author="${UI.esc(a.name)}">` +
+      (a.avatar
+        ? `<img class="d-avatar" src="${UI.esc(a.avatar)}" alt="" onerror="this.style.display='none'">`
+        : `<div class="d-avatar d-avatar--placeholder"></div>`) +
+      `<div class="d-audience-info">` +
+        `<span class="d-author-name">${UI.esc(a.name)}</span>` +
+        `<span class="d-author-meta">` +
+          `${a.sources.size} archive${a.sources.size !== 1 ? 's' : ''} · ` +
+          `${a.count} comment${a.count !== 1 ? 's' : ''}` +
+        `</span>` +
+      `</div>` +
+      `<button class="btn-secondary d-view-btn" style="font-size:11px;padding:5px 10px;" ` +
+        `data-view-author="${UI.esc(a.name)}">View profile</button>` +
+    `</div>`
+  ).join('');
+
+  _setDiscoveryStatus('audience', `${audience.length} shared`);
+}
+
+/* ── Panel 2: What This Audience Watches (~11 units) ─────────
+   Batch-fetches channel info for the top 10 most active
+   commenters with known channel IDs (1 unit), then fetches
+   5 recent uploads per channel (1 unit each). Results cached.
+   ─────────────────────────────────────────────────────────── */
+async function runDiscoveryWatches() {
+  if (_discoveryCache) {
+    /* Already fetched — just re-render from cache */
+    _renderDiscoveryWatches(_discoveryCache);
+    return;
+  }
+
+  const btn      = document.getElementById('d-watches-btn');
+  const statusEl = document.getElementById('d-watches-status');
+  const apiKey   = localStorage.getItem(API_KEY_STORAGE) || '';
+
+  if (!apiKey) {
+    statusEl.textContent = '⚠ No API key saved — enter one in the Archiver tab first.';
+    return;
+  }
+
+  const topCommenters = ArchiveManager.getTopCommenters(AppState.threads, 10);
+  if (topCommenters.length === 0) {
+    statusEl.textContent = '⚠ No commenters with known channel IDs found in this archive.';
+    return;
+  }
+
+  btn.disabled         = true;
+  statusEl.textContent = 'Fetching channel info…';
+
+  try {
+    /* Step 1: batch-fetch all channel info in one call (1 unit) */
+    const channelIds = topCommenters.map(c => c.channelId);
+    const channels   = await YouTubeAPI.getChannelInfo(channelIds, apiKey);
+
+    /* Step 2: fetch recent uploads per channel (1 unit each) */
+    const allUploads = [];
+    for (let i = 0; i < channels.length; i++) {
+      statusEl.textContent = `Fetching uploads ${i + 1} / ${channels.length}…`;
+      if (channels[i].uploadsPlaylistId) {
+        try {
+          const uploads = await YouTubeAPI.getRecentUploads(channels[i].uploadsPlaylistId, apiKey, 5);
+          uploads.forEach(v => allUploads.push({ ...v, _fromChannel: channels[i].title }));
+        } catch (_) {
+          /* Individual channel failure is non-fatal — skip silently */
+        }
+      }
+    }
+
+    _discoveryCache = { channels, uploads: allUploads };
+    _renderDiscoveryWatches(_discoveryCache);
+    statusEl.textContent = `✓ ${channels.length} channel${channels.length !== 1 ? 's' : ''}`;
+    _setDiscoveryStatus('watches', '✓ Cached');
+
+    /* Populate uploads mode in Panel 3 if it was already selected */
+    if (_discoverySearchMode === 'uploads') _refreshDiscoveryUploadsMode();
+
+  } catch (e) {
+    statusEl.textContent = `⚠ ${e.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function _renderDiscoveryWatches(cache) {
+  const channelsEl  = document.getElementById('d-watches-channels');
+  const uploadsEl   = document.getElementById('d-watches-uploads');
+  const channelGrid = document.getElementById('d-channel-grid');
+  const uploadsGrid = document.getElementById('d-uploads-grid');
+  if (!channelsEl || !uploadsEl) return;
+
+  if (cache.channels.length > 0) {
+    channelGrid.innerHTML = cache.channels.map(ch =>
+      `<div class="d-channel-card">` +
+        (ch.avatar
+          ? `<img src="${UI.esc(ch.avatar)}" alt="" onerror="this.style.display='none'">`
+          : `<div class="d-avatar d-avatar--placeholder" style="margin:0 auto"></div>`) +
+        `<span class="d-channel-name">${UI.esc(ch.title)}</span>` +
+        (ch.subscriberCount
+          ? `<span class="d-channel-subs">${UI.fmtCount(ch.subscriberCount)} subscribers</span>`
+          : '') +
+        `<a class="d-channel-link" href="https://www.youtube.com/channel/${UI.esc(ch.channelId)}" ` +
+          `target="_blank" rel="noopener noreferrer">View channel ↗</a>` +
+      `</div>`
+    ).join('');
+    channelsEl.style.display = '';
+  }
+
+  if (cache.uploads.length > 0) {
+    uploadsGrid.innerHTML   = _renderVideoGrid(cache.uploads);
+    uploadsEl.style.display = '';
+  }
+}
+
+/* ── Panel 3: Search YouTube (100 units per query) ───────────
+   Three modes: by comment terms (pre-filled from word freq),
+   by video tags, or by channel uploads (reuses Panel 2 cache,
+   no additional API cost).
+   ─────────────────────────────────────────────────────────── */
+function setDiscoverySearchMode(mode) {
+  _discoverySearchMode = mode;
+
+  ['terms', 'tags', 'uploads'].forEach(m => {
+    const modeBtn = document.getElementById('d-mode-btn-' + m);
+    const section = document.getElementById('d-search-' + m + '-section');
+    if (modeBtn) modeBtn.classList.toggle('active', m === mode);
+    if (section) section.style.display = m === mode ? '' : 'none';
+  });
+
+  /* Search button hidden in uploads mode — results come from cache */
+  const ctrlRow = document.getElementById('d-search-controls');
+  if (ctrlRow) ctrlRow.style.display = mode === 'uploads' ? 'none' : 'flex';
+
+  if (mode === 'uploads') _refreshDiscoveryUploadsMode();
+}
+
+function _refreshDiscoveryUploadsMode() {
+  const noteEl = document.getElementById('d-search-uploads-note');
+  const gridEl = document.getElementById('d-search-uploads-grid');
+  if (!noteEl || !gridEl) return;
+
+  if (!_discoveryCache || _discoveryCache.uploads.length === 0) {
+    noteEl.style.display = '';
+    gridEl.style.display = 'none';
+    return;
+  }
+
+  noteEl.style.display  = 'none';
+  gridEl.innerHTML      = _renderVideoGrid(_discoveryCache.uploads);
+  gridEl.style.display  = '';
+}
+
+function _populateDiscoveryTerms() {
+  /* Compute word frequency silently on first tab open if not cached */
+  if (!_wordFreqCache && AppState.threads.length > 0) {
+    _wordFreqCache = ArchiveManager.getWordFrequency(AppState.threads);
+  }
+  if (!_wordFreqCache) return;
+
+  /* Pre-fill with top 8 terms only if chips have not been customised yet */
+  if (_discoveryTerms.length === 0) {
+    _discoveryTerms = _wordFreqCache.slice(0, 8).map(([word]) => word);
+  }
+  _renderDiscoveryTermChips();
+}
+
+function _renderDiscoveryTermChips() {
+  const container = document.getElementById('d-search-term-chips');
+  if (!container) return;
+  container.innerHTML = _discoveryTerms.map(term =>
+    `<span class="d-chip">` +
+      `${UI.esc(term)}` +
+      `<button class="d-chip-remove" data-remove-term="${UI.esc(term)}" title="Remove">×</button>` +
+    `</span>`
+  ).join('');
+}
+
+function addDiscoverySearchTerm() {
+  const input = document.getElementById('d-search-term-input');
+  if (!input) return;
+  const val = input.value.trim().toLowerCase();
+  if (val && !_discoveryTerms.includes(val)) {
+    _discoveryTerms.push(val);
+    _renderDiscoveryTermChips();
+  }
+  input.value = '';
+  input.focus();
+}
+
+function _populateDiscoveryTags() {
+  const tags         = AppState.videoTags || [];
+  const noTagsEl4    = document.getElementById('d-tags-no-tags');
+  const sectionEl4   = document.getElementById('d-tags-section');
+  const chipRow4     = document.getElementById('d-tags-chip-row');
+  const noTagsEl3    = document.getElementById('d-search-no-tags');
+  const chipRow3     = document.getElementById('d-search-tag-chips');
+
+  if (tags.length === 0) {
+    if (noTagsEl4) noTagsEl4.style.display = '';
+    if (sectionEl4) sectionEl4.style.display = 'none';
+    if (noTagsEl3) noTagsEl3.style.display = '';
+    if (chipRow3) chipRow3.style.display = 'none';
+    return;
+  }
+
+  /* Initialise chip sets only on first open */
+  if (_discoveryTagsSet.length === 0)   _discoveryTagsSet   = [...tags];
+  if (_discoverySearchTags.length === 0) _discoverySearchTags = [...tags];
+
+  /* Panel 4 chips */
+  if (noTagsEl4) noTagsEl4.style.display = 'none';
+  if (sectionEl4) sectionEl4.style.display = '';
+  if (chipRow4) {
+    chipRow4.innerHTML = _discoveryTagsSet.map(tag =>
+      `<span class="d-chip">` +
+        `${UI.esc(tag)}` +
+        `<button class="d-chip-remove" data-remove-tag="${UI.esc(tag)}" title="Remove">×</button>` +
+      `</span>`
+    ).join('');
+  }
+
+  /* Panel 3 "By Video Tags" chips */
+  if (noTagsEl3) noTagsEl3.style.display = 'none';
+  if (chipRow3) {
+    chipRow3.style.display = '';
+    chipRow3.innerHTML = _discoverySearchTags.map(tag =>
+      `<span class="d-chip">` +
+        `${UI.esc(tag)}` +
+        `<button class="d-chip-remove" data-remove-search-tag="${UI.esc(tag)}" title="Remove">×</button>` +
+      `</span>`
+    ).join('');
+  }
+}
+
+async function runDiscoverySearch() {
+  const statusEl = document.getElementById('d-search-status');
+  const btn      = document.getElementById('d-search-btn');
+  const apiKey   = localStorage.getItem(API_KEY_STORAGE) || '';
+
+  if (!apiKey) { statusEl.textContent = '⚠ No API key saved — enter one in the Archiver tab first.'; return; }
+
+  const query = _discoverySearchMode === 'tags'
+    ? _discoverySearchTags.join(' ')
+    : _discoveryTerms.join(' ');
+
+  if (!query.trim()) { statusEl.textContent = '⚠ No terms selected.'; return; }
+
+  btn.disabled         = true;
+  statusEl.textContent = 'Searching… (100 units)';
+
+  try {
+    const results = await YouTubeAPI.searchVideos(query, apiKey, 25);
+    const gridEl  = document.getElementById('d-search-grid');
+    const labelEl = document.getElementById('d-search-results-label');
+    const wrapEl  = document.getElementById('d-search-results');
+
+    if (results.length === 0) {
+      statusEl.textContent = 'No results found.';
+      wrapEl.style.display = 'none';
+    } else {
+      const truncQ = query.length > 60 ? query.substring(0, 60) + '…' : query;
+      if (labelEl) labelEl.textContent =
+        `${results.length} result${results.length !== 1 ? 's' : ''} for "${truncQ}"`;
+      gridEl.innerHTML    = _renderVideoGrid(results);
+      wrapEl.style.display = '';
+      statusEl.textContent = `✓ ${results.length} results`;
+      _setDiscoveryStatus('search', `✓ ${results.length}`);
+    }
+  } catch (e) {
+    statusEl.textContent = `⚠ ${e.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ── Panel 4: Related by Tags (100 units) ────────────────────
+   Searches YouTube using the video's own tags — the closest
+   replacement for the retired relatedVideos API parameter.
+   Tag chips can be individually removed before searching.
+   ─────────────────────────────────────────────────────────── */
+async function runDiscoveryTagSearch() {
+  const statusEl = document.getElementById('d-tags-status');
+  const btn      = document.getElementById('d-tags-btn');
+  const apiKey   = localStorage.getItem(API_KEY_STORAGE) || '';
+
+  if (!apiKey) { statusEl.textContent = '⚠ No API key saved — enter one in the Archiver tab first.'; return; }
+
+  const query = _discoveryTagsSet.join(' ');
+  if (!query.trim()) { statusEl.textContent = '⚠ No tags available.'; return; }
+
+  btn.disabled         = true;
+  statusEl.textContent = 'Searching… (100 units)';
+
+  try {
+    const results = await YouTubeAPI.searchVideos(query, apiKey, 25);
+    const gridEl  = document.getElementById('d-tags-grid');
+    const wrapEl  = document.getElementById('d-tags-results');
+
+    if (results.length === 0) {
+      statusEl.textContent = 'No results found.';
+    } else {
+      gridEl.innerHTML     = _renderVideoGrid(results);
+      wrapEl.style.display = '';
+      statusEl.textContent = `✓ ${results.length} results`;
+      _setDiscoveryStatus('tags', `✓ ${results.length}`);
+    }
+  } catch (e) {
+    statusEl.textContent = `⚠ ${e.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ── Shared video card grid renderer ─────────────────────────*/
+function _renderVideoGrid(videos) {
+  return videos.map(v =>
+    `<a class="d-video-card" href="https://www.youtube.com/watch?v=${UI.esc(v.videoId)}" ` +
+      `target="_blank" rel="noopener noreferrer">` +
+      (v.thumbnail
+        ? `<img class="d-video-thumb" src="${UI.esc(v.thumbnail)}" alt="" loading="lazy">`
+        : '') +
+      `<div class="d-video-info">` +
+        `<div class="d-video-title">${UI.esc(v.title)}</div>` +
+        `<div class="d-video-meta">` +
+          `${UI.esc(v._fromChannel || v.channelTitle)}` +
+          `${v.publishedAt ? ' · ' + new Date(v.publishedAt).getFullYear() : ''}` +
+        `</div>` +
+      `</div>` +
+    `</a>`
+  ).join('');
+}
+
+/* ── Reset all Discovery state ───────────────────────────────
+   Called from resetViewer() so any archive reload starts clean.
+   ─────────────────────────────────────────────────────────── */
+function resetDiscovery() {
+  _discoveryCache      = null;
+  _discoverySearchMode = 'terms';
+  _discoveryTerms      = [];
+  _discoverySearchTags = [];
+  _discoveryTagsSet    = [];
+
+  /* Clear Panel 1 */
+  const audienceResults     = document.getElementById('d-audience-results');
+  const audiencePlaceholder = document.getElementById('d-audience-placeholder');
+  if (audienceResults) audienceResults.innerHTML = '';
+  if (audiencePlaceholder) {
+    audiencePlaceholder.textContent   = 'Load at least 2 archives via ⊕ Merge archive in the Viewer to see shared audience.';
+    audiencePlaceholder.style.display = '';
+  }
+
+  /* Clear Panel 2 */
+  const watchesChannels = document.getElementById('d-watches-channels');
+  const watchesUploads  = document.getElementById('d-watches-uploads');
+  const watchesStatus   = document.getElementById('d-watches-status');
+  const watchesBtn      = document.getElementById('d-watches-btn');
+  if (watchesChannels) watchesChannels.style.display = 'none';
+  if (watchesUploads)  watchesUploads.style.display  = 'none';
+  if (watchesStatus)   watchesStatus.textContent     = '';
+  if (watchesBtn)      watchesBtn.disabled           = false;
+
+  /* Clear Panel 3 */
+  const searchResults  = document.getElementById('d-search-results');
+  const searchStatus   = document.getElementById('d-search-status');
+  if (searchResults) searchResults.style.display = 'none';
+  if (searchStatus)  searchStatus.textContent    = '';
+
+  /* Clear Panel 4 */
+  const tagsResults = document.getElementById('d-tags-results');
+  const tagsStatus  = document.getElementById('d-tags-status');
+  if (tagsResults) tagsResults.style.display = 'none';
+  if (tagsStatus)  tagsStatus.textContent    = '';
+
+  /* Reset quota status column */
+  ['audience', 'watches', 'search', 'tags'].forEach(p => _setDiscoveryStatus(p, '—'));
+
+  /* Reset mode selector back to "terms" */
+  ['terms', 'tags', 'uploads'].forEach(m => {
+    const modeBtn = document.getElementById('d-mode-btn-' + m);
+    const section = document.getElementById('d-search-' + m + '-section');
+    if (modeBtn) modeBtn.classList.toggle('active', m === 'terms');
+    if (section) section.style.display = m === 'terms' ? '' : 'none';
+  });
+  const ctrlRow = document.getElementById('d-search-controls');
+  if (ctrlRow) ctrlRow.style.display = 'flex';
+
+  _updateDiscoveryTabBtn();
+}
+
+/* ─────────────────────────────────────────────────────────────
    INIT — runs once DOM is ready
    ───────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1242,6 +1711,68 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!btn) return;
     const chip = btn.closest('.v-source-chip');
     if (chip?.dataset.source) removeSource(chip.dataset.source);
+  });
+
+  /* ── Discovery tab event delegation ──────────────────────── */
+
+  /* Panel 1: "View profile" button — switches to Viewer and opens modal */
+  document.getElementById('d-audience-results').addEventListener('click', e => {
+    const btn = e.target.closest('[data-view-author]');
+    if (!btn || !AppState.threads.length) return;
+    const name  = btn.dataset.viewAuthor;
+    const vBtn  = document.querySelector('.tab-btn[onclick*="viewer"]');
+    switchTab('viewer', vBtn);
+    const stats = ArchiveManager.getUserStats(AppState.threads, name);
+    UI.renderUserModal(stats);
+    UI.highlightFeedAuthor(stats.authorName);
+  });
+
+  /* Panel 2–4: chip remove buttons — delegated on document */
+  document.addEventListener('click', e => {
+    const chipBtn = e.target.closest('.d-chip-remove');
+    if (!chipBtn) return;
+
+    /* Panel 3 — term chips */
+    if (chipBtn.dataset.removeTerm !== undefined) {
+      _discoveryTerms = _discoveryTerms.filter(t => t !== chipBtn.dataset.removeTerm);
+      _renderDiscoveryTermChips();
+      return;
+    }
+
+    /* Panel 3 — video-tag chips */
+    if (chipBtn.dataset.removeSearchTag !== undefined) {
+      _discoverySearchTags = _discoverySearchTags.filter(t => t !== chipBtn.dataset.removeSearchTag);
+      const container = document.getElementById('d-search-tag-chips');
+      if (container) {
+        container.innerHTML = _discoverySearchTags.map(tag =>
+          `<span class="d-chip">` +
+            `${UI.esc(tag)}` +
+            `<button class="d-chip-remove" data-remove-search-tag="${UI.esc(tag)}" title="Remove">×</button>` +
+          `</span>`
+        ).join('');
+      }
+      return;
+    }
+
+    /* Panel 4 — related-tag chips */
+    if (chipBtn.dataset.removeTag !== undefined) {
+      _discoveryTagsSet = _discoveryTagsSet.filter(t => t !== chipBtn.dataset.removeTag);
+      const container = document.getElementById('d-tags-chip-row');
+      if (container) {
+        container.innerHTML = _discoveryTagsSet.map(tag =>
+          `<span class="d-chip">` +
+            `${UI.esc(tag)}` +
+            `<button class="d-chip-remove" data-remove-tag="${UI.esc(tag)}" title="Remove">×</button>` +
+          `</span>`
+        ).join('');
+      }
+      return;
+    }
+  });
+
+  /* Panel 3: Enter key on term-add input */
+  document.getElementById('d-search-term-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addDiscoverySearchTerm();
   });
 
   /* Back to top — show after 400px of scroll, smooth-scroll to top on click */
