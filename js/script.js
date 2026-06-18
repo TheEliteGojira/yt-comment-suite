@@ -419,6 +419,7 @@ function resetArchiver() {
   AppState.videoViewCount    = 0;
   AppState.videoLikeCount    = 0;
   AppState.videoDescription  = '';
+  AppState.videoTags         = [];
 
   document.getElementById('a-comment-list').innerHTML    = '';
   document.getElementById('a-video-url').value           = '';
@@ -449,6 +450,7 @@ function exportJSON() {
     videoViewCount:    AppState.videoViewCount,
     videoLikeCount:    AppState.videoLikeCount,
     videoDescription:  AppState.videoDescription,
+    videoTags:         AppState.videoTags          || [],
   });
 }
 function exportCSV()  { ArchiveManager.exportCSV(AppState.allComments,  AppState.videoTitle); }
@@ -465,6 +467,7 @@ function exportFiltered(format) {
     videoViewCount:    AppState.videoViewCount,
     videoLikeCount:    AppState.videoLikeCount,
     videoDescription:  AppState.videoDescription,
+    videoTags:         AppState.videoTags          || [],
   };
   if (format === 'json') ArchiveManager.exportFilteredJSON(_renderedThreads, meta);
   if (format === 'csv')  ArchiveManager.exportCSV(ArchiveManager.flattenThreads(_renderedThreads), AppState.videoTitle);
@@ -857,6 +860,7 @@ function resetViewer() {
   UI.hide('v-meta-description');
   AppState.videoId          = '';
   AppState.videoDescription = '';
+  AppState.videoTags        = [];
 
   /* Reset word frequency panel */
   _wordFreqCache = null;
