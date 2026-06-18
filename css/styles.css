@@ -2106,3 +2106,85 @@ footer {
   .d-mode-btn { flex: 1; padding: 7px 8px; font-size: 10px; }
   .d-chip-add-row input[type="text"] { width: 140px; }
 }
+
+/* =============================================================
+   Modal — channel lookup section (③ Author card expansion)
+   ============================================================= */
+
+/* Separator band between the stats bar and the comment history */
+.modal-channel-section {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  background: var(--panel-hover);
+}
+
+/* "Look up channel" trigger button */
+.modal-lookup-btn {
+  font-size: 11px;
+  padding: 6px 14px;
+  font-family: 'Space Mono', monospace;
+}
+
+/* Inline error text shown when the lookup fails */
+.modal-lookup-error {
+  font-size: 11px;
+  color: var(--accent2);
+  font-family: 'Space Mono', monospace;
+  margin-left: 10px;
+}
+
+/* Wrapper rendered after a successful lookup */
+.modal-channel-data { display: flex; flex-direction: column; gap: 12px; }
+
+/* Avatar + name row */
+.modal-channel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-channel-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.modal-channel-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.modal-channel-subs {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  margin-top: 2px;
+}
+
+/* "Recent uploads" sub-label */
+.modal-channel-uploads-label {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* 3-column upload mini-grid reusing .d-video-card styles */
+.modal-channel-uploads {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 520px) {
+  .modal-channel-uploads { grid-template-columns: repeat(2, 1fr); }
+  .modal-channel-section { padding: 12px 16px; }
+}

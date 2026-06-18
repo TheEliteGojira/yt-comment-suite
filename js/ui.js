@@ -577,9 +577,16 @@ const UI = (() => {
 
     } /* end has-activity else */
 
+    /* ── Channel lookup section — populated by script.js after render.
+       Only present when an authorChannelId is available in the archive. */
+    const channelSection     = document.createElement('div');
+    channelSection.id        = 'modal-channel-section';
+    channelSection.className = 'modal-channel-section';
+
     /* ── Assemble ────────────────────────────────────────────── */
     panel.appendChild(header);
     panel.appendChild(statsBar);
+    if (stats.authorChannelId) panel.appendChild(channelSection);
     panel.appendChild(body);
     overlay.appendChild(panel);
     document.body.appendChild(overlay);

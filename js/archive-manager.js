@@ -449,6 +449,71 @@ const ArchiveManager = (() => {
       .slice(0, n || 10);
   }
 
+  /* ── Build commenter graph for force-directed visualisation ─
+     Scans all threads + replies to produce nodes (top N commenters
+     by total count) and the ordered list of distinct source labels.
+     Nodes include their source membership list for the physics sim.
+     0 API units — pure in-memory scan.
+
+     Returns { nodes, sources }
+       nodes:   [{ id, name, channelId, avatar, count, sources[] }]
+       sources: string[] ordered __base__ first, then merged sources  */
+  function buildAudienceGraph(threads, maxNodes) {
+    const limit     = maxNodes || 80;
+    const authorMap = new Map();
+
+    for (const thread of threads) {
+      const src = thread._source || '__base__';
+      const key = thread.authorChannelId || thread.author;
+      if (!authorMap.has(key)) {
+        authorMap.set(key, {
+          id:        key,
+          name:      thread.author,
+          channelId: thread.authorChannelId || '',
+          avatar:    thread.authorAvatar    || '',
+          count:     0,
+          sources:   new Set(),
+        });
+      }
+      const e = authorMap.get(key);
+      e.count++;
+      e.sources.add(src);
+
+      for (const reply of (thread.replies || [])) {
+        const rKey = reply.authorChannelId || reply.author;
+        if (!authorMap.has(rKey)) {
+          authorMap.set(rKey, {
+            id:        rKey,
+            name:      reply.author,
+            channelId: reply.authorChannelId || '',
+            avatar:    reply.authorAvatar    || '',
+            count:     0,
+            sources:   new Set(),
+          });
+        }
+        const re = authorMap.get(rKey);
+        re.count++;
+        re.sources.add(src);
+      }
+    }
+
+    /* Top N by total comment+reply count */
+    const nodes = [...authorMap.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+      .map(n => ({ ...n, sources: [...n.sources] }));
+
+    /* Sources: __base__ first, then merged sources in insertion order */
+    const sourceSet = new Set();
+    for (const node of nodes) node.sources.forEach(s => sourceSet.add(s));
+    const sources = [
+      ...(['__base__'].filter(s => sourceSet.has(s))),
+      ...[...sourceSet].filter(s => s !== '__base__'),
+    ];
+
+    return { nodes, sources };
+  }
+
   /* ── Merge two thread arrays ─────────────────────────────── */
   /* Deduplicates by thread id — incoming threads whose id already  */
   /* exists in the existing set are silently dropped. Each accepted  */
@@ -487,6 +552,7 @@ const ArchiveManager = (() => {
     removeSource,
     getSharedAudience,
     getTopCommenters,
+    buildAudienceGraph,
   };
 
 })();

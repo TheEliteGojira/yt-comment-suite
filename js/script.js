@@ -704,6 +704,8 @@ let _discoverySearchMode  = 'terms'; /* active mode for Panel 3 */
 let _discoveryTerms       = [];      /* current term chips for Panel 3 search */
 let _discoverySearchTags  = [];      /* tag chips for Panel 3 "By Video Tags" mode */
 let _discoveryTagsSet     = [];      /* tag chips for Panel 4 "Related by Tags" */
+let _discoveryGraphState  = null;    /* Panel 5: { nodes, sources, wells } after sim */
+let _channelLookupCache   = new Map(); /* authorChannelId → { channel, uploads } */
 
 /* Debounced entry point — shows loading dots immediately, defers heavy render */
 function applyViewerFilters() {
@@ -910,7 +912,8 @@ function resetViewer() {
   document.getElementById('v-date-from').value = '';
   document.getElementById('v-date-to').value   = '';
 
-  /* Clear Discovery tab state */
+  /* Clear Discovery tab state and per-session caches */
+  _channelLookupCache = new Map();
   resetDiscovery();
 }
 
@@ -1245,6 +1248,7 @@ function _updateDiscoveryTabBtn() {
 function openDiscoveryTab(btn) {
   switchTab('discovery', btn);
   runDiscoveryAudience();
+  runDiscoveryGraph();
   _populateDiscoveryTerms();
   _populateDiscoveryTags();
   /* Restore Panel 2 grid if already fetched this session */
@@ -1624,6 +1628,7 @@ function _renderVideoGrid(videos) {
    ─────────────────────────────────────────────────────────── */
 function resetDiscovery() {
   _discoveryCache      = null;
+  _discoveryGraphState = null;
   _discoverySearchMode = 'terms';
   _discoveryTerms      = [];
   _discoverySearchTags = [];
@@ -1673,7 +1678,301 @@ function resetDiscovery() {
   const ctrlRow = document.getElementById('d-search-controls');
   if (ctrlRow) ctrlRow.style.display = 'flex';
 
+  /* Clear Panel 5 canvas */
+  const graphCanvas = document.getElementById('d-graph-canvas');
+  if (graphCanvas) {
+    const ctx = graphCanvas.getContext('2d');
+    ctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+  }
+  const graphStatus = document.getElementById('d-graph-status');
+  if (graphStatus) graphStatus.textContent = '';
+
   _updateDiscoveryTabBtn();
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CHANNEL LOOKUP — author card expansion in the profile modal
+   ~2 API units: 1 for getChannelInfo + 1 for getRecentUploads
+   Results cached per authorChannelId for the session.
+   ─────────────────────────────────────────────────────────────
+
+   _wireModalChannelLookup is called immediately after renderUserModal.
+   It finds #modal-channel-section (injected by ui.js) and either
+   renders cached data directly or shows a "Look up" button.           */
+
+function _wireModalChannelLookup(stats) {
+  const section = document.getElementById('modal-channel-section');
+  if (!section || !stats.authorChannelId) return;
+  const apiKey = localStorage.getItem(API_KEY_STORAGE) || '';
+  if (!apiKey) return;
+
+  /* Serve from cache immediately if available */
+  if (_channelLookupCache.has(stats.authorChannelId)) {
+    _renderModalChannelData(section, _channelLookupCache.get(stats.authorChannelId));
+    return;
+  }
+
+  /* Render the look-up button */
+  const btn         = document.createElement('button');
+  btn.className     = 'btn-secondary modal-lookup-btn';
+  btn.textContent   = 'Look up channel (~2 units)';
+  section.appendChild(btn);
+
+  btn.addEventListener('click', async () => {
+    btn.disabled    = true;
+    btn.textContent = 'Looking up…';
+    try {
+      const channels = await YouTubeAPI.getChannelInfo([stats.authorChannelId], apiKey);
+      const channel  = channels[0] || null;
+      const uploads  = channel?.uploadsPlaylistId
+        ? await YouTubeAPI.getRecentUploads(channel.uploadsPlaylistId, apiKey, 3)
+        : [];
+      const data = { channel, uploads };
+      _channelLookupCache.set(stats.authorChannelId, data);
+      section.innerHTML = '';
+      _renderModalChannelData(section, data);
+    } catch (e) {
+      btn.disabled    = false;
+      btn.textContent = 'Look up channel (~2 units)';
+      const errEl       = document.createElement('span');
+      errEl.className   = 'modal-lookup-error';
+      errEl.textContent = `⚠ ${e.message}`;
+      section.appendChild(errEl);
+    }
+  });
+}
+
+/* Render fetched channel info + recent uploads into the modal section */
+function _renderModalChannelData(section, { channel, uploads }) {
+  if (!channel) {
+    section.innerHTML = '<span class="modal-lookup-error">Channel data unavailable.</span>';
+    return;
+  }
+
+  const avatarHtml = channel.avatar
+    ? `<img src="${UI.esc(channel.avatar)}" class="modal-channel-avatar" alt=""
+          onerror="this.style.display='none'">`
+    : '';
+
+  const subsHtml = channel.subscriberCount
+    ? `<div class="modal-channel-subs">${UI.fmtCount(channel.subscriberCount)} subscribers</div>`
+    : '';
+
+  let uploadsHtml = '';
+  if (uploads.length > 0) {
+    uploadsHtml = `<div class="modal-channel-uploads-label">Recent uploads</div>
+      <div class="modal-channel-uploads">` +
+      uploads.map(v =>
+        `<a class="d-video-card" href="https://www.youtube.com/watch?v=${UI.esc(v.videoId)}"
+            target="_blank" rel="noopener noreferrer">` +
+          (v.thumbnail ? `<img class="d-video-thumb" src="${UI.esc(v.thumbnail)}" alt="" loading="lazy">` : '') +
+          `<div class="d-video-info">` +
+            `<div class="d-video-title">${UI.esc(v.title)}</div>` +
+            `<div class="d-video-meta">${v.publishedAt ? new Date(v.publishedAt).getFullYear() : ''}</div>` +
+          `</div>` +
+        `</a>`
+      ).join('') +
+    `</div>`;
+  }
+
+  section.innerHTML =
+    `<div class="modal-channel-data">` +
+      `<div class="modal-channel-header">` +
+        avatarHtml +
+        `<div>` +
+          `<div class="modal-channel-title">${UI.esc(channel.title)}</div>` +
+          subsHtml +
+        `</div>` +
+      `</div>` +
+      uploadsHtml +
+    `</div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PANEL 5 — Commenter network graph (0 API units)
+   Force-directed layout using source-based gravity wells.
+   Nodes = top 80 commenters; gravity wells = one per archive.
+   Nodes cluster toward the archive(s) they appear in.
+   Multi-source (cross-archive) commenters float between clusters.
+   ───────────────────────────────────────────────────────────── */
+
+const _GRAPH_PALETTE = ['#ff233d', '#096cbc', '#f5702d', '#8b5cf6', '#10b981', '#f59e0b'];
+const _GRAPH_MULTI_RING = '#e8ff4e'; /* highlight yellow outline on cross-archive nodes */
+
+/* Run the force-directed simulation. Mutates node positions in place.
+   Returns the gravity well Map (src → { x, y }) for drawing.         */
+function _runForceSimulation(nodes, sources, canvasW, canvasH) {
+  const cx = canvasW / 2, cy = canvasH / 2;
+  const R  = Math.min(canvasW, canvasH) * 0.28;
+  const pad = 50;
+
+  /* Place one gravity well per source, arranged in a circle */
+  const wells = new Map(
+    sources.map((s, i) => [s, {
+      x: sources.length === 1
+        ? cx
+        : cx + R * Math.cos(2 * Math.PI * i / sources.length - Math.PI / 2),
+      y: sources.length === 1
+        ? cy
+        : cy + R * Math.sin(2 * Math.PI * i / sources.length - Math.PI / 2),
+    }])
+  );
+
+  /* Initialise each node near its first source's well */
+  for (const node of nodes) {
+    const well = wells.get(node.sources[0]) || { x: cx, y: cy };
+    node.x  = well.x + (Math.random() - 0.5) * 80;
+    node.y  = well.y + (Math.random() - 0.5) * 80;
+    node.vx = 0;
+    node.vy = 0;
+  }
+
+  const GRAVITY   = 0.06;
+  const REPULSION = 1400;
+  const DAMPING   = 0.82;
+  const ITERS     = 280;
+
+  for (let iter = 0; iter < ITERS; iter++) {
+    const cool = 1 - iter / ITERS;
+
+    for (const node of nodes) {
+      let fx = 0, fy = 0;
+
+      /* Gravity toward each source well, split evenly across memberships */
+      const g = GRAVITY / node.sources.length;
+      for (const src of node.sources) {
+        const w = wells.get(src);
+        if (!w) continue;
+        fx += (w.x - node.x) * g;
+        fy += (w.y - node.y) * g;
+      }
+
+      /* Pairwise repulsion to prevent overlap */
+      for (const other of nodes) {
+        if (other === node) continue;
+        const dx = node.x - other.x;
+        const dy = node.y - other.y;
+        const d2 = dx * dx + dy * dy || 1;
+        const d  = Math.sqrt(d2);
+        const f  = REPULSION / d2;
+        fx += dx / d * f;
+        fy += dy / d * f;
+      }
+
+      node.vx = (node.vx + fx) * DAMPING;
+      node.vy = (node.vy + fy) * DAMPING;
+      node.x  = Math.max(pad, Math.min(canvasW - pad, node.x + node.vx * cool));
+      node.y  = Math.max(pad, Math.min(canvasH - pad, node.y + node.vy * cool));
+    }
+  }
+
+  return wells;
+}
+
+/* Draw the graph onto the canvas from the settled simulation state */
+function _drawGraph(ctx, nodes, sources, wells, canvasW, canvasH) {
+  const isDark     = document.body.dataset.theme !== 'light';
+  const bgColor    = isDark ? '#0a0a0a' : '#f0f4f5';
+  const textColor  = isDark ? '#e8e8e8' : '#111111';
+  const srcColors  = new Map(sources.map((s, i) => [s, _GRAPH_PALETTE[i % _GRAPH_PALETTE.length]]));
+  const maxCount   = Math.max(...nodes.map(n => n.count), 1);
+
+  ctx.clearRect(0, 0, canvasW, canvasH);
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
+  /* Source well halos + labels */
+  for (const [src, well] of wells) {
+    const col = srcColors.get(src) || '#888';
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.beginPath();
+    ctx.arc(well.x, well.y, 54, 0, Math.PI * 2);
+    ctx.fillStyle = col;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.font = 'bold 11px "Space Mono", monospace';
+    ctx.fillStyle = col;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const label = src === '__base__'
+      ? 'Base archive'
+      : src.replace(/\.json$/i, '').slice(0, 20);
+    ctx.fillText(label, well.x, well.y);
+    ctx.restore();
+  }
+
+  /* Draw nodes (small first so large nodes render on top) */
+  const bySize = [...nodes].sort((a, b) => a.count - b.count);
+  for (const node of bySize) {
+    /* Node radius: logarithmic scale, range 5–22px */
+    const r     = 5 + (Math.log1p(node.count) / Math.log1p(maxCount)) * 17;
+    node._r     = r;
+
+    /* Color: for multi-source nodes use the first non-base source color
+       so cross-archive commenters stand out from the base cluster       */
+    const colorSrc = node.sources.length > 1
+      ? (node.sources.find(s => s !== '__base__') || node.sources[0])
+      : node.sources[0];
+    const color = srcColors.get(colorSrc) || '#888888';
+
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    /* Yellow ring for cross-archive nodes */
+    if (node.sources.length > 1) {
+      ctx.strokeStyle = _GRAPH_MULTI_RING;
+      ctx.lineWidth   = 2;
+      ctx.stroke();
+    }
+  }
+
+  /* Labels for top 15 commenters (always visible) */
+  const top15 = [...nodes].sort((a, b) => b.count - a.count).slice(0, 15);
+  ctx.font = '10px "Space Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (const node of top15) {
+    const label = node.name.length > 18 ? node.name.slice(0, 16) + '…' : node.name;
+    const lx = node.x;
+    const ly = node.y + (node._r || 8) + 3;
+    /* Drop shadow for legibility */
+    ctx.fillStyle = bgColor;
+    ctx.fillText(label, lx + 1, ly + 1);
+    ctx.fillStyle = textColor;
+    ctx.fillText(label, lx, ly);
+  }
+}
+
+/* Run Panel 5 — called on every Discovery tab open (0 API units, fast) */
+function runDiscoveryGraph() {
+  const canvas    = document.getElementById('d-graph-canvas');
+  const statusEl  = document.getElementById('d-graph-status');
+  if (!canvas || !statusEl) return;
+
+  if (AppState.threads.length === 0) return;
+
+  /* Size the canvas buffer to its rendered width */
+  const rect     = canvas.getBoundingClientRect();
+  canvas.width   = Math.max(rect.width || 0, 320);
+  canvas.height  = 460;
+
+  const ctx = canvas.getContext('2d');
+
+  const { nodes, sources } = ArchiveManager.buildAudienceGraph(AppState.threads, 80);
+  if (nodes.length === 0) { statusEl.textContent = 'No comment data.'; return; }
+
+  const wells          = _runForceSimulation(nodes, sources, canvas.width, canvas.height);
+  _discoveryGraphState = { nodes, sources, wells };
+
+  _drawGraph(ctx, nodes, sources, wells, canvas.width, canvas.height);
+
+  const multiCount = nodes.filter(n => n.sources.length > 1).length;
+  statusEl.textContent = `${nodes.length} commenters · ${sources.length} archive${sources.length !== 1 ? 's' : ''}` +
+    (multiCount ? ` · ${multiCount} cross-archive` : '');
+  _setDiscoveryStatus('graph', '✓');
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1728,6 +2027,7 @@ document.addEventListener('DOMContentLoaded', () => {
     switchTab('viewer', vBtn);
     const stats = ArchiveManager.getUserStats(AppState.threads, name);
     UI.renderUserModal(stats);
+    _wireModalChannelLookup(stats);
     UI.highlightFeedAuthor(stats.authorName);
   });
 
@@ -1779,6 +2079,73 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') addDiscoverySearchTerm();
   });
 
+  /* Panel 5: canvas hover tooltip and click-to-profile */
+  (function () {
+    const canvas  = document.getElementById('d-graph-canvas');
+    const tooltip = document.getElementById('d-graph-tooltip');
+    if (!canvas || !tooltip) return;
+
+    function _nearestNode(cx, cy) {
+      if (!_discoveryGraphState) return null;
+      let best = null, bestD = Infinity;
+      for (const node of _discoveryGraphState.nodes) {
+        const d = Math.sqrt((node.x - cx) ** 2 + (node.y - cy) ** 2);
+        if (d < (node._r || 8) + 6 && d < bestD) { bestD = d; best = node; }
+      }
+      return best;
+    }
+
+    function _canvasCoords(e) {
+      const rect   = canvas.getBoundingClientRect();
+      const scaleX = canvas.width  / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        cx: (e.clientX - rect.left) * scaleX,
+        cy: (e.clientY - rect.top)  * scaleY,
+        px: e.clientX - rect.left,
+        py: e.clientY - rect.top,
+      };
+    }
+
+    canvas.addEventListener('mousemove', e => {
+      const { cx, cy, px, py } = _canvasCoords(e);
+      const node = _nearestNode(cx, cy);
+      if (node) {
+        const srcLabels = node.sources
+          .map(s => s === '__base__' ? 'Base' : s.replace(/\.json$/i, ''))
+          .join(', ');
+        tooltip.innerHTML  = `<strong>${UI.esc(node.name)}</strong> &middot; ` +
+          `${node.count} comment${node.count !== 1 ? 's' : ''}<br>${UI.esc(srcLabels)}`;
+        tooltip.style.left    = (px + 14) + 'px';
+        tooltip.style.top     = (py + 14) + 'px';
+        tooltip.style.display = 'block';
+        canvas.style.cursor   = 'pointer';
+      } else {
+        tooltip.style.display = 'none';
+        canvas.style.cursor   = '';
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+      canvas.style.cursor   = '';
+    });
+
+    canvas.addEventListener('click', e => {
+      if (!_discoveryGraphState || !AppState.threads.length) return;
+      const { cx, cy } = _canvasCoords(e);
+      const node = _nearestNode(cx, cy);
+      if (!node) return;
+      const stats = ArchiveManager.getUserStats(AppState.threads, node.name, node.channelId || '');
+      /* Switch to Viewer before opening the modal so the feed highlight works */
+      const vBtn = document.querySelector('.tab-btn[onclick*="viewer"]');
+      switchTab('viewer', vBtn);
+      UI.renderUserModal(stats);
+      _wireModalChannelLookup(stats);
+      UI.highlightFeedAuthor(stats.authorName);
+    });
+  })();
+
   /* Back to top — show after 400px of scroll, smooth-scroll to top on click */
   const backToTopBtn = document.getElementById('v-back-to-top');
   window.addEventListener('scroll', () => {
@@ -1814,6 +2181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     UI.renderUserModal(stats, cannotRender);
+    _wireModalChannelLookup(stats);
     UI.highlightFeedAuthor(stats.authorName);
   });
 
@@ -1845,6 +2213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!authorEl || !AppState.threads.length) return;
     const stats = ArchiveManager.getUserStats(AppState.threads, authorEl.textContent.trim());
     UI.renderUserModal(stats);
+    _wireModalChannelLookup(stats);
     UI.highlightFeedAuthor(stats.authorName);
   });
 

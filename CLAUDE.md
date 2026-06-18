@@ -605,8 +605,65 @@ All planned features implemented. Discovery tab added at commit #48.
 
 ### 🗺 Long term
 
-> This section is intentionally empty as of β 1.1.0. The project is feature-complete for
-> its current scope. If you return to it, consider the following starting points:
+> Social / discovery phase roadmap as of β 1.2.0. Items marked **IN SCOPE NEXT** are
+> actively being worked on. The rest are shelved but documented for future sessions.
+
+#### ① Cross-archive commenter network — **IMPLEMENTED β 1.3.0** *(0 API units)*
+A visual graph rendered on an HTML `<canvas>` (or SVG) inside the Discovery tab. Nodes
+are commenters; edges connect commenters who appear in the same archive. Load 3–4
+archives from related videos and the connective tissue of a niche becomes visible — who
+is everywhere, who is siloed. Entirely in-memory from `AppState.threads` + `_source` tags.
+
+Implementation notes:
+- `ArchiveManager.buildAudienceGraph(threads)` → `{ nodes: [{id, name, avatar, count}],
+  edges: [{source, target, weight}] }` where weight = number of shared archives
+- Render with a simple force-directed layout (no library needed — O(n²) repulsion +
+  spring attraction on a `<canvas>`, requestAnimationFrame loop)
+- Node size proportional to total comment count; edge thickness proportional to weight
+- Click a node → open that author's profile modal (reuse existing `getUserStats` + `renderUserModal`)
+- Only meaningful with 2+ merged archives; show placeholder otherwise (same as Panel 1)
+- Cap at top 100 commenters by comment count to keep the graph readable
+- Add as **Panel 5** in the Discovery tab, below Panel 4
+
+#### ② Commenter timeline *(0 API units)*
+Heatmap / scatter plot of commenter activity over time within a single archive.
+X-axis = `publishedAt` date, Y-axis = engagement level or commenter rank. Reveals
+whether traffic came from launch-day fans, algorithm surfacing, or anniversary spikes.
+Purely from timestamps already in the data. Add as **Panel 6** in Discovery.
+
+#### ③ Author card channel lookup — **IMPLEMENTED β 1.3.0** *(~2 API units per lookup)*
+When the user profile modal is open and `stats.authorChannelId` is present, show a
+**"Look up channel →"** button below the existing "View channel ↗" link. Clicking it
+calls `YouTubeAPI.getChannelInfo([stats.authorChannelId], apiKey)` (1 unit) and expands
+the modal with: subscriber count, uploads count, and a "Recent uploads" mini-grid
+(3 videos via `getRecentUploads`, 1 unit). Results cached per `authorChannelId` in a
+`_channelLookupCache` Map for the session — repeat clicks are free.
+
+Implementation notes:
+- Button only shown when `stats.authorChannelId` is non-empty and API key is saved
+- Loading state: button text → "Looking up… (2 units)" while fetching
+- Error state: show inline message, re-enable button
+- Cache key: `authorChannelId`; value: `{ channel, uploads }`
+- New `_channelLookupCache = new Map()` module-level in `script.js`, cleared in `resetViewer`
+- Rendering: extend `UI.renderUserModal` to accept an optional `channelData` param, or
+  inject a `#modal-channel-section` div that `script.js` populates after the fetch
+- The 3-video mini-grid reuses `.d-video-card` / `.d-video-thumb` / `.d-video-info` CSS
+
+#### ④ Archive comparison dashboard *(0 API units)*
+Side-by-side stat diff between two loaded archives: top commenters in each, unique vs.
+shared vocabulary (via word frequency diff), date range overlap, commenter overlap %.
+Presented as a dashboard panel in Discovery. No new API calls — all computed from
+`AppState.threads` + `_source` tags.
+
+#### ⑤ Community fingerprint export *(0 API units)*
+Aggregates commenter overlap, word frequency, activity timing, and top authors into a
+compact JSON "fingerprint" for the loaded archive set. Exportable via a button in
+Discovery. Useful for comparing niches over time or across channels without re-loading
+the full archives.
+
+---
+
+#### Shelved / infrastructure
 
 - **`yt-channel-suite/` — separate project** for channel-level tooling (video performance
   dashboard, upload calendar heatmap, subscriber milestone tracker, top commenter
