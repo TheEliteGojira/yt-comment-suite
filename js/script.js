@@ -1734,6 +1734,7 @@ function _wireModalChannelLookup(stats) {
     } catch (e) {
       btn.disabled    = false;
       btn.textContent = 'Look up channel (~2 units)';
+      section.querySelectorAll('.modal-lookup-error').forEach(el => el.remove());
       const errEl       = document.createElement('span');
       errEl.className   = 'modal-lookup-error';
       errEl.textContent = `⚠ ${e.message}`;

@@ -38,7 +38,7 @@ const YouTubeAPI = (() => {
         throw new Error('API key is not authorised for the YouTube Data API v3. Make sure you have enabled it in your Google Cloud project.');
 
       if (code === 404)
-        throw new Error('Video not found. It may be private, deleted, or the ID is incorrect.');
+        throw new Error('Not found. The resource may be private, deleted, or the ID is incorrect.');
 
       throw new Error(`API error ${code}: ${message}`);
     }
