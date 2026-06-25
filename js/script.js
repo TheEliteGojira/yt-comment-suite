@@ -642,6 +642,7 @@ function loadViewerData(meta, threads) {
   UI.show('v-controls', 'flex');
   UI.show('v-result-count');
   UI.show('v-filtered-export-row', 'flex');
+  document.getElementById('v-yt-view-btn').style.display = '';
 
   applyViewerFilters();
 }
@@ -886,6 +887,8 @@ function resetViewer() {
   const wfArrow = document.getElementById('v-word-freq-arrow');
   if (wfArrow) wfArrow.classList.remove('open');
 
+  closeYouTubeView();
+  document.getElementById('v-yt-view-btn').style.display = 'none';
   UI.show('v-drop-zone');
   UI.hide('v-loading');
   UI.hide('v-meta-bar');
@@ -1691,6 +1694,176 @@ function resetDiscovery() {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   YOUTUBE VIEW — full-screen authentic comment overlay
+   ──────────────────────────────────────────────────────────────
+   Renders _renderedThreads (current filtered + sorted set) in a
+   layout that mimics YouTube's modern dark comment section.
+   Zero API calls — purely in-memory, instant.
+   ─────────────────────────────────────────────────────────────
+*/
+
+/* Converts an ISO timestamp to a YouTube-style relative string */
+function _ytRelTime(iso) {
+  if (!iso) return '';
+  const sec = Math.max(0, Math.floor((Date.now() - new Date(iso)) / 1000));
+  const yr  = Math.floor(sec / 31536000);
+  const mo  = Math.floor(sec / 2592000);
+  const wk  = Math.floor(sec / 604800);
+  const dy  = Math.floor(sec / 86400);
+  const hr  = Math.floor(sec / 3600);
+  const mn  = Math.floor(sec / 60);
+  if (yr >= 1) return `${yr} year${yr  > 1 ? 's' : ''} ago`;
+  if (mo >= 1) return `${mo} month${mo > 1 ? 's' : ''} ago`;
+  if (wk >= 1) return `${wk} week${wk  > 1 ? 's' : ''} ago`;
+  if (dy >= 1) return `${dy} day${dy   > 1 ? 's' : ''} ago`;
+  if (hr >= 1) return `${hr} hour${hr  > 1 ? 's' : ''} ago`;
+  if (mn >= 1) return `${mn} minute${mn > 1 ? 's' : ''} ago`;
+  return 'just now';
+}
+
+/* Builds one comment or reply DOM node — no innerHTML to avoid XSS */
+function _buildYTCommentEl(c, isReply) {
+  const row = document.createElement('div');
+  row.className = isReply ? 'yt-reply' : 'yt-comment';
+
+  /* Avatar */
+  const avatarWrap = document.createElement('div');
+  if (!isReply) avatarWrap.className = 'yt-avatar-wrap';
+  if (c.authorAvatar) {
+    const img = document.createElement('img');
+    img.className = isReply ? 'yt-reply-avatar' : 'yt-avatar';
+    img.src = c.authorAvatar;
+    img.alt = '';
+    img.onerror = function () { this.style.display = 'none'; };
+    avatarWrap.appendChild(img);
+  } else {
+    const ph = document.createElement('div');
+    ph.className = isReply ? 'yt-reply-avatar-placeholder' : 'yt-avatar-placeholder';
+    avatarWrap.appendChild(ph);
+  }
+  row.appendChild(avatarWrap);
+
+  /* Body */
+  const body = document.createElement('div');
+  body.className = 'yt-comment-body';
+
+  const meta = document.createElement('div');
+  meta.className = 'yt-comment-meta';
+  const authorEl = document.createElement('span');
+  authorEl.className = 'yt-author';
+  authorEl.textContent = c.author || 'Unknown';
+  const tsEl = document.createElement('span');
+  tsEl.className = 'yt-timestamp';
+  tsEl.textContent = _ytRelTime(c.publishedAt);
+  meta.appendChild(authorEl);
+  meta.appendChild(tsEl);
+  body.appendChild(meta);
+
+  const textEl = document.createElement('div');
+  textEl.className = 'yt-comment-text';
+  textEl.textContent = c.text || '';
+  body.appendChild(textEl);
+
+  /* Actions: 👍 [count] · 👎 · Reply */
+  const actions = document.createElement('div');
+  actions.className = 'yt-actions';
+
+  const like = document.createElement('button');
+  like.className = 'yt-action-btn';
+  const likeIcon = document.createElement('span');
+  likeIcon.className = 'yt-action-icon';
+  likeIcon.textContent = '👍';
+  like.appendChild(likeIcon);
+  if (c.likeCount > 0) {
+    const likeNum = document.createElement('span');
+    likeNum.textContent = UI.fmtCount(c.likeCount);
+    like.appendChild(likeNum);
+  }
+  actions.appendChild(like);
+
+  const sep = document.createElement('span');
+  sep.className = 'yt-action-sep';
+  sep.textContent = '·';
+  actions.appendChild(sep);
+
+  const dislike = document.createElement('button');
+  dislike.className = 'yt-action-btn';
+  const dislikeIcon = document.createElement('span');
+  dislikeIcon.className = 'yt-action-icon';
+  dislikeIcon.textContent = '👎';
+  dislike.appendChild(dislikeIcon);
+  actions.appendChild(dislike);
+
+  if (!isReply) {
+    const replyBtn = document.createElement('button');
+    replyBtn.className = 'yt-action-btn';
+    replyBtn.textContent = 'Reply';
+    actions.appendChild(replyBtn);
+  }
+
+  body.appendChild(actions);
+  row.appendChild(body);
+  return row;
+}
+
+/* Builds one thread (comment + replies + divider) */
+function _buildYTThreadEl(thread) {
+  const wrap = document.createElement('div');
+  wrap.className = 'yt-thread';
+  wrap.appendChild(_buildYTCommentEl(thread, false));
+
+  if (thread.replies && thread.replies.length > 0) {
+    const repliesDiv = document.createElement('div');
+    repliesDiv.className = 'yt-replies';
+    for (const reply of thread.replies) {
+      repliesDiv.appendChild(_buildYTCommentEl(reply, true));
+    }
+    wrap.appendChild(repliesDiv);
+  }
+
+  const hr = document.createElement('hr');
+  hr.className = 'yt-divider';
+  wrap.appendChild(hr);
+  return wrap;
+}
+
+/* Open the YouTube-style overlay — renders current filtered view */
+function openYouTubeView() {
+  const threads = _renderedThreads;
+  if (!threads || threads.length === 0) return;
+
+  const LIMIT = 300;
+  const slice  = threads.slice(0, LIMIT);
+  const total  = threads.reduce((s, t) => s + 1 + (t.replies?.length || 0), 0);
+
+  document.getElementById('yt-count-label').textContent =
+    `${UI.fmt(total)} Comment${total !== 1 ? 's' : ''}`;
+
+  const list = document.getElementById('yt-comment-list');
+  list.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  for (const thread of slice) frag.appendChild(_buildYTThreadEl(thread));
+
+  if (threads.length > LIMIT) {
+    const notice = document.createElement('div');
+    notice.className = 'yt-cap-notice';
+    notice.textContent =
+      `Showing ${LIMIT.toLocaleString()} of ${UI.fmt(threads.length)} threads — use the Viewer filters to narrow the set.`;
+    frag.appendChild(notice);
+  }
+
+  list.appendChild(frag);
+  document.getElementById('yt-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+/* Close the overlay */
+function closeYouTubeView() {
+  document.getElementById('yt-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+/* ─────────────────────────────────────────────────────────────
    CHANNEL LOOKUP — author card expansion in the profile modal
    ~2 API units: 1 for getChannelInfo + 1 for getRecentUploads
    Results cached per authorChannelId for the session.
@@ -1995,6 +2168,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('v-merge-file-opt').addEventListener('click', () => {
     document.getElementById('v-merge-menu').style.display = 'none';
     document.getElementById('v-merge-input').click();
+  });
+
+  /* ESC closes the YouTube view overlay */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('yt-modal').style.display !== 'none') {
+      closeYouTubeView();
+    }
   });
 
   /* Close merge menu on click outside */

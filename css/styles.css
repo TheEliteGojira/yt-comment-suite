@@ -178,6 +178,7 @@ body::before {
 /* ── Page header ──────────────────────────────────────────── */
 .page-header {
   margin-bottom: 40px;
+  position: relative;
 }
 
 .logo-tag {
@@ -2187,4 +2188,249 @@ footer {
 @media (max-width: 520px) {
   .modal-channel-uploads { grid-template-columns: repeat(2, 1fr); }
   .modal-channel-section { padding: 12px 16px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   YOUTUBE VIEW — full-screen authentic comment overlay
+   ═════════════════════════════════════════════════════════════ */
+
+/* Trigger button — absolute top-right of the viewer page-header */
+.yt-view-trigger {
+  position:      absolute;
+  top:           0;
+  right:         0;
+  background:    transparent;
+  border:        1px solid var(--border);
+  color:         var(--text-muted);
+  font-family:   'Space Mono', monospace;
+  font-size:     10px;
+  letter-spacing: 0.04em;
+  padding:       7px 13px;
+  cursor:        pointer;
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+  transition:    border-color 0.15s, color 0.15s;
+}
+.yt-view-trigger:hover { border-color: #ff0000; color: #ff0000; }
+.yt-trigger-dot {
+  width:         8px;
+  height:        8px;
+  background:    #ff0000;
+  border-radius: 2px;
+  flex-shrink:   0;
+}
+
+/* Full-screen overlay — always YouTube dark (#0f0f0f) */
+#yt-modal {
+  position:       fixed;
+  inset:          0;
+  z-index:        500;
+  background:     #0f0f0f;
+  display:        flex;
+  flex-direction: column;
+  overflow:       hidden;
+}
+
+/* Minimal top bar */
+.yt-topbar {
+  flex-shrink:     0;
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         12px 20px;
+  border-bottom:   1px solid #272727;
+}
+.yt-topbar-label {
+  font-family:    'Space Mono', monospace;
+  font-size:      11px;
+  color:          #aaaaaa;
+  letter-spacing: 0.04em;
+}
+.yt-topbar-close {
+  background:    none;
+  border:        none;
+  color:         #aaaaaa;
+  font-size:     20px;
+  cursor:        pointer;
+  line-height:   1;
+  padding:       4px 10px;
+  margin-right:  -6px;
+  border-radius: 4px;
+  transition:    color 0.1s, background 0.1s;
+}
+.yt-topbar-close:hover { color: #f1f1f1; background: #272727; }
+
+/* Scrollable content area */
+.yt-scroll-area {
+  flex:            1;
+  overflow-y:      auto;
+  scrollbar-color: #424242 transparent;
+  scrollbar-width: thin;
+}
+.yt-inner {
+  max-width: 800px;
+  margin:    0 auto;
+  padding:   32px 24px 80px;
+}
+
+/* Count + sort row */
+.yt-header-row {
+  display:     flex;
+  align-items: center;
+  gap:         24px;
+  margin-bottom: 24px;
+}
+.yt-count-label {
+  font-family: Roboto, 'Segoe UI', sans-serif;
+  font-size:   16px;
+  font-weight: 500;
+  color:       #f1f1f1;
+}
+.yt-sort-pill {
+  background:  none;
+  border:      none;
+  color:       #f1f1f1;
+  font-size:   14px;
+  font-weight: 500;
+  cursor:      pointer;
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+  padding:     8px 12px;
+  border-radius: 18px;
+  font-family: Roboto, 'Segoe UI', sans-serif;
+  transition:  background 0.1s;
+}
+.yt-sort-pill:hover { background: #272727; }
+
+/* Thread wrapper */
+.yt-thread { margin-bottom: 0; }
+
+/* Top-level comment row */
+.yt-comment {
+  display: flex;
+  gap:     16px;
+  padding: 16px 0 4px;
+}
+
+/* Reply row */
+.yt-reply {
+  display: flex;
+  gap:     12px;
+  padding: 12px 0 4px;
+}
+
+/* Avatars */
+.yt-avatar-wrap { flex-shrink: 0; }
+
+.yt-avatar,
+.yt-avatar-placeholder {
+  width:         40px;
+  height:        40px;
+  border-radius: 50%;
+  object-fit:    cover;
+  background:    #272727;
+  display:       block;
+}
+
+.yt-reply-avatar,
+.yt-reply-avatar-placeholder {
+  width:         24px;
+  height:        24px;
+  border-radius: 50%;
+  object-fit:    cover;
+  background:    #272727;
+  display:       block;
+  flex-shrink:   0;
+}
+
+/* Comment body */
+.yt-comment-body { flex: 1; min-width: 0; }
+
+/* Author + timestamp */
+.yt-comment-meta {
+  display:     flex;
+  align-items: baseline;
+  flex-wrap:   wrap;
+  gap:         6px;
+  margin-bottom: 4px;
+}
+.yt-author {
+  font-family: Roboto, 'Segoe UI', sans-serif;
+  font-size:   13px;
+  font-weight: 600;
+  color:       #f1f1f1;
+}
+.yt-timestamp {
+  font-family: Roboto, 'Segoe UI', sans-serif;
+  font-size:   12px;
+  color:       #aaaaaa;
+}
+
+/* Comment text */
+.yt-comment-text {
+  font-family: Roboto, 'Segoe UI', sans-serif;
+  font-size:   14px;
+  color:       #f1f1f1;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break:  break-word;
+  margin-bottom: 8px;
+}
+
+/* Action row */
+.yt-actions {
+  display:     flex;
+  align-items: center;
+  gap:         2px;
+}
+.yt-action-btn {
+  background:    none;
+  border:        none;
+  color:         #aaaaaa;
+  cursor:        pointer;
+  font-family:   Roboto, 'Segoe UI', sans-serif;
+  font-size:     13px;
+  display:       flex;
+  align-items:   center;
+  gap:           5px;
+  padding:       6px 10px;
+  border-radius: 18px;
+  line-height:   1;
+  transition:    background 0.1s, color 0.1s;
+}
+.yt-action-btn:hover { background: #272727; color: #f1f1f1; }
+.yt-action-icon { font-size: 16px; line-height: 1; }
+.yt-action-sep {
+  color:       #3f3f3f;
+  font-size:   14px;
+  padding:     0 4px;
+  user-select: none;
+  line-height: 1;
+}
+
+/* Indented replies block */
+.yt-replies { margin-left: 56px; }
+
+/* Thread divider */
+.yt-divider {
+  border:     none;
+  border-top: 1px solid #272727;
+  margin:     4px 0;
+}
+
+/* Cap notice shown when only a subset of threads is rendered */
+.yt-cap-notice {
+  text-align:  center;
+  font-family: Roboto, 'Segoe UI', sans-serif;
+  font-size:   13px;
+  color:       #aaaaaa;
+  padding:     24px 0;
+}
+
+@media (max-width: 600px) {
+  .yt-inner          { padding: 20px 16px 60px; }
+  .yt-view-trigger   { font-size: 9px; padding: 5px 10px; }
+  .yt-replies        { margin-left: 36px; }
 }
