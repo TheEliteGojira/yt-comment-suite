@@ -1721,6 +1721,31 @@ function _ytRelTime(iso) {
   return 'just now';
 }
 
+/* Creates a two-path SVG icon (YouTube outline thumb style) */
+function _ytSvgIcon(d1, d2) {
+  const ns  = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('width',        '20');
+  svg.setAttribute('height',       '20');
+  svg.setAttribute('viewBox',      '0 0 24 24');
+  svg.setAttribute('fill',         'none');
+  svg.setAttribute('stroke',       'currentColor');
+  svg.setAttribute('stroke-width', '1.8');
+  svg.setAttribute('stroke-linecap',  'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  [d1, d2].filter(Boolean).forEach(d => {
+    const p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', d);
+    svg.appendChild(p);
+  });
+  return svg;
+}
+
+const _YT_THUMB_UP_D1   = 'M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z';
+const _YT_THUMB_UP_D2   = 'M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3';
+const _YT_THUMB_DOWN_D1 = 'M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z';
+const _YT_THUMB_DOWN_D2 = 'M17 2h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17';
+
 /* Builds one comment or reply DOM node — no innerHTML to avoid XSS */
 function _buildYTCommentEl(c, isReply) {
   const row = document.createElement('div');
@@ -1764,16 +1789,13 @@ function _buildYTCommentEl(c, isReply) {
   textEl.textContent = c.text || '';
   body.appendChild(textEl);
 
-  /* Actions: 👍 [count] · 👎 · Reply */
+  /* Actions: 👍 [count]  👎  Reply */
   const actions = document.createElement('div');
   actions.className = 'yt-actions';
 
   const like = document.createElement('button');
   like.className = 'yt-action-btn';
-  const likeIcon = document.createElement('span');
-  likeIcon.className = 'yt-action-icon';
-  likeIcon.textContent = '👍';
-  like.appendChild(likeIcon);
+  like.appendChild(_ytSvgIcon(_YT_THUMB_UP_D1, _YT_THUMB_UP_D2));
   if (c.likeCount > 0) {
     const likeNum = document.createElement('span');
     likeNum.textContent = UI.fmtCount(c.likeCount);
@@ -1781,43 +1803,69 @@ function _buildYTCommentEl(c, isReply) {
   }
   actions.appendChild(like);
 
-  const sep = document.createElement('span');
-  sep.className = 'yt-action-sep';
-  sep.textContent = '·';
-  actions.appendChild(sep);
-
   const dislike = document.createElement('button');
   dislike.className = 'yt-action-btn';
-  const dislikeIcon = document.createElement('span');
-  dislikeIcon.className = 'yt-action-icon';
-  dislikeIcon.textContent = '👎';
-  dislike.appendChild(dislikeIcon);
+  dislike.appendChild(_ytSvgIcon(_YT_THUMB_DOWN_D1, _YT_THUMB_DOWN_D2));
   actions.appendChild(dislike);
 
-  if (!isReply) {
-    const replyBtn = document.createElement('button');
-    replyBtn.className = 'yt-action-btn';
-    replyBtn.textContent = 'Reply';
-    actions.appendChild(replyBtn);
-  }
+  const replyBtn = document.createElement('button');
+  replyBtn.className = 'yt-action-reply';
+  replyBtn.textContent = 'Reply';
+  actions.appendChild(replyBtn);
 
   body.appendChild(actions);
   row.appendChild(body);
   return row;
 }
 
-/* Builds one thread (comment + replies + divider) */
+/* Builds one thread (comment + collapsible replies + divider) */
 function _buildYTThreadEl(thread) {
   const wrap = document.createElement('div');
   wrap.className = 'yt-thread';
   wrap.appendChild(_buildYTCommentEl(thread, false));
 
   if (thread.replies && thread.replies.length > 0) {
+    const count = thread.replies.length;
+    const label = `${count} ${count === 1 ? 'reply' : 'replies'}`;
+
+    /* "N replies ∨" toggle — shown by default */
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'yt-replies-toggle';
+    const chevDown = document.createElement('span');
+    chevDown.className = 'yt-chevron';
+    chevDown.textContent = '▼';
+    toggleBtn.appendChild(chevDown);
+    toggleBtn.appendChild(document.createTextNode(' ' + label));
+
+    /* Replies container — hidden by default */
     const repliesDiv = document.createElement('div');
     repliesDiv.className = 'yt-replies';
+    repliesDiv.style.display = 'none';
+
+    /* "Hide replies ∧" button at top of replies block */
+    const hideBtn = document.createElement('button');
+    hideBtn.className = 'yt-hide-replies-btn';
+    const chevUp = document.createElement('span');
+    chevUp.className = 'yt-chevron';
+    chevUp.textContent = '▲';
+    hideBtn.appendChild(chevUp);
+    hideBtn.appendChild(document.createTextNode(' Hide replies'));
+    repliesDiv.appendChild(hideBtn);
+
     for (const reply of thread.replies) {
       repliesDiv.appendChild(_buildYTCommentEl(reply, true));
     }
+
+    toggleBtn.addEventListener('click', () => {
+      repliesDiv.style.display = '';
+      toggleBtn.style.display  = 'none';
+    });
+    hideBtn.addEventListener('click', () => {
+      repliesDiv.style.display = 'none';
+      toggleBtn.style.display  = '';
+    });
+
+    wrap.appendChild(toggleBtn);
     wrap.appendChild(repliesDiv);
   }
 

@@ -2383,7 +2383,7 @@ footer {
 .yt-actions {
   display:     flex;
   align-items: center;
-  gap:         2px;
+  gap:         0;
 }
 .yt-action-btn {
   background:    none;
@@ -2394,21 +2394,51 @@ footer {
   font-size:     13px;
   display:       flex;
   align-items:   center;
-  gap:           5px;
+  gap:           6px;
   padding:       6px 10px;
   border-radius: 18px;
   line-height:   1;
   transition:    background 0.1s, color 0.1s;
 }
 .yt-action-btn:hover { background: #272727; color: #f1f1f1; }
-.yt-action-icon { font-size: 16px; line-height: 1; }
-.yt-action-sep {
-  color:       #3f3f3f;
-  font-size:   14px;
-  padding:     0 4px;
-  user-select: none;
-  line-height: 1;
+.yt-action-btn svg   { display: block; flex-shrink: 0; }
+.yt-action-reply {
+  font-size:   13px;
+  font-weight: 500;
+  color:       #aaaaaa;
+  background:  none;
+  border:      none;
+  cursor:      pointer;
+  padding:     6px 12px;
+  border-radius: 18px;
+  font-family: Roboto, 'Segoe UI', sans-serif;
+  transition:  background 0.1s, color 0.1s;
 }
+.yt-action-reply:hover { background: #272727; color: #f1f1f1; }
+
+/* Replies toggle — "N replies ∨" and "Hide replies ∧" */
+.yt-replies-toggle,
+.yt-hide-replies-btn {
+  display:       flex;
+  align-items:   center;
+  gap:           6px;
+  background:    none;
+  border:        none;
+  color:         #3ea6ff;
+  font-family:   Roboto, 'Segoe UI', sans-serif;
+  font-size:     14px;
+  font-weight:   500;
+  cursor:        pointer;
+  padding:       8px 12px;
+  border-radius: 18px;
+  margin-top:    4px;
+  transition:    background 0.1s;
+}
+.yt-replies-toggle:hover,
+.yt-hide-replies-btn:hover { background: rgba(62, 166, 255, 0.1); }
+.yt-replies-toggle { padding-left: 56px; } /* align with comment body */
+.yt-hide-replies-btn { margin-bottom: 4px; }
+.yt-chevron { font-size: 11px; line-height: 1; }
 
 /* Indented replies block */
 .yt-replies { margin-left: 56px; }
@@ -2430,7 +2460,8 @@ footer {
 }
 
 @media (max-width: 600px) {
-  .yt-inner          { padding: 20px 16px 60px; }
-  .yt-view-trigger   { font-size: 9px; padding: 5px 10px; }
-  .yt-replies        { margin-left: 36px; }
+  .yt-inner              { padding: 20px 16px 60px; }
+  .yt-view-trigger       { font-size: 9px; padding: 5px 10px; }
+  .yt-replies            { margin-left: 36px; }
+  .yt-replies-toggle     { padding-left: 36px; }
 }
