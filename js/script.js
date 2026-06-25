@@ -1786,7 +1786,7 @@ function _buildYTCommentEl(c, isReply) {
 
   const textEl = document.createElement('div');
   textEl.className = 'yt-comment-text';
-  textEl.textContent = c.text || '';
+  textEl.innerHTML = UI.sanitiseDisplay(c.text || '');
   body.appendChild(textEl);
 
   /* Actions: 👍 [count]  👎  Reply */
